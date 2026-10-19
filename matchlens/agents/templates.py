@@ -259,6 +259,10 @@ class _Builder:
 
 # -- Player lens ------------------------------------------------------------------------
 
+SPRINT_KMH = 19.8
+"""A scorer's run speed leads the box only from high-speed running upward; a header from
+a standing start at a corner is told by its finish instead."""
+
 
 def player_template(ctx: MomentContext, player_id: str) -> TemplateRef:
     """A box for one contributor, from the evidence only."""
@@ -272,7 +276,9 @@ def player_template(ctx: MomentContext, player_id: str) -> TemplateRef:
         b.name("scorer", str(scorer))
 
     if m.type is MomentType.GOAL and role == "scorer":
-        fast = b.has(f"run:{player_id}", "top_speed_kmh") and b.has("shot", "shot_speed_kmh")
+        run = ctx.ledger.get(f"run:{player_id}")
+        sprint = run is not None and run.numbers.get("top_speed_kmh", 0.0) >= SPRINT_KMH
+        fast = sprint and b.has("shot", "shot_speed_kmh")
         if fast:
             b.num(f"run:{player_id}", "top_speed_kmh", "speed")
             b.num("shot", "shot_speed_kmh", "shot_speed")
