@@ -62,6 +62,14 @@ pytest                    # contracts and sample match
 ruff check . && mypy      # lint and type check
 ```
 
+Simulate a full match (events, 10 Hz tracking frames and metadata, validated against the
+contracts) or a whole season with `matchlens-sim`; see [docs/simulator.md](docs/simulator.md)
+and the [calibration report](docs/calibration.md):
+
+```bash
+matchlens-sim match --storyline comeback --out out/comeback
+```
+
 The sample match lives in [data/sample](data/sample): three minutes of a fictional derby
 with a goal, a corner and a yellow card, as events, tracking frames, example moments and a
 cue track. Rebuild it with `python scripts/make_sample_match.py`.

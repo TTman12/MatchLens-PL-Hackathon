@@ -39,6 +39,7 @@ matchlens-schemas = "matchlens.contracts.export:main"
 matchlens-agents = "matchlens.agents.pipeline:main"
 matchlens-mcp = "matchlens.mcp_server.server:main"
 matchlens-evals = "matchlens.agents.audit:main"
+matchlens-sim = "matchlens.sim.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["matchlens"]

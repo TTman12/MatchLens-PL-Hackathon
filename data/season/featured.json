@@ -1,0 +1,12 @@
+{
+  "match_id": "m291",
+  "matchday": 30,
+  "home_id": "ash",
+  "away_id": "brk",
+  "seed": 2028310507,
+  "season_seed": 2026,
+  "unavailable": [
+    "brk-09",
+    "brk-11"
+  ]
+}
