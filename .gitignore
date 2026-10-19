@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / web
+node_modules/
+web/dist/
+*.tsbuildinfo
+
+# Local config and secrets (never commit these)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+local.settings.json
+.azure/
+
+# Generated output that is not published
+out/
+*.log
+
+# Editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
