@@ -137,20 +137,26 @@ def _agent_for(moment: Any, key: str) -> str | None:
 
 async def run_foundry(match_dir: Path = SAMPLE) -> list[Any]:  # pragma: no cover - needs Azure
     """Score Player-lens boxes with Foundry's groundedness and relevance evaluators."""
-    from agent_framework import Agent, evaluate_agent
-    from agent_framework_foundry import FoundryChatClient, FoundryEvals
+    from agent_framework_foundry import FoundryChatClient
     from azure.identity.aio import DefaultAzureCredential
 
-    from matchlens.agents.lenses import moment_brief, prompt
     from matchlens.agents.providers import FoundrySettings
-    from matchlens.mcp_server.tools import MatchStateStore
 
     settings = FoundrySettings.from_env()
-    client = FoundryChatClient(
-        project_endpoint=settings.endpoint,
-        model=settings.fast_model,
-        credential=DefaultAzureCredential(),
-    )
+    async with DefaultAzureCredential() as credential:
+        client = FoundryChatClient(
+            project_endpoint=settings.endpoint, model=settings.fast_model, credential=credential
+        )
+        return await _score_player_boxes(client, match_dir)
+
+
+async def _score_player_boxes(client: Any, match_dir: Path) -> list[Any]:  # pragma: no cover
+    from agent_framework import Agent, evaluate_agent
+    from agent_framework_foundry import FoundryEvals
+
+    from matchlens.agents.lenses import moment_brief, prompt
+    from matchlens.mcp_server.tools import MatchStateStore
+
     stats = StatsEngine(load_match(match_dir))
     store = MatchStateStore(stats)
     evals = FoundryEvals(
@@ -201,7 +207,19 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.foundry:
         for result in asyncio.run(run_foundry()):
-            print("Foundry:", result)
+            scores = ", ".join(
+                f"{name} {counts.get('passed', 0)}/{sum(counts.values())}"
+                for name, counts in result.per_evaluator.items()
+            )
+            print(f"Foundry [{result.status}]: {result.passed}/{result.total} passed ({scores})")
+            for item in result.items:
+                for score in item.scores:
+                    if not score.passed:
+                        print(f"  - {item.item_id} {score.name}: {score.score}")
+            if result.report_url:
+                print("  report:", result.report_url)
+            if result.status != "completed" or result.failed:
+                failed += 1
     return 1 if failed else 0
 
 
