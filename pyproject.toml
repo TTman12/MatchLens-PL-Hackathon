@@ -23,6 +23,7 @@ dev = [
 
 [project.scripts]
 matchlens-schemas = "matchlens.contracts.export:main"
+matchlens-sim = "matchlens.sim.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["matchlens"]
