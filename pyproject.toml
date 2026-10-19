@@ -14,6 +14,19 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# The agent pipeline: Microsoft Agent Framework workflows and the Match-State MCP server.
+agents = [
+  "agent-framework-core>=1.22,<2",
+  "mcp>=2.3,<3",
+]
+# Running the agents on Microsoft Foundry, with Content Safety and Application Insights.
+foundry = [
+  "matchlens[agents]",
+  "agent-framework-foundry>=1.15,<2",
+  "azure-identity>=1.26",
+  "azure-ai-contentsafety>=1.0",
+  "azure-monitor-opentelemetry>=1.8",
+]
 dev = [
   "jsonschema>=4.22",
   "mypy>=1.10",
@@ -23,6 +36,9 @@ dev = [
 
 [project.scripts]
 matchlens-schemas = "matchlens.contracts.export:main"
+matchlens-agents = "matchlens.agents.pipeline:main"
+matchlens-mcp = "matchlens.mcp_server.server:main"
+matchlens-evals = "matchlens.agents.audit:main"
 matchlens-sim = "matchlens.sim.cli:main"
 
 [tool.hatch.build.targets.wheel]
@@ -40,6 +56,10 @@ python_version = "3.11"
 strict = true
 plugins = ["pydantic.mypy"]
 packages = ["matchlens"]
+
+[[tool.mypy.overrides]]
+module = ["azure.*", "agent_framework_foundry"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
