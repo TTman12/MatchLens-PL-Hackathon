@@ -1,0 +1,441 @@
+[
+  {
+    "moment_id": "m017-mo01",
+    "match_id": "m017",
+    "type": "corner",
+    "period": 1,
+    "t_start": 17.2,
+    "t_peak": 37.5,
+    "t_end": 38.2,
+    "replay_window": [
+      17.2,
+      22.4
+    ],
+    "importance": 0.34,
+    "scoring_team": null,
+    "involved": [
+      {
+        "player_id": "brk-09",
+        "role": "shooter",
+        "events": [
+          "m017-e0015"
+        ],
+        "touches": 1,
+        "top_speed_kmh": null,
+        "distance_in_window_m": null
+      },
+      {
+        "player_id": "brk-07",
+        "role": "taker",
+        "events": [
+          "m017-e0016"
+        ],
+        "touches": 1,
+        "top_speed_kmh": null,
+        "distance_in_window_m": null
+      }
+    ],
+    "win_prob_before": {
+      "home": 0.44,
+      "draw": 0.28,
+      "away": 0.28
+    },
+    "win_prob_after": {
+      "home": 0.44,
+      "draw": 0.28,
+      "away": 0.28
+    },
+    "swing": 0.0,
+    "context_refs": [],
+    "evidence": [
+      {
+        "id": "ev1",
+        "claim_type": "stat",
+        "value": "Header blocked behind, xG 0.18",
+        "source": "m017-e0015",
+        "numbers": {
+          "xg": 0.18
+        }
+      }
+    ],
+    "drafts": {
+      "player": {},
+      "club": {},
+      "pundit": null
+    },
+    "verdicts": {},
+    "director": {
+      "show": [],
+      "camera": "corner_low",
+      "replay_at_t": null,
+      "budget_left": {}
+    },
+    "status": "detected"
+  },
+  {
+    "moment_id": "m017-mo03",
+    "match_id": "m017",
+    "type": "goal",
+    "period": 1,
+    "t_start": 48.0,
+    "t_peak": 59.0,
+    "t_end": 59.6,
+    "replay_window": [
+      48.0,
+      59.6
+    ],
+    "importance": 0.92,
+    "scoring_team": "ash",
+    "involved": [
+      {
+        "player_id": "ash-09",
+        "role": "scorer",
+        "events": [
+          "m017-e0025",
+          "m017-e0026"
+        ],
+        "touches": 2,
+        "top_speed_kmh": 34.3,
+        "distance_in_window_m": 77.5
+      },
+      {
+        "player_id": "ash-08",
+        "role": "assist",
+        "events": [
+          "m017-e0023",
+          "m017-e0024"
+        ],
+        "touches": 2,
+        "top_speed_kmh": 28.8,
+        "distance_in_window_m": 72.6
+      },
+      {
+        "player_id": "ash-06",
+        "role": "build_up",
+        "events": [
+          "m017-e0020",
+          "m017-e0021"
+        ],
+        "touches": 2,
+        "top_speed_kmh": 23.4,
+        "distance_in_window_m": 58.7
+      }
+    ],
+    "win_prob_before": {
+      "home": 0.44,
+      "draw": 0.28,
+      "away": 0.28
+    },
+    "win_prob_after": {
+      "home": 0.63,
+      "draw": 0.23,
+      "away": 0.14
+    },
+    "swing": 0.19,
+    "context_refs": [
+      "season:ash-09:goals",
+      "season:ash-09:last_goal",
+      "table:ash",
+      "fixture:ash:next"
+    ],
+    "evidence": [
+      {
+        "id": "ev1",
+        "claim_type": "stat",
+        "value": "25.3 m line-breaking through ball, difficulty 0.71",
+        "source": "m017-e0024",
+        "numbers": {
+          "distance_m": 25.3,
+          "difficulty": 0.71
+        }
+      },
+      {
+        "id": "ev2",
+        "claim_type": "stat",
+        "value": "Varrow reached 34.3 km/h, covering 77.5 m",
+        "source": "track:ash-09:48.0-59.6",
+        "numbers": {
+          "top_speed_kmh": 34.3,
+          "distance_m": 77.5
+        }
+      },
+      {
+        "id": "ev3",
+        "claim_type": "stat",
+        "value": "Shot at 104 km/h, xG 0.27",
+        "source": "m017-e0026",
+        "numbers": {
+          "shot_speed_kmh": 104.0,
+          "xg": 0.27
+        }
+      },
+      {
+        "id": "ev4",
+        "claim_type": "season",
+        "value": "Varrow now has 4 league goals this season",
+        "source": "season:ash-09:goals",
+        "numbers": {
+          "goals": 4.0
+        }
+      },
+      {
+        "id": "ev5",
+        "claim_type": "win_prob",
+        "value": "Ashmere win probability 44% to 63%",
+        "source": "winprob:m017:59.0",
+        "numbers": {
+          "before": 0.44,
+          "after": 0.63
+        }
+      },
+      {
+        "id": "ev6",
+        "claim_type": "table",
+        "value": "Ashmere started the day 3rd on 7 points",
+        "source": "table:ash",
+        "numbers": {
+          "position": 3.0,
+          "points": 7.0
+        }
+      }
+    ],
+    "drafts": {
+      "player": {
+        "ash-09": {
+          "lens": "player",
+          "subject_id": "ash-09",
+          "kind": "box",
+          "headline": "Varrow: 34.3 km/h, then 104 km/h",
+          "body": "Varrow hit 34.3 km/h onto the through ball and finished at 104 km/h. That's 4 league goals this season.",
+          "evidence_ids": [
+            "ev2",
+            "ev3",
+            "ev4"
+          ],
+          "author": "agent",
+          "agent": "player-agent:ash-09"
+        },
+        "ash-08": {
+          "lens": "player",
+          "subject_id": "ash-08",
+          "kind": "box",
+          "headline": "Kestley splits the line",
+          "body": "A 25.3 m through ball under pressure, rated 0.71 difficulty, put the striker clean through.",
+          "evidence_ids": [
+            "ev1"
+          ],
+          "author": "agent",
+          "agent": "player-agent:ash-08"
+        },
+        "ash-06": {
+          "lens": "player",
+          "subject_id": "ash-06",
+          "kind": "box",
+          "headline": "Brennick starts it",
+          "body": "Took the ball off the centre back, carried it into midfield and found the pass that started the move.",
+          "evidence_ids": [],
+          "author": "template",
+          "agent": null
+        }
+      },
+      "club": {
+        "ash": {
+          "lens": "club",
+          "subject_id": "ash",
+          "kind": "box",
+          "headline": "Derby lead for Ashmere",
+          "body": "One up in the Kilnside derby, and the win chance jumps from 44% to 63%.",
+          "evidence_ids": [
+            "ev5"
+          ],
+          "author": "agent",
+          "agent": "club-agent:ash"
+        },
+        "brk": {
+          "lens": "club",
+          "subject_id": "brk",
+          "kind": "no_box",
+          "headline": "",
+          "body": "",
+          "evidence_ids": [],
+          "author": "agent",
+          "agent": "club-agent:brk"
+        }
+      },
+      "pundit": {
+        "lens": "pundit",
+        "subject_id": null,
+        "kind": "box",
+        "headline": "One pass, two lines gone",
+        "body": "Kestley turned away from the press and played through both Brackenford lines. The striker's run was already on.",
+        "evidence_ids": [
+          "ev1",
+          "ev2"
+        ],
+        "author": "agent",
+        "agent": "pundit-agent"
+      }
+    },
+    "verdicts": {
+      "player:ash-09": {
+        "status": "approved",
+        "issues": [],
+        "final": null
+      },
+      "player:ash-08": {
+        "status": "approved",
+        "issues": [],
+        "final": null
+      },
+      "player:ash-06": {
+        "status": "fallback",
+        "issues": [
+          "Player agent timed out; template box used"
+        ],
+        "final": null
+      },
+      "club:ash": {
+        "status": "approved",
+        "issues": [],
+        "final": null
+      },
+      "pundit": {
+        "status": "repaired",
+        "issues": [
+          "Draft said 'three lines'; evidence ev1 supports one line-breaking pass. Rewritten."
+        ],
+        "final": null
+      }
+    },
+    "director": {
+      "show": [
+        "player:ash-09",
+        "player:ash-08",
+        "player:ash-06",
+        "club:ash",
+        "pundit"
+      ],
+      "camera": "spidercam_goal",
+      "replay_at_t": 61.0,
+      "budget_left": {
+        "player:ash-09": 7,
+        "player:ash-08": 7,
+        "player:ash-06": 7,
+        "club:ash": 7,
+        "pundit": 7
+      }
+    },
+    "status": "scheduled"
+  },
+  {
+    "moment_id": "m017-mo04",
+    "match_id": "m017",
+    "type": "card",
+    "period": 1,
+    "t_start": 117.4,
+    "t_peak": 131.0,
+    "t_end": 132.0,
+    "replay_window": [
+      117.4,
+      122.0
+    ],
+    "importance": 0.55,
+    "scoring_team": null,
+    "involved": [
+      {
+        "player_id": "ash-03",
+        "role": "fouler",
+        "events": [
+          "m017-e0032",
+          "m017-e0033"
+        ],
+        "touches": 1,
+        "top_speed_kmh": null,
+        "distance_in_window_m": null
+      },
+      {
+        "player_id": "brk-08",
+        "role": "fouled",
+        "events": [
+          "m017-e0031"
+        ],
+        "touches": 1,
+        "top_speed_kmh": null,
+        "distance_in_window_m": null
+      }
+    ],
+    "win_prob_before": {
+      "home": 0.63,
+      "draw": 0.23,
+      "away": 0.14
+    },
+    "win_prob_after": {
+      "home": 0.62,
+      "draw": 0.23,
+      "away": 0.15
+    },
+    "swing": -0.01,
+    "context_refs": [
+      "season:ash-03:yellow_cards",
+      "fixture:ash:next:m019"
+    ],
+    "evidence": [
+      {
+        "id": "ev1",
+        "claim_type": "discipline",
+        "value": "Halloway's yellow card number 5; 5 brings a one-match ban",
+        "source": "season:ash-03:yellow_cards",
+        "numbers": {
+          "yellows": 5.0,
+          "threshold": 5.0
+        }
+      },
+      {
+        "id": "ev2",
+        "claim_type": "fixture",
+        "value": "Next match: away at Calderwick, matchday 10",
+        "source": "fixture:m019",
+        "numbers": {
+          "matchday": 10.0
+        }
+      }
+    ],
+    "drafts": {
+      "player": {},
+      "club": {
+        "ash": {
+          "lens": "club",
+          "subject_id": "ash",
+          "kind": "box",
+          "headline": "Halloway banned for Calderwick",
+          "body": "That's his 5th yellow, so he misses next week's trip to Calderwick.",
+          "evidence_ids": [
+            "ev1",
+            "ev2"
+          ],
+          "author": "agent",
+          "agent": "club-agent:ash"
+        }
+      },
+      "pundit": null
+    },
+    "verdicts": {
+      "club:ash": {
+        "status": "approved",
+        "issues": [],
+        "final": null
+      }
+    },
+    "director": {
+      "show": [
+        "club:ash"
+      ],
+      "camera": "card_close",
+      "replay_at_t": 133.0,
+      "budget_left": {
+        "club:ash": 6
+      }
+    },
+    "status": "scheduled"
+  }
+]
