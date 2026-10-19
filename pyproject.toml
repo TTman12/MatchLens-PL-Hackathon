@@ -19,6 +19,12 @@ agents = [
   "agent-framework-core>=1.22,<2",
   "mcp>=2.3,<3",
 ]
+# The live server: one match on a broadcast delay, with the agents running inside it.
+live = [
+  "matchlens[agents]",
+  "starlette>=0.40",
+  "uvicorn>=0.30",
+]
 # Running the agents on Microsoft Foundry, with Content Safety and Application Insights.
 foundry = [
   "matchlens[agents]",
@@ -40,6 +46,8 @@ matchlens-agents = "matchlens.agents.pipeline:main"
 matchlens-mcp = "matchlens.mcp_server.server:main"
 matchlens-evals = "matchlens.agents.audit:main"
 matchlens-sim = "matchlens.sim.cli:main"
+matchlens-demo = "matchlens.api.demo:main"
+matchlens-live = "matchlens.api.live:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["matchlens"]

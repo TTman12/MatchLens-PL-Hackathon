@@ -84,6 +84,93 @@ def build_stages(
     )
 
 
+class MatchRun:
+    """The agent pipeline for one match, fed one moment at a time in match order.
+
+    ``run_match`` drives it over a whole match at once; the live server
+    (``matchlens.api.live``) drives it as its clock reaches each moment, so the agents
+    only ever see moments the broadcast has already passed.
+    """
+
+    def __init__(
+        self,
+        data: MatchData,
+        provider: ModelProvider | None = None,
+        *,
+        languages: list[str] | None = None,
+        engine: Engine = "agent-framework",
+        timeout_s: float | None = None,
+        director: DirectorConfig | None = None,
+    ) -> None:
+        self.data = data
+        self.provider = provider or OfflineProvider()
+        languages = languages or ["en", "es"]
+        if "en" not in languages:
+            languages = ["en", *languages]
+        self.languages = languages
+        timeout = (
+            timeout_s
+            if timeout_s is not None
+            else (5.0 if self.provider.name == "offline" else 20.0)
+        )
+
+        self.stats = StatsEngine(data)
+        self.store = MatchStateStore(self.stats)
+        self.trace = AgentTrace(provider=self.provider.name)
+        self.stages = build_stages(
+            self.stats,
+            self.store,
+            self.provider,
+            self.trace,
+            languages,
+            timeout_s=timeout,
+            director=director,
+        )
+        self.runner: AgentFrameworkRunner | PlainRunner
+        try:
+            self.runner = (
+                AgentFrameworkRunner(self.stages)
+                if engine == "agent-framework"
+                else PlainRunner(self.stages)
+            )
+        except ImportError:
+            self.trace.add(
+                None,
+                "pipeline",
+                "pipeline",
+                "start",
+                "degraded",
+                "agent-framework not installed: running stages with asyncio",
+            )
+            self.runner = PlainRunner(self.stages)
+        self.done: list[MomentContext] = []
+        self._period_ends = [e for e in data.events if e.type is EventType.PERIOD_END]
+
+    def detect(self) -> list[MomentContext]:
+        """Every candidate moment in the match, in match order."""
+        return detect_moments(self.stats)
+
+    async def until(self, t: float) -> list[dict[str, Any]]:
+        """Briefs for every period that ended before match time ``t``."""
+        cues: list[dict[str, Any]] = []
+        for end in [e for e in self._period_ends if e.t < t]:
+            cues += await _brief(self.stages, end, self.done, self.data, self.stats)
+            self._period_ends.remove(end)
+        return cues
+
+    async def moment(self, ctx: MomentContext) -> list[dict[str, Any]]:
+        """Runs one moment through the workflow, after any brief that falls before it."""
+        cues = await self.until(ctx.moment.t_peak)
+        self.store.add_moment(ctx.moment)
+        outcome = await self.runner.run(MomentJob(ctx))
+        self.done.append(ctx)
+        return cues + outcome.cues
+
+    async def finish(self) -> list[dict[str, Any]]:
+        """Briefs for any period ends after the last moment."""
+        return await self.until(float("inf"))
+
+
 async def run_match(
     match: MatchData | Path | str,
     provider: ModelProvider | None = None,
@@ -95,53 +182,16 @@ async def run_match(
 ) -> PipelineResult:
     """Detect moments, run every agent, and return moments, cues and the agent trace."""
     data = match if isinstance(match, MatchData) else load_match(match)
-    provider = provider or OfflineProvider()
-    languages = languages or ["en", "es"]
-    if "en" not in languages:
-        languages = ["en", *languages]
-    timeout = timeout_s if timeout_s is not None else (5.0 if provider.name == "offline" else 20.0)
-
-    stats = StatsEngine(data)
-    store = MatchStateStore(stats)
-    trace = AgentTrace(provider=provider.name)
-    stages = build_stages(
-        stats, store, provider, trace, languages, timeout_s=timeout, director=director
+    run = MatchRun(
+        data, provider, languages=languages, engine=engine, timeout_s=timeout_s, director=director
     )
-    runner: AgentFrameworkRunner | PlainRunner
-    try:
-        runner = (
-            AgentFrameworkRunner(stages) if engine == "agent-framework" else PlainRunner(stages)
-        )
-    except ImportError:
-        trace.add(
-            None,
-            "pipeline",
-            "pipeline",
-            "start",
-            "degraded",
-            "agent-framework not installed: running stages with asyncio",
-        )
-        runner = PlainRunner(stages)
-
-    contexts = detect_moments(stats)
-    for ctx in contexts:
-        store.add_moment(ctx.moment)
-
+    contexts = run.detect()
     cues: list[dict[str, Any]] = []
-    period_ends = [e for e in data.events if e.type is EventType.PERIOD_END]
-    done: list[MomentContext] = []
     for ctx in contexts:
-        for end in [e for e in period_ends if e.t < ctx.moment.t_peak]:
-            cues += await _brief(stages, end, done, data, stats)
-            period_ends.remove(end)
-        outcome = await runner.run(MomentJob(ctx))
-        cues += outcome.cues
-        done.append(ctx)
-    for end in period_ends:
-        cues += await _brief(stages, end, done, data, stats)
-
-    track = _cue_track(data.match_id, cues, languages)
-    return PipelineResult([c.moment for c in contexts], track, trace, contexts)
+        cues += await run.moment(ctx)
+    cues += await run.finish()
+    track = cue_track(data.match_id, cues, run.languages)
+    return PipelineResult([c.moment for c in contexts], track, run.trace, contexts)
 
 
 async def _brief(
@@ -158,7 +208,7 @@ async def _brief(
     return [cue, *await stages.translator.translate(None, [cue], {})]
 
 
-def _cue_track(match_id: str, raw: list[dict[str, Any]], languages: list[str]) -> CueTrack:
+def cue_track(match_id: str, raw: list[dict[str, Any]], languages: list[str]) -> CueTrack:
     def order(c: dict[str, Any]) -> tuple[Any, ...]:
         return (
             c["t_show"],

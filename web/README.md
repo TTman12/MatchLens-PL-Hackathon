@@ -11,9 +11,12 @@ npm test           # model tests, plus the sample data checked against schemas/
 npm run build      # static site in dist/, with the sample match copied in
 ```
 
-`?data=<url>/` plays any folder laid out like `data/sample/` (`match.json`, `league.json`,
-`events.json`, `cues.json`, `frames.jsonl`), so simulator output needs no code change.
-`?t=<seconds>` opens at a moment. Shortcuts: space, ← →, N (next moment), 1 to 3 (lens),
+With no parameters the player plays `data/demo/` (built by `matchlens-demo`), or the
+bundled sample if there is no demo. `?data=<url>/` plays any folder laid out like
+`data/sample/` (`match.json`, `league.json`, `events.json`, `cues.json`, `frames.jsonl`,
+optionally `moments.json`), so simulator output needs no code change. `?live` follows a
+`matchlens-live` server instead (`npm run dev` forwards `/live/` to port 8000; see
+[docs/live.md](../docs/live.md)). `?t=<seconds>` opens at a moment. Shortcuts: space, ← →, N (next moment), 1 to 3 (lens),
 F (full screen), M (mute).
 
 ## How it works
@@ -29,6 +32,16 @@ language is instant, even mid-replay.
 | `src/player/engine.ts` | The client-side director: playback clock, replay and camera choice each frame, and what each lens draws |
 | `src/render/` | three.js stadium, players, ball, trails and the camera presets (`tv_main`, `spidercam_goal`, `corner_low`, `card_close`, `save_reverse`, `tactical_high`) |
 | `src/ui/` | The shell: score bug, replay bug, name tags, speedometer, fact boxes with the evidence dropdown, lens sweep, controls and sidebars |
+
+### Clock
+
+Playback runs on the condensed clock by default (`src/model/clock.ts`, the same rule as
+`matchlens/api/clock.py`): up to 30× between moments, easing to 1× before every moment
+that matters and staying there through its replay and box, with a "30×" badge while it
+runs fast. The speed menu also offers fixed speeds. Live, the server owns the clock: the
+player sits at the live edge, can rewind behind it, and "Go live" catches up. Frames,
+events and cues arrive while it plays (`src/model/live.ts`); the match, tracks and trails
+grow in place, and moment markers past the live edge stay hidden.
 
 ### Rules it follows from the contracts
 

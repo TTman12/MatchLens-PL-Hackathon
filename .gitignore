@@ -28,6 +28,8 @@ local.settings.json
 
 # Generated output that is not published
 out/
+# The demo match (45 MB of frames): rebuild with matchlens-demo
+data/demo/
 *.log
 
 # Editors and OS

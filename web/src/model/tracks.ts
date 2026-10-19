@@ -6,42 +6,66 @@ import type { Frame } from "../contracts";
  * speedometers, highlights) is derived from this, for every player, with no server call.
  */
 export class Tracks {
-  readonly times: Float64Array;
-  readonly ball: Float32Array; // n * 3: x, y, z
+  times: Float64Array;
+  ball: Float32Array; // n * 3: x, y, z
   readonly players = new Map<string, Float32Array>(); // n * 4: x, y, vx, vy; NaN when off the pitch
   readonly start: number;
-  readonly end: number;
   readonly dt: number;
+  private count = 0;
 
   constructor(frames: Frame[]) {
     if (frames.length < 2) throw new Error("need at least two frames");
-    const n = frames.length;
-    this.times = new Float64Array(n);
-    this.ball = new Float32Array(n * 3);
-    const ids = new Set<string>();
-    for (const f of frames) for (const id of Object.keys(f.players)) ids.add(id);
-    for (const id of ids) this.players.set(id, new Float32Array(n * 4).fill(Number.NaN));
-
-    frames.forEach((f, i) => {
-      this.times[i] = f.t;
-      const b = f.ball as number[];
-      this.ball.set([b[0] ?? 0, b[1] ?? 0, b[2] ?? 0], i * 3);
-      for (const [id, p] of Object.entries(f.players)) {
-        this.players.get(id)!.set(p as number[], i * 4);
-      }
-    });
-    this.start = this.times[0]!;
-    this.end = this.times[n - 1]!;
-    this.dt = (this.end - this.start) / (n - 1);
+    this.times = new Float64Array(frames.length);
+    this.ball = new Float32Array(frames.length * 3);
+    this.start = frames[0]!.t;
+    // Frames are evenly spaced (10 Hz); rounding keeps float noise from drifting the index.
+    this.dt = Math.round((frames[1]!.t - frames[0]!.t) * 1e6) / 1e6;
+    this.append(frames);
   }
 
   get length(): number {
-    return this.times.length;
+    return this.count;
+  }
+
+  get end(): number {
+    return this.times[this.count - 1]!;
+  }
+
+  /**
+   * Adds frames after the last one, as a live stream delivers them. Storage grows by
+   * doubling, and a player seen for the first time (a substitute) is off the pitch before.
+   */
+  append(frames: Frame[]) {
+    const n = this.count + frames.length;
+    if (n > this.times.length) this.grow(Math.max(n, this.times.length * 2));
+    for (const f of frames) for (const id of Object.keys(f.players)) if (!this.players.has(id)) this.players.set(id, new Float32Array(this.times.length * 4).fill(Number.NaN));
+    frames.forEach((f, k) => {
+      const i = this.count + k;
+      this.times[i] = f.t;
+      const b = f.ball as number[];
+      this.ball.set([b[0] ?? 0, b[1] ?? 0, b[2] ?? 0], i * 3);
+      for (const [id, p] of Object.entries(f.players)) this.players.get(id)!.set(p as number[], i * 4);
+    });
+    this.count = n;
+  }
+
+  private grow(cap: number) {
+    const times = new Float64Array(cap);
+    times.set(this.times.subarray(0, this.count));
+    this.times = times;
+    const ball = new Float32Array(cap * 3);
+    ball.set(this.ball.subarray(0, this.count * 3));
+    this.ball = ball;
+    for (const [id, p] of this.players) {
+      const q = new Float32Array(cap * 4).fill(Number.NaN);
+      q.set(p.subarray(0, this.count * 4));
+      this.players.set(id, q);
+    }
   }
 
   /** Frame index just before `t` and the blend toward the next one. Frames are evenly spaced. */
   locate(t: number): [number, number] {
-    const n = this.times.length;
+    const n = this.count;
     const f = (Math.min(Math.max(t, this.start), this.end) - this.start) / this.dt;
     const i = Math.min(Math.floor(f), n - 2);
     return [i, f - i];

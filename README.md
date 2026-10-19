@@ -27,6 +27,7 @@ pipeline as timed, machine-readable overlay cues a broadcast graphics engine cou
 | Explain | Moment Detector, then Player, Club and Pundit agents, checked by a Verifier | `matchlens/agents` |
 | Render | Director schedules replays and fact boxes as timed overlay cues | `matchlens/agents`, `web/` |
 | Personalise | Lens, favourite player or club, depth (casual or analyst) and language | `web/`, Translator agent |
+| Stream | One shared clock on a broadcast delay; agents work inside it | `matchlens/api` |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full flow and who owns what, and
 [docs/contracts.md](docs/contracts.md) for the data formats every part shares.
@@ -50,6 +51,33 @@ evals/         Foundry groundedness evaluation set
 docs/          architecture, contracts, calibration report
 tests/         pytest suite
 ```
+
+## Watch a whole match
+
+Requires Python 3.11 or later and Node 20 or later. From the repository root:
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[live]"
+matchlens-demo                     # simulate the featured match, run the agents (~15 s)
+(cd web && npm install && npm run build)
+matchlens-live --web web/dist      # then open http://127.0.0.1:8000/?live
+```
+
+`matchlens-demo` plays the season's featured fixture with the `comeback` storyline
+(Ashmere 3-2 Brackenford) into `data/demo/` and runs every agent on it with the offline
+provider, which needs no credentials. `matchlens-live` streams that match on a three-minute
+broadcast delay: the agents get each moment once the server's clock is past it and write
+its cues while viewers are still watching the build-up. The player follows the shared
+clock on the condensed timeline (fast between moments, real time for every moment that
+matters), so a whole match takes about 15 minutes. Switch lens, favourite player, club or
+language at any time; rewind behind the live edge and press "Go live" to catch up. See
+[docs/live.md](docs/live.md).
+
+Without the server, `cd web && npm run dev` plays `data/demo/` from files at
+http://localhost:5173 (or the bundled sample if the demo has not been built), with the same
+condensed clock and a free scrubber. To run the agents on Microsoft Foundry instead, install `.[foundry]`
+and set the environment variables listed in [.env.example](.env.example).
 
 ## Quick start
 

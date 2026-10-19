@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Match } from "../model/match";
+import type { LiveFeed } from "../model/live";
 import { LENSES, type Viewer } from "../model/viewer";
 import { Engine } from "../player/engine";
 import { Stage } from "../render/stage";
@@ -8,6 +9,7 @@ import { LensOverlay, ReplayBug, ScoreBug, Stinger, SweepBar } from "./Overlays"
 
 interface Props {
   match: Match;
+  feed: LiveFeed | null;
   viewer: Viewer;
   setViewer: (v: Viewer) => void;
   onEngine: (e: Engine | null) => void;
@@ -15,7 +17,7 @@ interface Props {
   toggleFullscreen: () => void;
 }
 
-export function PlayerView({ match, viewer, setViewer, onEngine, fullscreen, toggleFullscreen }: Props) {
+export function PlayerView({ match, feed, viewer, setViewer, onEngine, fullscreen, toggleFullscreen }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const [engine, setEngine] = useState<Engine | null>(null);
@@ -36,7 +38,7 @@ export function PlayerView({ match, viewer, setViewer, onEngine, fullscreen, tog
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(box);
-    const eng = new Engine(match, stage, viewerRef.current);
+    const eng = new Engine(match, stage, viewerRef.current, feed);
     // `?t=<seconds>` opens the match at a moment, for sharing a link or recording a demo.
     const startAt = Number(new URLSearchParams(location.search).get("t"));
     if (startAt > 0) eng.seek(startAt);
@@ -52,7 +54,7 @@ export function PlayerView({ match, viewer, setViewer, onEngine, fullscreen, tog
       stage.dispose();
       onEngine(null);
     };
-  }, [match, onEngine]);
+  }, [match, feed, onEngine]);
 
   // Keyboard: space play/pause, arrows seek, f full screen, m mute, n next moment, 1-3 lens.
   useEffect(() => {
@@ -129,12 +131,12 @@ function Hud({
       </div>
       {f.sweep && <SweepBar at={f.sweep.at} from={f.sweep.previous} to={f.lens} />}
       <Stinger slotId={f.slot?.id ?? null} />
-      {!f.playing && f.t <= match.start + 0.01 && (
-        <button className="big-play" onClick={() => engine.play()} aria-label="Play">
+      {!f.playing && (f.live ? !engine.hasPlayed : f.t <= match.start + 0.01) && (
+        <button className="big-play" onClick={() => (f.live ? engine.goLive() : engine.play())} aria-label="Play">
           <svg viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" fill="currentColor" />
           </svg>
-          <span>Watch the match</span>
+          <span>{f.live ? "Join live" : "Watch the match"}</span>
         </button>
       )}
       <Controls engine={engine} match={match} frame={f} fullscreen={fullscreen} toggleFullscreen={toggleFullscreen} />

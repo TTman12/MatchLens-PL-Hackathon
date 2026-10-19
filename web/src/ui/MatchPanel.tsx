@@ -45,7 +45,7 @@ export function MatchPanel({ match, engine, viewer }: { match: Match; engine: En
 
       <h2 className="panel-title">Key moments</h2>
       <div className="moments">
-        {match.markers.map((m) => (
+        {engine.markers().map((m) => (
           <button
             key={`${m.kind}${m.t}`}
             className={`moment moment-${m.kind}${second >= m.t ? " is-past" : ""}`}

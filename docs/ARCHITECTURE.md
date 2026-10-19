@@ -51,7 +51,7 @@ owns. To change something another track owns, open a PR and tag that track in it
 | `matchlens/stats/` | AGT | Derived stats and win probability, as functions | events, frames, season |
 | `matchlens/mcp_server/` | AGT | Match-State MCP tools | stats, season, moments |
 | `matchlens/agents/` | AGT | `moments.json`, `cues.json` | events, frames, season, MCP tools |
-| `matchlens/api/` | AGT | Session API, frame and cue streams | sim, agents |
+| `matchlens/api/` | AGT | Demo build (`matchlens-demo`), live server and condensed clock (`matchlens-live`, [live.md](live.md)) | sim, agents |
 | `evals/` | AGT | Groundedness evaluation set and results | moments |
 | `web/` | WEB | The player | `frames.jsonl`, `cues.json`, `match.json`, `league.json`, `schemas/` |
 | `infra/`, `.github/workflows/deploy*.yml` | AGT, until someone else takes it | Azure deployment | — |

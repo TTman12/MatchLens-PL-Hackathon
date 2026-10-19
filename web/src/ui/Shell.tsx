@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Match } from "../model/match";
+import type { LiveFeed } from "../model/live";
 import type { Viewer } from "../model/viewer";
 import type { Engine } from "../player/engine";
 import { Logo } from "./App";
@@ -9,11 +10,12 @@ import { PlayerView } from "./PlayerView";
 
 interface Props {
   match: Match;
+  feed: LiveFeed | null;
   viewer: Viewer;
   setViewer: (v: Viewer) => void;
 }
 
-export function Shell({ match, viewer, setViewer }: Props) {
+export function Shell({ match, feed, viewer, setViewer }: Props) {
   const [engine, setEngine] = useState<Engine | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -44,6 +46,7 @@ export function Shell({ match, viewer, setViewer }: Props) {
           <span className="crest" style={{ background: away.colours.primary }} />
         </div>
         <div className="topbar-meta">
+          {feed && <span className="topbar-live">Live · {Math.round(feed.clock.lead / 60)} min delay</span>}
           {match.league.name} · Matchday {match.meta.matchday}
         </div>
       </header>
@@ -54,6 +57,7 @@ export function Shell({ match, viewer, setViewer }: Props) {
         <div ref={playerRef} className={`player-frame${fullscreen ? " is-fullscreen" : ""}`}>
           <PlayerView
             match={match}
+            feed={feed}
             viewer={viewer}
             setViewer={setViewer}
             onEngine={setEngine}

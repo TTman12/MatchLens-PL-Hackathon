@@ -1,4 +1,5 @@
-import type { Club, CueTrack, League, MatchEvent, MatchMeta, Player } from "../contracts";
+import type { Club, Cue, CueTrack, Frame, League, MatchEvent, MatchMeta, Player } from "../contracts";
+import { slowSpans, type MomentTiming, type Span } from "./clock";
 import { parseFrames, Tracks } from "./tracks";
 import { localise } from "./cues";
 import { replaySlots, type ReplaySlot } from "./replays";
@@ -25,17 +26,37 @@ export interface PlayerInfo extends Player {
   slot: string;
 }
 
-/** One match, loaded and indexed for playback. */
+/** Match time a live match is drawn against on the scrubber until it has ended. */
+const NOMINAL_END_S = 96 * 60;
+
+/** New data from a live feed, everything after what the match already holds. */
+export interface MatchUpdate {
+  frames?: Frame[];
+  events?: MatchEvent[];
+  cues?: Cue[];
+  moments?: MomentTiming[];
+}
+
+/**
+ * One match, loaded and indexed for playback. A file-based match is complete when it is
+ * built; a live one grows through `extend` as the feed delivers frames, events and cues,
+ * and `version` counts the updates so views can drop what they cached.
+ */
 export class Match {
   readonly clubs = new Map<string, Club>();
   readonly players = new Map<string, PlayerInfo>();
   readonly home: Club;
   readonly away: Club;
-  readonly markers: Marker[];
-  readonly slots: ReplaySlot[];
-  readonly trails: SlotTrails;
-  private readonly goals: MatchEvent[];
-  private readonly periodStarts: { period: number; t: number }[];
+  markers: Marker[] = [];
+  slots: ReplaySlot[] = [];
+  readonly trails: SlotTrails = new Map();
+  /** Stretches of match time the condensed clock plays at 1x. */
+  spans: Span[] = [];
+  version = 0;
+  /** Set on a live match once the feed says it has ended. */
+  ended: boolean;
+  private goals: MatchEvent[] = [];
+  private periodStarts: { period: number; t: number }[] = [];
   private localised = new Map<string, CueTrack["cues"]>();
 
   constructor(
@@ -44,7 +65,10 @@ export class Match {
     readonly events: MatchEvent[],
     readonly cueTrack: CueTrack,
     readonly tracks: Tracks,
+    readonly moments: MomentTiming[] = [],
+    readonly live = false,
   ) {
+    this.ended = !live;
     for (const c of league.clubs) this.clubs.set(c.team_id, c);
     this.home = this.clubs.get(meta.home.team_id)!;
     this.away = this.clubs.get(meta.away.team_id)!;
@@ -59,22 +83,46 @@ export class Match {
         if (p) this.players.set(id, { ...p, teamId: club.team_id, club, slot: "SUB" });
       }
     }
+    this.index();
+  }
+
+  /** Appends what a live feed delivered and rebuilds everything derived from it. */
+  extend(u: MatchUpdate) {
+    if (u.frames?.length) this.tracks.append(u.frames);
+    if (u.events?.length) this.events.push(...u.events);
+    if (u.cues?.length) this.cueTrack.cues.push(...u.cues);
+    if (u.moments?.length) this.moments.push(...u.moments);
+    this.index();
+  }
+
+  private index() {
+    const events = this.events;
     this.goals = events.filter((e) => e.type === "goal");
     this.periodStarts = events
       .filter((e) => e.type === "period_start")
       .map((e) => ({ period: e.period, t: e.t }));
     if (this.periodStarts.length === 0) this.periodStarts.push({ period: 1, t: 0 });
     this.markers = buildMarkers(this, events);
-    this.slots = replaySlots(cueTrack.cues);
-    this.trails = allTrails(tracks, this.slots);
+    this.slots = replaySlots(this.cueTrack.cues);
+    // Trails are computed once per replay window; a live match adds new windows only.
+    for (const s of this.slots) if (!this.trails.has(s.id)) this.trails.set(s.id, allTrails(this.tracks, [s]).get(s.id)!);
+    this.spans = slowSpans(this.moments, this.cueTrack.cues);
+    this.localised.clear();
+    this.version++;
   }
 
   get start(): number {
     return this.tracks.start;
   }
 
+  /** The last match time there are frames for. */
   get end(): number {
     return this.tracks.end;
+  }
+
+  /** The far end of the scrubber: the match's end, or a full match's length while live. */
+  get horizon(): number {
+    return this.ended ? this.end : Math.max(this.end, this.start + NOMINAL_END_S);
   }
 
   cues(lang: string) {
@@ -174,14 +222,18 @@ async function text(url: string, onProgress?: (p: LoadProgress) => void): Promis
   return s + decoder.decode();
 }
 
-/** Loads a match laid out like data/sample/ from `base` (a URL ending in /). */
+/**
+ * Loads a match laid out like data/sample/ from `base` (a URL ending in /). The moments
+ * are optional: without them the condensed clock slows for cues alone.
+ */
 export async function loadMatch(base: string, onProgress?: (p: LoadProgress) => void): Promise<Match> {
-  const [meta, league, events, cues, frames] = await Promise.all([
+  const [meta, league, events, cues, moments, frames] = await Promise.all([
     json<MatchMeta>(base, "match.json"),
     json<League>(base, "league.json"),
     json<MatchEvent[]>(base, "events.json"),
     json<CueTrack>(base, "cues.json"),
+    json<MomentTiming[]>(base, "moments.json").catch(() => []),
     text(base + "frames.jsonl", onProgress),
   ]);
-  return new Match(meta, league, events, cues, new Tracks(parseFrames(frames)));
+  return new Match(meta, league, events, cues, new Tracks(parseFrames(frames)), moments);
 }

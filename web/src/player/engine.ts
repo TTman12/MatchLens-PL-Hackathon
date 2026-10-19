@@ -1,5 +1,7 @@
 import type { Camera, CameraShot, Cue } from "../contracts";
 import type { Marker, Match } from "../model/match";
+import { rateAt } from "../model/clock";
+import type { LiveFeed } from "../model/live";
 import { badgesAt, boxAt, scheduleBoxes, type ScheduledBox } from "../model/cues";
 import { replayCameraFor, replayTime, slotAt, type ReplaySlot } from "../model/replays";
 import type { Viewer } from "../model/viewer";
@@ -8,6 +10,8 @@ import { NO_GRAPHICS, type LensGraphics, type Stage } from "../render/stage";
 import { Crowd } from "../audio/crowd";
 
 export const SPEEDS = [0.5, 1, 2, 4] as const;
+/** The playback speed setting: the condensed clock, or a fixed multiple of real time. */
+export type Speed = "condensed" | (typeof SPEEDS)[number];
 export const SWEEP_MS = 650;
 const LENS_ACCENT = { player: "#33e1a1", pundit: "#ffb547" } as const;
 
@@ -41,7 +45,9 @@ export interface FrameView {
   clock: string;
   score: [number, number];
   playing: boolean;
+  /** Match seconds per wall second right now. */
   rate: number;
+  speed: Speed;
   muted: boolean;
   slot: ReplaySlot | null;
   replaySpeed: number;
@@ -51,6 +57,8 @@ export interface FrameView {
   /** The lens being swept away, and how far the bar has travelled (0 to 1). */
   sweep: { at: number; previous: LensView } | null;
   ended: boolean;
+  /** Set when following a live server: whether we sit at the live edge or behind it. */
+  live: { atEdge: boolean; behind: number; delay: number } | null;
 }
 
 type Listener = () => void;
@@ -68,7 +76,11 @@ export class Engine {
   private schedules = new Map<string, ScheduledBox[]>();
   private t: number;
   private playing = false;
+  private speed: Speed = "condensed";
   private rate = 1;
+  /** Live only: stay pinned to the server's clock until the viewer pauses or rewinds. */
+  private following = true;
+  private seenVersion = -1;
   private muted = false;
   private lastWall = 0;
   /** Seconds of wall time the engine has run, for animations that ignore the match clock. */
@@ -87,9 +99,11 @@ export class Engine {
     readonly match: Match,
     private stage: Stage,
     viewer: Viewer,
+    readonly feed: LiveFeed | null = null,
   ) {
     this.viewer = viewer;
-    this.t = match.start;
+    this.t = feed ? feed.edge() : match.start;
+    this.seenVersion = match.version;
     this.snapshot = this.compute(0);
   }
 
@@ -119,8 +133,12 @@ export class Engine {
     this.lastWall = 0;
   }
 
+  /** Whether playback has ever started (live shows "Join live" until then). */
+  hasPlayed = false;
+
   play() {
-    if (this.t >= this.match.end - 0.05) this.seek(this.match.start);
+    this.hasPlayed = true;
+    if (!this.feed && this.t >= this.match.end - 0.05) this.seek(this.match.start);
     this.playing = true;
     this.crowd.start();
     this.crowd.setActive(true);
@@ -128,6 +146,7 @@ export class Engine {
 
   pause() {
     this.playing = false;
+    this.following = false;
     this.crowd.setActive(false);
   }
 
@@ -137,12 +156,22 @@ export class Engine {
   }
 
   seek(t: number) {
-    this.t = Math.min(this.match.end, Math.max(this.match.start, t));
+    const last = this.feed ? this.feed.edge() : this.match.end;
+    this.t = Math.min(last, Math.max(this.match.start, t));
+    if (this.feed) this.following = this.t >= last - 0.5;
     this.snapNext = true;
   }
 
-  setRate(r: number) {
-    this.rate = r;
+  /** Live only: jump back to the live edge and stay there. */
+  goLive() {
+    if (!this.feed) return;
+    this.seek(this.feed.edge());
+    this.following = true;
+    this.play();
+  }
+
+  setSpeed(s: Speed) {
+    this.speed = s;
   }
 
   setMuted(m: boolean) {
@@ -163,7 +192,24 @@ export class Engine {
 
   /** The next moment marker after the current time, to jump a few seconds before it. */
   nextMarker(): Marker | null {
-    return this.match.markers.find((m) => m.t > this.t + 4.5) ?? null;
+    return this.markers().find((m) => m.t > this.t + 4.5) ?? null;
+  }
+
+  /**
+   * Moment markers the viewer may see. Live, the feed runs minutes ahead of the viewer,
+   * so markers past the live edge stay hidden: no spoilers from the broadcast delay.
+   */
+  markers(): Marker[] {
+    if (!this.feed) return this.match.markers;
+    const edge = this.feed.edge();
+    return this.match.markers.filter((m) => m.t <= edge);
+  }
+
+  /** Replay slots the viewer may see on the scrubber, by the same rule. */
+  slots(): ReplaySlot[] {
+    if (!this.feed) return this.match.slots;
+    const edge = this.feed.edge();
+    return this.match.slots.filter((s) => s.start <= edge);
   }
 
   // ---- per frame --------------------------------------------------------------
@@ -184,11 +230,25 @@ export class Engine {
    */
   tick(dt: number) {
     this.wall += dt;
+    if (this.match.version !== this.seenVersion) {
+      // A live feed added frames, events or cues: drop cached schedules, add new trails.
+      this.seenVersion = this.match.version;
+      this.schedules.clear();
+      this.stage.syncTrails();
+    }
+    this.rate = this.speed === "condensed" ? rateAt(this.t, this.match.spans) : this.speed;
     if (this.playing) {
       const before = this.t;
-      this.t = Math.min(this.match.end, this.t + dt * this.rate);
+      if (this.feed && this.following) {
+        this.t = Math.max(this.t, this.feed.edge());
+      } else {
+        const last = this.feed ? this.feed.edge() : this.match.end;
+        this.t = Math.min(last, this.t + dt * this.rate);
+        if (this.feed && this.t >= last - 0.05) this.following = true;
+      }
+      if (this.feed) this.rate = this.feed.clock.rate;
       for (const m of this.match.markers) if (m.kind === "goal" && before < m.t && this.t >= m.t) this.crowd.roar();
-      if (this.t >= this.match.end) this.pause();
+      if (this.match.ended && this.t >= this.match.end) this.pause();
     }
     this.snapshot = this.compute(dt);
     for (const fn of this.listeners) fn();
@@ -275,7 +335,8 @@ export class Engine {
       clock: m.clock(t),
       score: m.score(t),
       playing: this.playing,
-      rate: this.rate,
+      rate: this.playing ? this.rate : 0,
+      speed: this.speed,
       muted: this.muted,
       slot,
       replaySpeed,
@@ -283,7 +344,10 @@ export class Engine {
       forcedShot: this.forcedShot,
       lens,
       sweep,
-      ended: t >= m.end,
+      ended: m.ended && t >= m.end,
+      live: this.feed
+        ? { atEdge: this.following, behind: Math.max(0, this.feed.edge() - t), delay: this.feed.clock.lead }
+        : null,
     };
   }
 

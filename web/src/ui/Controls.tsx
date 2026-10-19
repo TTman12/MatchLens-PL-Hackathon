@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { CameraShot } from "../contracts";
 import type { Match, MarkerKind } from "../model/match";
-import { SPEEDS, type Engine, type FrameView } from "../player/engine";
+import { SPEEDS, type Engine, type FrameView, type Speed } from "../player/engine";
 import { SHOT_LABELS } from "../render/cameras";
 
 interface Props {
@@ -49,7 +49,7 @@ const MARKER_ICON: Record<MarkerKind, React.ReactNode> = {
 };
 
 export function Controls({ engine, match, frame, fullscreen, toggleFullscreen }: Props) {
-  const span = match.end - match.start;
+  const span = match.horizon - match.start;
   const pct = (t: number) => ((t - match.start) / span) * 100;
   const [hover, setHover] = useState<number | null>(null);
   const [menu, setMenu] = useState<"speed" | "camera" | null>(null);
@@ -59,6 +59,11 @@ export function Controls({ engine, match, frame, fullscreen, toggleFullscreen }:
   const timeAt = (clientX: number) => {
     const r = bar.current!.getBoundingClientRect();
     return match.start + Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * span;
+  };
+  const speedLabel = (s: Speed) => (s === "condensed" ? "Condensed" : s === 1 ? "Normal" : `${s}×`);
+  const ffLabel = () => {
+    if (frame.speed !== "condensed") return `${frame.speed}×`;
+    return frame.rate > 1.5 ? `${Math.round(frame.rate)}×` : "1×";
   };
 
   return (
@@ -80,18 +85,19 @@ export function Controls({ engine, match, frame, fullscreen, toggleFullscreen }:
         role="slider"
         aria-label="Seek"
         aria-valuemin={match.start}
-        aria-valuemax={match.end}
+        aria-valuemax={match.horizon}
         aria-valuenow={frame.t}
       >
         <div className="scrub-track">
-          {match.slots.map((s) => (
+          {engine.slots().map((s) => (
             <div key={s.id} className="scrub-replay" style={{ left: `${pct(s.start)}%`, width: `${pct(s.end) - pct(s.start)}%` }} />
           ))}
+          {frame.live && <div className="scrub-buffer" style={{ width: `${pct(frame.t + frame.live.behind)}%` }} />}
           <div className="scrub-fill" style={{ width: `${pct(frame.t)}%` }} />
           {hover !== null && <div className="scrub-hover" style={{ width: `${pct(hover)}%` }} />}
         </div>
         <div className="scrub-head" style={{ left: `${pct(frame.t)}%` }} />
-        {match.markers.map((m) => (
+        {engine.markers().map((m) => (
           <button
             key={`${m.kind}${m.t}`}
             className={`marker marker-${m.kind}`}
@@ -159,8 +165,18 @@ export function Controls({ engine, match, frame, fullscreen, toggleFullscreen }:
         </button>
         <div className="ctrl-time">
           <b>{frame.clock}</b>
-          <span> / {match.clock(match.end)}</span>
+          {!frame.live && <span> / {match.clock(match.end)}</span>}
         </div>
+        {frame.live && (
+          <button
+            className={`ctrl ctrl-text go-live${frame.live.atEdge ? " is-live" : ""}`}
+            onClick={() => engine.goLive()}
+            title={`Viewers watch ${Math.round(frame.live.delay / 60)} match minutes behind the agents`}
+          >
+            <span className="live-dot" />
+            {frame.live.atEdge ? "Live" : `Go live (−${match.clock(match.start + frame.live.behind).replace(/^0/, "")})`}
+          </button>
+        )}
         <div className="ctrl-spacer" />
         <div className="ctrl-menu-wrap">
           <button className="ctrl ctrl-text" onClick={() => setMenu(menu === "camera" ? null : "camera")} aria-haspopup="menu">
@@ -189,30 +205,36 @@ export function Controls({ engine, match, frame, fullscreen, toggleFullscreen }:
             </div>
           )}
         </div>
-        <div className="ctrl-menu-wrap">
-          <button className="ctrl ctrl-text" onClick={() => setMenu(menu === "speed" ? null : "speed")} aria-haspopup="menu">
-            {frame.rate}×
-          </button>
-          {menu === "speed" && (
-            <div className="ctrl-menu" role="menu">
-              <div className="ctrl-menu-title">Speed</div>
-              {SPEEDS.map((s) => (
-                <button
-                  key={s}
-                  role="menuitemradio"
-                  aria-checked={frame.rate === s}
-                  className={frame.rate === s ? "is-on" : ""}
-                  onClick={() => {
-                    engine.setRate(s);
-                    setMenu(null);
-                  }}
-                >
-                  {s === 1 ? "Normal" : `${s}×`}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {frame.live ? (
+          <span className="ctrl ctrl-text ctrl-static" title="The live server sets the pace for every viewer">
+            {frame.live.atEdge && frame.rate > 1.5 ? `${Math.round(frame.rate)}×` : "1×"}
+          </span>
+        ) : (
+          <div className="ctrl-menu-wrap">
+            <button className="ctrl ctrl-text" onClick={() => setMenu(menu === "speed" ? null : "speed")} aria-haspopup="menu">
+              {ffLabel()}
+            </button>
+            {menu === "speed" && (
+              <div className="ctrl-menu" role="menu">
+                <div className="ctrl-menu-title">Speed</div>
+                {(["condensed", ...SPEEDS] as Speed[]).map((s) => (
+                  <button
+                    key={s}
+                    role="menuitemradio"
+                    aria-checked={frame.speed === s}
+                    className={frame.speed === s ? "is-on" : ""}
+                    onClick={() => {
+                      engine.setSpeed(s);
+                      setMenu(null);
+                    }}
+                  >
+                    {speedLabel(s)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <button className="ctrl" onClick={toggleFullscreen} aria-label={fullscreen ? "Exit full screen" : "Full screen"}>
           {fullscreen ? (
             <svg viewBox="0 0 24 24">

@@ -1,13 +1,38 @@
 import { useEffect, useState } from "react";
 import { loadMatch, type LoadProgress, type Match } from "../model/match";
+import { LiveFeed } from "../model/live";
 import type { Viewer } from "../model/viewer";
 import { Shell } from "./Shell";
 
-/** Where match files are read from: `?data=<url>/` overrides the bundled sample. */
-function dataBase(): string {
-  const q = new URLSearchParams(location.search).get("data");
-  const base = q ?? import.meta.env.VITE_DATA_URL ?? "/data/sample/";
-  return base.endsWith("/") ? base : base + "/";
+const slash = (base: string) => (base.endsWith("/") ? base : base + "/");
+
+/**
+ * Where the match comes from. `?live` follows a `matchlens-live` server on this origin
+ * (`?live=<url>/` elsewhere). Otherwise files: `?data=<url>/`, then VITE_DATA_URL, then
+ * the demo match if it has been built (`matchlens-demo`), then the bundled sample.
+ */
+function source(): { live: string } | { files: string[] } {
+  const q = new URLSearchParams(location.search);
+  if (q.has("live")) return { live: slash(q.get("live") || "/live/") };
+  const base = q.get("data") ?? import.meta.env.VITE_DATA_URL;
+  return { files: base ? [slash(base)] : ["/data/demo/", "/data/sample/"] };
+}
+
+async function load(onProgress: (p: LoadProgress) => void): Promise<{ match: Match; feed: LiveFeed | null }> {
+  const src = source();
+  if ("live" in src) {
+    const feed = await LiveFeed.connect(src.live);
+    return { match: feed.match, feed };
+  }
+  let error: unknown = null;
+  for (const base of src.files) {
+    try {
+      return { match: await loadMatch(base, onProgress), feed: null };
+    } catch (e) {
+      error = e;
+    }
+  }
+  throw error;
 }
 
 const STORE_KEY = "matchlens.viewer";
@@ -45,21 +70,26 @@ function busiestPlayer(m: Match): string {
 
 export function App() {
   const [match, setMatch] = useState<Match | null>(null);
+  const [feed, setFeed] = useState<LiveFeed | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<LoadProgress>({ loaded: 0, total: 0 });
   const [viewer, setViewer] = useState<Viewer | null>(null);
 
   useEffect(() => {
     let live = true;
-    loadMatch(dataBase(), (p) => live && setProgress(p))
-      .then((m) => {
-        if (!live) return;
+    let opened: LiveFeed | null = null;
+    load((p) => live && setProgress(p))
+      .then(({ match: m, feed: f }) => {
+        opened = f;
+        if (!live) return f?.stop();
         setMatch(m);
+        setFeed(f);
         setViewer(initialViewer(m));
       })
       .catch((e: unknown) => live && setError(String(e)));
     return () => {
       live = false;
+      opened?.stop();
     };
   }, []);
 
@@ -88,11 +118,14 @@ export function App() {
         <div className="splash-bar">
           <div style={{ width: `${pct ?? 30}%` }} className={pct === null ? "indeterminate" : ""} />
         </div>
-        <p className="splash-note">Loading tracking data{pct !== null ? ` · ${pct}%` : ""}</p>
+        <p className="splash-note">
+          {"live" in source() ? "Joining the live match" : "Loading tracking data"}
+          {pct !== null ? ` · ${pct}%` : ""}
+        </p>
       </div>
     );
   }
-  return <Shell match={match} viewer={viewer} setViewer={setViewer} />;
+  return <Shell match={match} feed={feed} viewer={viewer} setViewer={setViewer} />;
 }
 
 export function Logo() {

@@ -7,10 +7,11 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-// The player reads match data through the shared contracts. Until a live API exists, it
-// loads files laid out like data/sample/ from /data/<name>/. This plugin serves the
-// repo's data/ folder in dev and copies the sample into the build, so the static site
-// works on its own (Azure Static Web Apps, or `npm run preview`).
+// The player reads match data through the shared contracts, either from files laid out
+// like data/sample/ under /data/<name>/, or from a `matchlens-live` server under /live/.
+// This plugin serves the repo's data/ folder in dev and copies the sample, and the demo
+// match when it has been built, into the build, so the static site works on its own
+// (Azure Static Web Apps, or `npm run preview`).
 const dataRoot = path.resolve(here, "../data");
 
 function matchData(): Plugin {
@@ -26,17 +27,22 @@ function matchData(): Plugin {
       });
     },
     closeBundle() {
-      const out = path.resolve(here, "dist/data/sample");
-      cpSync(path.join(dataRoot, "sample"), out, {
-        recursive: true,
-        filter: (src: string) => !src.endsWith("README.md"),
-      });
+      for (const name of ["sample", "demo"]) {
+        const from = path.join(dataRoot, name);
+        if (!existsSync(path.join(from, "frames.jsonl"))) continue;
+        cpSync(from, path.resolve(here, "dist/data", name), {
+          recursive: true,
+          filter: (src: string) => !src.endsWith("README.md"),
+        });
+      }
     },
   };
 }
 
 export default defineConfig({
   plugins: [react(), matchData()],
+  // `matchlens-live` serves the live feed on :8000; `npm run dev` forwards /live/ to it.
+  server: { proxy: { "/live": process.env.MATCHLENS_LIVE_URL ?? "http://127.0.0.1:8000" } },
   build: {
     target: "es2022",
     chunkSizeWarningLimit: 900,

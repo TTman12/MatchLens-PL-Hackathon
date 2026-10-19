@@ -314,8 +314,14 @@ export class Stage {
     this.scene.add(near);
   }
 
+  /** Builds meshes for replay windows a live feed has added since the last call. */
+  syncTrails() {
+    this.buildTrails();
+  }
+
   private buildTrails() {
     for (const [slotId, trails] of this.match.trails) {
+      if (this.ballTrails.has(slotId)) continue;
       for (const [pid, trail] of trails) {
         const mesh = new THREE.Mesh(ribbon(trail.points, 0.55, 0.05), this.playerTrailMat);
         mesh.visible = false;

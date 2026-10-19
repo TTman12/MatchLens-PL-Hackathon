@@ -42,6 +42,14 @@ export function ReplayBug({ frame }: { frame: FrameView }) {
       <div className="livebug">
         <span className="live-dot" /> LIVE
         {frame.shot !== "tv_main" && <span className="cam-label">{SHOT_LABELS[frame.shot]}</span>}
+        {frame.rate > 1.5 && (
+          <span className="ff-badge" title="Condensed clock: fast between moments, real time for every moment that matters">
+            <svg viewBox="0 0 24 24" aria-hidden>
+              <path d="M3 6l9 6-9 6zM12 6l9 6-9 6z" fill="currentColor" />
+            </svg>
+            {Math.round(frame.rate)}×
+          </span>
+        )}
       </div>
     );
   }
