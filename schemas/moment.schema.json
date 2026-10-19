@@ -1,0 +1,541 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ttman12/matchlens-pl-hackathon/schemas/moment.schema.json",
+  "x-schema-version": "1.0.0",
+  "$defs": {
+    "CameraShot": {
+      "description": "Camera presets (build plan 3.7).",
+      "enum": [
+        "tv_main",
+        "spidercam_goal",
+        "corner_low",
+        "card_close",
+        "save_reverse",
+        "tactical_high"
+      ],
+      "title": "CameraShot",
+      "type": "string"
+    },
+    "ClaimType": {
+      "enum": [
+        "stat",
+        "season",
+        "table",
+        "fixture",
+        "discipline",
+        "win_prob",
+        "milestone"
+      ],
+      "title": "ClaimType",
+      "type": "string"
+    },
+    "DirectorDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "show": {
+          "description": "Draft keys to put on screen",
+          "items": {
+            "type": "string"
+          },
+          "title": "Show",
+          "type": "array"
+        },
+        "camera": {
+          "$ref": "#/$defs/CameraShot",
+          "default": "tv_main"
+        },
+        "replay_at_t": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Match time the replay starts",
+          "title": "Replay At T"
+        },
+        "budget_left": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "Boxes left this half, by lens or player track",
+          "title": "Budget Left",
+          "type": "object"
+        }
+      },
+      "title": "DirectorDecision",
+      "type": "object"
+    },
+    "Draft": {
+      "additionalProperties": false,
+      "description": "A lens agent's proposed box, or its decision that the moment gets no box.",
+      "properties": {
+        "lens": {
+          "$ref": "#/$defs/Lens"
+        },
+        "subject_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "player_id for the Player lens, team_id for the Club lens",
+          "title": "Subject Id"
+        },
+        "kind": {
+          "default": "box",
+          "enum": [
+            "box",
+            "no_box"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "headline": {
+          "default": "",
+          "title": "Headline",
+          "type": "string"
+        },
+        "body": {
+          "default": "",
+          "title": "Body",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "pattern": "^ev\\d+$",
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "author": {
+          "default": "agent",
+          "enum": [
+            "agent",
+            "template"
+          ],
+          "title": "Author",
+          "type": "string"
+        },
+        "agent": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Agent instance that wrote it",
+          "title": "Agent"
+        }
+      },
+      "required": [
+        "lens"
+      ],
+      "title": "Draft",
+      "type": "object"
+    },
+    "Drafts": {
+      "additionalProperties": false,
+      "properties": {
+        "player": {
+          "patternProperties": {
+            "^[a-z]{3}-\\d{2}$": {
+              "$ref": "#/$defs/Draft"
+            }
+          },
+          "title": "Player",
+          "type": "object"
+        },
+        "club": {
+          "patternProperties": {
+            "^[a-z]{3}$": {
+              "$ref": "#/$defs/Draft"
+            }
+          },
+          "title": "Club",
+          "type": "object"
+        },
+        "pundit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Draft"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Drafts",
+      "type": "object"
+    },
+    "EvidenceItem": {
+      "additionalProperties": false,
+      "description": "One checkable fact. ``numbers`` holds the machine values the Verifier compares against.",
+      "properties": {
+        "id": {
+          "pattern": "^ev\\d+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "claim_type": {
+          "$ref": "#/$defs/ClaimType"
+        },
+        "value": {
+          "description": "Human-readable statement of the fact",
+          "title": "Value",
+          "type": "string"
+        },
+        "source": {
+          "description": "An event id or a context ref, e.g. season:ash-09:goals",
+          "title": "Source",
+          "type": "string"
+        },
+        "numbers": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Numbers",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "claim_type",
+        "value",
+        "source"
+      ],
+      "title": "EvidenceItem",
+      "type": "object"
+    },
+    "Involvement": {
+      "additionalProperties": false,
+      "description": "A player who contributed to the moment. Player agents fan out over this list.",
+      "properties": {
+        "player_id": {
+          "pattern": "^[a-z]{3}-\\d{2}$",
+          "title": "Player Id",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/InvolvementRole"
+        },
+        "events": {
+          "items": {
+            "pattern": "^m\\d{3,}-e\\d{4,}$",
+            "type": "string"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "touches": {
+          "default": 0,
+          "description": "Touches inside the replay window",
+          "minimum": 0,
+          "title": "Touches",
+          "type": "integer"
+        },
+        "top_speed_kmh": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Top Speed Kmh"
+        },
+        "distance_in_window_m": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Distance In Window M"
+        }
+      },
+      "required": [
+        "player_id",
+        "role"
+      ],
+      "title": "Involvement",
+      "type": "object"
+    },
+    "InvolvementRole": {
+      "enum": [
+        "scorer",
+        "assist",
+        "build_up",
+        "shooter",
+        "keeper",
+        "defender",
+        "fouler",
+        "fouled",
+        "taker"
+      ],
+      "title": "InvolvementRole",
+      "type": "string"
+    },
+    "Lens": {
+      "enum": [
+        "player",
+        "club",
+        "pundit"
+      ],
+      "title": "Lens",
+      "type": "string"
+    },
+    "MomentStatus": {
+      "enum": [
+        "detected",
+        "drafted",
+        "verified",
+        "scheduled",
+        "dropped"
+      ],
+      "title": "MomentStatus",
+      "type": "string"
+    },
+    "MomentType": {
+      "enum": [
+        "goal",
+        "corner",
+        "card",
+        "big_save",
+        "big_chance",
+        "swing"
+      ],
+      "title": "MomentType",
+      "type": "string"
+    },
+    "Verdict": {
+      "additionalProperties": false,
+      "description": "The Verifier's ruling on one draft. ``final`` is the text to show, if any.",
+      "properties": {
+        "status": {
+          "enum": [
+            "approved",
+            "repaired",
+            "rejected",
+            "fallback"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "issues": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Issues",
+          "type": "array"
+        },
+        "final": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Draft"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "Verdict",
+      "type": "object"
+    },
+    "WinProbability": {
+      "additionalProperties": false,
+      "description": "Three-way win probability from the home team's point of view. Sums to 1.",
+      "properties": {
+        "home": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Home",
+          "type": "number"
+        },
+        "draw": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Draw",
+          "type": "number"
+        },
+        "away": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Away",
+          "type": "number"
+        }
+      },
+      "required": [
+        "home",
+        "draw",
+        "away"
+      ],
+      "title": "WinProbability",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One detected moment and everything the agents have added to it.\n\nDraft keys, used by ``verdicts`` and ``director.show``: ``player:<player_id>``,\n``club:<team_id>`` and ``pundit``.",
+  "properties": {
+    "moment_id": {
+      "pattern": "^m\\d{3,}-mo\\d{2,}$",
+      "title": "Moment Id",
+      "type": "string"
+    },
+    "match_id": {
+      "pattern": "^m\\d{3,}$",
+      "title": "Match Id",
+      "type": "string"
+    },
+    "type": {
+      "$ref": "#/$defs/MomentType"
+    },
+    "period": {
+      "enum": [
+        1,
+        2
+      ],
+      "title": "Period",
+      "type": "integer"
+    },
+    "t_start": {
+      "minimum": 0,
+      "title": "T Start",
+      "type": "number"
+    },
+    "t_peak": {
+      "minimum": 0,
+      "title": "T Peak",
+      "type": "number"
+    },
+    "t_end": {
+      "minimum": 0,
+      "title": "T End",
+      "type": "number"
+    },
+    "replay_window": {
+      "maxItems": 2,
+      "minItems": 2,
+      "prefixItems": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "title": "Replay Window",
+      "type": "array"
+    },
+    "importance": {
+      "description": "Detector score; above threshold slows the clock",
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Importance",
+      "type": "number"
+    },
+    "scoring_team": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z]{3}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Scoring Team"
+    },
+    "involved": {
+      "items": {
+        "$ref": "#/$defs/Involvement"
+      },
+      "title": "Involved",
+      "type": "array"
+    },
+    "win_prob_before": {
+      "$ref": "#/$defs/WinProbability"
+    },
+    "win_prob_after": {
+      "$ref": "#/$defs/WinProbability"
+    },
+    "swing": {
+      "description": "Change in the larger of the two win probabilities",
+      "title": "Swing",
+      "type": "number"
+    },
+    "context_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Context Refs",
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/EvidenceItem"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "drafts": {
+      "$ref": "#/$defs/Drafts"
+    },
+    "verdicts": {
+      "additionalProperties": {
+        "$ref": "#/$defs/Verdict"
+      },
+      "title": "Verdicts",
+      "type": "object"
+    },
+    "director": {
+      "$ref": "#/$defs/DirectorDecision"
+    },
+    "status": {
+      "$ref": "#/$defs/MomentStatus",
+      "default": "detected"
+    }
+  },
+  "required": [
+    "moment_id",
+    "match_id",
+    "type",
+    "period",
+    "t_start",
+    "t_peak",
+    "t_end",
+    "replay_window",
+    "importance",
+    "win_prob_before",
+    "win_prob_after",
+    "swing"
+  ],
+  "title": "Moment",
+  "type": "object"
+}

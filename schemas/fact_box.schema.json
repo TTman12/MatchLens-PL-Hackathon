@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ttman12/matchlens-pl-hackathon/schemas/fact_box.schema.json",
+  "x-schema-version": "1.0.0",
+  "$defs": {
+    "AnalystDetail": {
+      "additionalProperties": false,
+      "description": "Extra depth shown when the evidence dropdown is opened.",
+      "properties": {
+        "event_ids": {
+          "items": {
+            "pattern": "^m\\d{3,}-e\\d{4,}$",
+            "type": "string"
+          },
+          "title": "Event Ids",
+          "type": "array"
+        },
+        "pass_map": {
+          "items": {
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Pass Map",
+          "type": "array"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        }
+      },
+      "title": "AnalystDetail",
+      "type": "object"
+    },
+    "ClaimType": {
+      "enum": [
+        "stat",
+        "season",
+        "table",
+        "fixture",
+        "discipline",
+        "win_prob",
+        "milestone"
+      ],
+      "title": "ClaimType",
+      "type": "string"
+    },
+    "EvidenceItem": {
+      "additionalProperties": false,
+      "description": "One checkable fact. ``numbers`` holds the machine values the Verifier compares against.",
+      "properties": {
+        "id": {
+          "pattern": "^ev\\d+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "claim_type": {
+          "$ref": "#/$defs/ClaimType"
+        },
+        "value": {
+          "description": "Human-readable statement of the fact",
+          "title": "Value",
+          "type": "string"
+        },
+        "source": {
+          "description": "An event id or a context ref, e.g. season:ash-09:goals",
+          "title": "Source",
+          "type": "string"
+        },
+        "numbers": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Numbers",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "claim_type",
+        "value",
+        "source"
+      ],
+      "title": "EvidenceItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The text of a box. Casual viewers see headline and body; analysts open the evidence.",
+  "properties": {
+    "headline": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Headline",
+      "type": "string"
+    },
+    "body": {
+      "default": "",
+      "description": "One or two plain sentences",
+      "maxLength": 280,
+      "title": "Body",
+      "type": "string"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/EvidenceItem"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "analyst": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AnalystDetail"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "headline"
+  ],
+  "title": "FactBox",
+  "type": "object"
+}

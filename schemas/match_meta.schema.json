@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ttman12/matchlens-pl-hackathon/schemas/match_meta.schema.json",
+  "x-schema-version": "1.0.0",
+  "$defs": {
+    "LineupEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "player_id": {
+          "pattern": "^[a-z]{3}-\\d{2}$",
+          "title": "Player Id",
+          "type": "string"
+        },
+        "slot": {
+          "description": "Formation slot, e.g. GK, LCB, RW, ST",
+          "title": "Slot",
+          "type": "string"
+        }
+      },
+      "required": [
+        "player_id",
+        "slot"
+      ],
+      "title": "LineupEntry",
+      "type": "object"
+    },
+    "Stakes": {
+      "additionalProperties": false,
+      "properties": {
+        "derby": {
+          "default": false,
+          "title": "Derby",
+          "type": "boolean"
+        },
+        "notes": {
+          "description": "Plain facts, e.g. 'Winner goes top'",
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        }
+      },
+      "title": "Stakes",
+      "type": "object"
+    },
+    "TeamSheet": {
+      "additionalProperties": false,
+      "properties": {
+        "team_id": {
+          "pattern": "^[a-z]{3}$",
+          "title": "Team Id",
+          "type": "string"
+        },
+        "formation": {
+          "title": "Formation",
+          "type": "string"
+        },
+        "starting": {
+          "items": {
+            "$ref": "#/$defs/LineupEntry"
+          },
+          "maxItems": 11,
+          "minItems": 11,
+          "title": "Starting",
+          "type": "array"
+        },
+        "bench": {
+          "items": {
+            "pattern": "^[a-z]{3}-\\d{2}$",
+            "type": "string"
+          },
+          "title": "Bench",
+          "type": "array"
+        }
+      },
+      "required": [
+        "team_id",
+        "formation",
+        "starting"
+      ],
+      "title": "TeamSheet",
+      "type": "object"
+    },
+    "Weather": {
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "description": "e.g. clear, overcast, rain, wind",
+          "title": "Condition",
+          "type": "string"
+        },
+        "temperature_c": {
+          "title": "Temperature C",
+          "type": "number"
+        },
+        "wind_kmh": {
+          "minimum": 0,
+          "title": "Wind Kmh",
+          "type": "number"
+        }
+      },
+      "required": [
+        "condition",
+        "temperature_c",
+        "wind_kmh"
+      ],
+      "title": "Weather",
+      "type": "object"
+    },
+    "WinProbability": {
+      "additionalProperties": false,
+      "description": "Three-way win probability from the home team's point of view. Sums to 1.",
+      "properties": {
+        "home": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Home",
+          "type": "number"
+        },
+        "draw": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Draw",
+          "type": "number"
+        },
+        "away": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Away",
+          "type": "number"
+        }
+      },
+      "required": [
+        "home",
+        "draw",
+        "away"
+      ],
+      "title": "WinProbability",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "``match.json``: one per match. Player attributes live in ``league.json``.",
+  "properties": {
+    "schema_version": {
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "match_id": {
+      "pattern": "^m\\d{3,}$",
+      "title": "Match Id",
+      "type": "string"
+    },
+    "league_id": {
+      "title": "League Id",
+      "type": "string"
+    },
+    "season_id": {
+      "title": "Season Id",
+      "type": "string"
+    },
+    "matchday": {
+      "minimum": 1,
+      "title": "Matchday",
+      "type": "integer"
+    },
+    "seed": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Simulator seed; null if hand-made",
+      "title": "Seed"
+    },
+    "kickoff_local": {
+      "description": "ISO 8601 local date-time, fictional",
+      "title": "Kickoff Local",
+      "type": "string"
+    },
+    "stadium": {
+      "title": "Stadium",
+      "type": "string"
+    },
+    "referee": {
+      "title": "Referee",
+      "type": "string"
+    },
+    "weather": {
+      "$ref": "#/$defs/Weather"
+    },
+    "home": {
+      "$ref": "#/$defs/TeamSheet"
+    },
+    "away": {
+      "$ref": "#/$defs/TeamSheet"
+    },
+    "home_attacks_in_period_1": {
+      "description": "Pitch-frame direction the home team attacks in period 1; swaps at half-time",
+      "enum": [
+        "+x",
+        "-x"
+      ],
+      "title": "Home Attacks In Period 1",
+      "type": "string"
+    },
+    "stakes": {
+      "$ref": "#/$defs/Stakes"
+    },
+    "pre_match_win_prob": {
+      "$ref": "#/$defs/WinProbability"
+    }
+  },
+  "required": [
+    "schema_version",
+    "match_id",
+    "league_id",
+    "season_id",
+    "matchday",
+    "kickoff_local",
+    "stadium",
+    "referee",
+    "weather",
+    "home",
+    "away",
+    "home_attacks_in_period_1",
+    "pre_match_win_prob"
+  ],
+  "title": "MatchMeta",
+  "type": "object"
+}
