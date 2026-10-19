@@ -27,7 +27,10 @@ python evals/run_evals.py --foundry   # also Foundry evaluators (needs Azure, se
    It also fails if a misquoted draft was approved, or if chaos misquoted nothing.
 3. **Foundry groundedness** (`--foundry`). Player-lens agents run on Foundry and their
    output is scored by Foundry's built-in groundedness and relevance evaluators, with
-   the moment's evidence as context. Needs the settings in `.env.example`.
+   the moment's evidence as context. Needs the settings in `.env.example`. Each run
+   prints its pass count per evaluator and a link to the run in the Foundry portal; a
+   run that does not complete, or any failed judgment, fails the evals. First run
+   (19 Oct 2026, gpt-4.1-mini): 8 of 8 boxes passed groundedness and relevance.
 
 ## Adding a case
 

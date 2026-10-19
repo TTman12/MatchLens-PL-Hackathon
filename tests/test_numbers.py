@@ -18,10 +18,24 @@ def values(text: str, lang: str = "en") -> list[float]:
 
 def test_reads_digits_percentages_ordinals_scores_and_words() -> None:
     assert values("34.3 km/h, 44%, 5th, 2nd, 1-0, two lines, first goal") == sorted(
-        [34.3, 44, 5, 2, 1, 0, 2, 1]
+        {34.3, 44, 5, 2, 1, 0}
     )
     assert values("Ya suma 7 goles, su primer gol, tres partidos", "es") == [1, 3, 7]
     assert values("a one-match ban") == [1]
+
+
+def test_a_unit_written_without_a_space_keeps_its_decimals() -> None:
+    # "58.8m" once read as a bare 58, which a 58.8 m distance then appeared to back.
+    assert [(c.value, c.unit) for c in extract("a 58.8m run")] == [(58.8, "m")]
+    assert unsupported("a 58.1m run", [ev(distance_m=58.8)])
+
+
+def test_a_score_ending_a_sentence_is_still_a_score() -> None:
+    assert [c.pair for c in extract("Ashmere lead 1-0.")] == [(1.0, 0.0)]
+
+
+def test_a_repeated_number_is_not_a_new_one() -> None:
+    assert values("1-0 up, and 1-0 it stays") == values("1-0 up")
 
 
 def test_spanish_articles_are_not_numbers() -> None:

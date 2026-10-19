@@ -17,9 +17,10 @@ import argparse
 import asyncio
 import json
 import os
+from collections.abc import Awaitable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 
 from matchlens.contracts import SCHEMA_VERSION, Cue, CueTrack, EventType, Layer, Moment
 from matchlens.mcp_server.tools import MatchStateStore
@@ -29,7 +30,13 @@ from .briefs import write_brief
 from .detector import detect_moments
 from .director import Director, DirectorConfig
 from .lenses import AgentCaller, ClubLens, PlayerLens, PunditLens
-from .providers import ModelProvider, OfflineProvider, configure_tracing, provider_from_env
+from .providers import (
+    ModelProvider,
+    OfflineProvider,
+    close_provider,
+    configure_tracing,
+    provider_from_env,
+)
 from .state import MomentContext, MomentJob
 from .trace import AgentTrace
 from .translator import Translator
@@ -37,6 +44,7 @@ from .verifier import Verifier, tone_checker_from_env
 from .workflow import AgentFrameworkRunner, PlainRunner, Stages
 
 Engine = Literal["agent-framework", "asyncio"]
+T = TypeVar("T")
 LAYER_ORDER = {Layer.GLOBAL: 0, Layer.PLAYER: 1, Layer.CLUB: 2, Layer.PUNDIT: 3}
 
 
@@ -229,6 +237,14 @@ def cue_track(match_id: str, raw: list[dict[str, Any]], languages: list[str]) ->
     )
 
 
+async def run_and_close(provider: ModelProvider, run: Awaitable[T]) -> T:
+    """Await ``run``, then close ``provider`` on the same event loop."""
+    try:
+        return await run
+    finally:
+        await close_provider(provider)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Run the MatchLens agents on one match.")
     parser.add_argument("match_dir", help="Folder with match.json, events.json, frames.jsonl ...")
@@ -249,12 +265,15 @@ def main(argv: list[str] | None = None) -> None:
     configure_tracing()
     provider = provider_from_env(chaos=args.chaos)
     result = asyncio.run(
-        run_match(
-            args.match_dir,
+        run_and_close(
             provider,
-            languages=[x.strip() for x in args.lang.split(",") if x.strip()],
-            engine=args.engine,
-            timeout_s=args.timeout,
+            run_match(
+                args.match_dir,
+                provider,
+                languages=[x.strip() for x in args.lang.split(",") if x.strip()],
+                engine=args.engine,
+                timeout_s=args.timeout,
+            ),
         )
     )
     result.write(args.out)

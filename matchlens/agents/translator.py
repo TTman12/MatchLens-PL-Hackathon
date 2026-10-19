@@ -2,8 +2,9 @@
 
 A translation is accepted only if it claims exactly the same numbers as the approved
 English box, keeps every name, fits the box limits, and every number is still backed by
-the box's evidence. Otherwise the box stays English-only for that language and the
-agent timeline says why. The model is asked to localise, not translate word for word.
+the box's evidence. A rejected attempt is retried once with the problems listed; if the
+retry fails too, the box stays English-only for that language and the agent timeline
+says why. The model is asked to localise, not translate word for word.
 """
 
 from __future__ import annotations
@@ -68,56 +69,71 @@ class Translator:
         box = cue["box"]
         moment_id = cue.get("moment_id")
         instance = f"translator:{lang}:{cue.get('_key', 'brief')}"
-        task = AgentTask(
-            agent="translator",
-            instance=instance,
-            instructions=prompt("translator"),
-            prompt=json.dumps(
-                {
-                    "target_language": LANGUAGE_NAMES.get(lang, lang),
+        request: dict[str, Any] = {
+            "target_language": LANGUAGE_NAMES.get(lang, lang),
+            "headline": box["headline"],
+            "body": box["body"],
+        }
+        problems: list[str] = []
+        headline = body = ""
+        for attempt in range(1 + self.caller.retries):
+            if problems:
+                # Show the model its rejected attempt and exactly which lock it broke.
+                request |= {
+                    "rejected_attempt": {"headline": headline, "body": body},
+                    "problems": problems,
+                }
+            task = AgentTask(
+                agent="translator",
+                instance=instance,
+                instructions=prompt("translator"),
+                prompt=json.dumps(request, ensure_ascii=False),
+                payload={
+                    "lang": lang,
+                    "template": result.template if result else cue.get("_template"),
                     "headline": box["headline"],
                     "body": box["body"],
-                }
-            ),
-            payload={
-                "lang": lang,
-                "template": result.template if result else cue.get("_template"),
-                "headline": box["headline"],
-                "body": box["body"],
-            },
+                },
+            )
+            started = time.perf_counter()
+            try:
+                reply = await asyncio.wait_for(
+                    self.caller.provider.complete(task), self.caller.timeout_s
+                )
+                data = parse_json(reply)
+            except (ProviderError, TimeoutError) as exc:
+                self.trace.add(
+                    moment_id,
+                    "translator",
+                    instance,
+                    "translate",
+                    "skipped",
+                    f"kept English only: {exc or 'timed out'}",
+                    started,
+                )
+                return None
+            headline, body = str(data.get("headline", "")), str(data.get("body", ""))
+            problems = self._lock_problems(box, headline, body, lang)
+            if not problems:
+                status = "ok" if attempt == 0 else "retried"
+                self.trace.add(
+                    moment_id, "translator", instance, "translate", status, headline, started
+                )
+                return cue | {"lang": lang, "box": box | {"headline": headline, "body": body}}
+            if attempt < self.caller.retries:
+                self.trace.add(
+                    moment_id,
+                    "translator",
+                    instance,
+                    "translate",
+                    "retry",
+                    "; ".join(problems) + "; retrying with the problems listed",
+                    started,
+                )
+        self.trace.add(
+            moment_id, "translator", instance, "translate", "rejected", "; ".join(problems), started
         )
-        started = time.perf_counter()
-        try:
-            reply = await asyncio.wait_for(
-                self.caller.provider.complete(task), self.caller.timeout_s
-            )
-            data = parse_json(reply)
-        except (ProviderError, TimeoutError) as exc:
-            self.trace.add(
-                moment_id,
-                "translator",
-                instance,
-                "translate",
-                "skipped",
-                f"kept English only: {exc or 'timed out'}",
-                started,
-            )
-            return None
-        headline, body = str(data.get("headline", "")), str(data.get("body", ""))
-        problems = self._lock_problems(box, headline, body, lang)
-        if problems:
-            self.trace.add(
-                moment_id,
-                "translator",
-                instance,
-                "translate",
-                "rejected",
-                "; ".join(problems),
-                started,
-            )
-            return None
-        self.trace.add(moment_id, "translator", instance, "translate", "ok", headline, started)
-        return cue | {"lang": lang, "box": box | {"headline": headline, "body": body}}
+        return None
 
     def _lock_problems(self, box: dict[str, Any], headline: str, body: str, lang: str) -> list[str]:
         problems = []
@@ -134,6 +150,8 @@ class Translator:
         for name in self.names:
             if re.search(rf"\b{re.escape(name)}\b", source) and name not in target:
                 problems.append(f"name '{name}' missing")
-        if not headline or len(headline) > HEADLINE_MAX or len(body) > BODY_MAX:
-            problems.append("does not fit the box")
+        if not headline or len(headline) > HEADLINE_MAX:
+            problems.append(f"headline is {len(headline)} characters; the limit is {HEADLINE_MAX}")
+        if len(body) > BODY_MAX:
+            problems.append(f"body is {len(body)} characters; the limit is {BODY_MAX}")
         return problems

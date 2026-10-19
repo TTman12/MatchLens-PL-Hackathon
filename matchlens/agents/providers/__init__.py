@@ -42,6 +42,14 @@ def provider_from_env(
     return provider
 
 
+async def close_provider(provider: ModelProvider) -> None:
+    """Release the provider's network sessions (the Azure credential's, for Foundry)."""
+    inner = getattr(provider, "inner", None)  # a ChaosProvider wraps the real one
+    close = getattr(inner if inner is not None else provider, "close", None)
+    if close is not None:
+        await close()
+
+
 __all__ = [
     "AgentFrameworkProvider",
     "AgentTask",
@@ -52,6 +60,7 @@ __all__ = [
     "OfflineProvider",
     "ProviderError",
     "Tier",
+    "close_provider",
     "configure_tracing",
     "provider_from_env",
 ]
