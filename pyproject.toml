@@ -57,7 +57,7 @@ plugins = ["pydantic.mypy"]
 packages = ["matchlens"]
 
 [[tool.mypy.overrides]]
-module = ["azure.*"]
+module = ["azure.*", "agent_framework_foundry"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
