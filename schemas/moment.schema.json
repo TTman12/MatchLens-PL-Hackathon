@@ -486,7 +486,7 @@
       "$ref": "#/$defs/WinProbability"
     },
     "swing": {
-      "description": "Change in the larger of the two win probabilities",
+      "description": "Change in home win probability; positive favours home",
       "title": "Swing",
       "type": "number"
     },

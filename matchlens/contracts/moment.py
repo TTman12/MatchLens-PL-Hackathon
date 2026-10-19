@@ -171,7 +171,7 @@ class Moment(Contract):
     involved: list[Involvement] = Field(default_factory=list)
     win_prob_before: WinProbability
     win_prob_after: WinProbability
-    swing: float = Field(description="Change in the larger of the two win probabilities")
+    swing: float = Field(description="Change in home win probability; positive favours home")
     context_refs: list[str] = Field(default_factory=list)
     evidence: list[EvidenceItem] = Field(default_factory=list)
     drafts: Drafts = Field(default_factory=Drafts)
