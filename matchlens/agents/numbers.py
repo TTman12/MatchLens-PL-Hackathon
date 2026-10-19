@@ -71,6 +71,16 @@ WORDS: dict[str, dict[str, float]] = {
         "cuarta": 4,
         "quinto": 5,
         "quinta": 5,
+        "sexto": 6,
+        "sexta": 6,
+        "séptimo": 7,
+        "séptima": 7,
+        "octavo": 8,
+        "octava": 8,
+        "noveno": 9,
+        "novena": 9,
+        "décimo": 10,
+        "décima": 10,
         "doblete": 2,
         "triplete": 3,
     },
@@ -82,8 +92,9 @@ WORDS: dict[str, dict[str, float]] = {
 LABELS = frozenset({"half-time", "halftime", "medio-tiempo"})
 
 _NUMBER = re.compile(
-    r"(?P<pre>xG\s)?(?<![\w.])(?P<a>\d+(?:\.\d+)?)(?:\s?[-\u2013]\s?(?P<b>\d+)(?![\d.]))?"
-    r"(?P<pct>\s?%)?(?P<ord>st|nd|rd|th|º|ª|\.?º)?(?![\w])(?P<unit>\s?(?:km/h|m\b|xG\b))?"
+    r"(?P<pre>xG\s)?(?<![\w.])(?P<a>\d+(?:\.\d+)?)(?!\.?\d)"
+    r"(?:\s?[-\u2013]\s?(?P<b>\d+)(?!\.?\d))?(?P<pct>\s?%)?(?P<ord>st|nd|rd|th|º|ª|\.?º)?"
+    r"(?:(?P<unit>\s?(?:km/h|m\b|xG\b))|(?![\w]))"
 )
 
 UNIT_KEYS = {
@@ -176,8 +187,12 @@ def backing(claim: Claim, evidence: list[EvidenceItem]) -> list[str]:
 
 
 def number_set(text: str, lang: str) -> list[float]:
-    """The claimed values, sorted, for comparing a translation with its source."""
-    values: list[float] = []
+    """The distinct claimed values, sorted, for comparing a translation with its source.
+
+    Distinct, because saying "1-0" twice states no new fact: a translation may repeat
+    or merge a number, but not add, drop or change one.
+    """
+    values: set[float] = set()
     for c in extract(text, lang):
-        values += list(c.pair) if c.pair else [c.value]
+        values.update(c.pair if c.pair else [c.value])
     return sorted(values)

@@ -70,6 +70,23 @@ class Recompute:
             return (
                 {"top_speed_kmh": run.top_speed_kmh, "distance_m": run.distance_m} if run else None
             )
+        season = self.match.season_stats.get(parts[1]) if parts[0] == "season" else None
+        if (
+            season is not None
+            and "previous_best_kmh" not in item.numbers
+            and "threshold" not in (item.numbers)
+        ):
+            # A Match-State lookup an agent made: the season before kick-off, as filed.
+            if parts[2] == "goals" and "assists" in item.numbers:
+                return {
+                    "goals": season.goals,
+                    "assists": season.assists,
+                    "appearances": season.appearances,
+                }
+            if parts[2] == "yellow_cards":
+                return {"yellows": season.yellow_cards}
+            if parts[2] == "top_speed":
+                return {"top_speed_kmh": season.top_speed_kmh or -1}
         if parts[0] == "season" and parts[2] == "goals":
             return {"goals": s.context.season_goals(parts[1], moment.t_peak)}
         if parts[0] == "season" and parts[2] == "last_goal":
@@ -83,7 +100,10 @@ class Recompute:
                 "previous_best_kmh": best or -1,
             }
         if parts[0] == "season" and parts[2] == "yellow_cards":
-            card = next(e for e in moment.involved if e.role == "fouler").events[-1]
+            booked = [e for e in moment.involved if e.player_id == parts[1] and e.role == "fouler"]
+            if not booked:
+                return None
+            card = booked[0].events[-1]
             d = s.context.discipline_after(card)
             return {
                 "yellows": d.yellows_toward_ban,

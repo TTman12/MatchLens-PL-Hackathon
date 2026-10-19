@@ -41,7 +41,12 @@ from pathlib import Path
 from typing import Any, Literal
 
 from matchlens.agents.pipeline import MatchRun, cue_track
-from matchlens.agents.providers import ModelProvider, configure_tracing, provider_from_env
+from matchlens.agents.providers import (
+    ModelProvider,
+    close_provider,
+    configure_tracing,
+    provider_from_env,
+)
 from matchlens.agents.state import MomentContext
 from matchlens.contracts import EventType
 from matchlens.stats import MatchData, load_match
@@ -103,7 +108,11 @@ class LiveSession:
         self.pace = pace
         self.max_rate = max_rate
         self.languages = languages or ["en", "es"]
-        self._provider_factory = provider_factory or (lambda: provider_from_env())
+        if provider_factory is None:
+            # One provider for every loop of the match, so one Azure credential is reused.
+            shared = provider_from_env()
+            provider_factory = lambda: shared  # noqa: E731
+        self._provider_factory = provider_factory
         self.jobs: asyncio.Queue[tuple[int, MomentContext | float]] = asyncio.Queue()
         self.generation = 0
         self.reset()
@@ -112,6 +121,7 @@ class LiveSession:
         """Back to kick-off, with fresh agents. Jobs queued for the old run are skipped."""
         self.generation += 1
         provider: ModelProvider = self._provider_factory()
+        self.provider = provider
         self.run = MatchRun(self.data, provider, languages=self.languages)
         self.pending: list[MomentContext] = self.run.detect()
         self.periods = [e.t for e in self.data.events if e.type is EventType.PERIOD_END]
@@ -321,6 +331,7 @@ def create_app(
         finally:
             for task in tasks:
                 task.cancel()
+            await close_provider(session.provider)
 
     routes: list[Any] = [
         Route("/live/poll", poll),

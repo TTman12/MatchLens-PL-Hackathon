@@ -12,9 +12,10 @@ import pytest
 from matchlens.agents.audit import audit, audit_dir
 from matchlens.agents.numbers import unsupported
 from matchlens.agents.pipeline import main, run_match
-from matchlens.agents.providers import ChaosProvider, OfflineProvider
-from matchlens.contracts import EventType, MatchEvent
-from matchlens.stats import load_match
+from matchlens.agents.providers import AgentTask, ChaosProvider, OfflineProvider
+from matchlens.contracts import EventType, EvidenceItem, MatchEvent
+from matchlens.mcp_server.tools import MatchStateStore
+from matchlens.stats import StatsEngine, load_match
 
 from .agt_helpers import run
 from .conftest import SAMPLE, SCHEMAS, load_json
@@ -126,6 +127,32 @@ def test_killed_translator_leaves_boxes_in_english() -> None:
     assert result.cues.languages == ["en"]
 
 
+class DropsANumberOnce(OfflineProvider):
+    """Translates each box first without its numbers, then properly once told why."""
+
+    def __init__(self) -> None:
+        self.retries: list[dict[str, object]] = []
+
+    async def complete(self, task: AgentTask) -> str:
+        if task.agent != "translator":
+            return await super().complete(task)
+        request = json.loads(task.prompt)
+        if "problems" not in request:
+            return json.dumps({"headline": "Gol", "body": ""})
+        self.retries.append(request)
+        return await super().complete(task)
+
+
+def test_a_rejected_translation_is_retried_with_its_problems() -> None:
+    provider = DropsANumberOnce()
+    result = asyncio.run(run_match(SAMPLE, provider, languages=["en", "es"]))
+    spanish = [c for c in result.cues.cues if c.lang == "es"]
+    assert spanish == [c for c in run().cues.cues if c.lang == "es"]
+    assert provider.retries and all(r["rejected_attempt"] for r in provider.retries)
+    statuses = {e.status for e in result.trace.events if e.agent == "translator"}
+    assert statuses == {"retry", "retried"}
+
+
 def test_misquoting_agents_never_reach_the_screen() -> None:
     provider = ChaosProvider.from_rules(OfflineProvider(), ["misquote:*"])
     result = asyncio.run(run_match(SAMPLE, provider, languages=["en", "es"]))
@@ -172,3 +199,19 @@ def test_cli_writes_outputs_and_audit_passes(tmp_path: Path) -> None:
     report = audit_dir(SAMPLE, tmp_path)
     assert report.ok, report.problems
     assert report.numbers_checked > 50
+
+
+def test_the_audit_recomputes_season_lookups_an_agent_made() -> None:
+    # On Foundry, agents call Match-State tools; the fouled player's season record then
+    # sits on the card moment next to the fouler's, under the same kind of source.
+    result = run()
+    store = MatchStateStore(StatsEngine(load_match(SAMPLE)))
+    card = next(m for m in result.moments if str(m.type) == "card")
+    fouled = next(i.player_id for i in card.involved if i.role == "fouled")
+    for n, f in enumerate(store.get_season_stats(fouled)["facts"]):
+        card.evidence.append(EvidenceItem.model_validate(f | {"id": f"ev{900 + n}"}))
+    report = audit(SAMPLE, result.moments, result.cues)
+    assert report.ok, report.problems
+    wrong = card.evidence[-1].model_copy(update={"numbers": {"top_speed_kmh": 99.0}})
+    card.evidence[-1] = wrong
+    assert not audit(SAMPLE, result.moments, result.cues).ok

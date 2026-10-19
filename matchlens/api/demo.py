@@ -18,7 +18,7 @@ import asyncio
 import time
 from pathlib import Path
 
-from matchlens.agents.pipeline import run_match
+from matchlens.agents.pipeline import run_and_close, run_match
 from matchlens.agents.providers import configure_tracing, provider_from_env
 from matchlens.sim.cli import main as sim_main
 
@@ -47,7 +47,9 @@ def build_demo(
         return
     started = time.perf_counter()
     provider = provider_from_env(chaos=chaos or [])
-    result = asyncio.run(run_match(out, provider, languages=languages or ["en", "es"]))
+    result = asyncio.run(
+        run_and_close(provider, run_match(out, provider, languages=languages or ["en", "es"]))
+    )
     result.write(out)
     print(
         f"{len(result.moments)} moments, {len(result.cues.cues)} cues via {provider.name} "
