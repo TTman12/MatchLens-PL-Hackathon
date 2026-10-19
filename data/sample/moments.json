@@ -73,7 +73,7 @@
     "status": "detected"
   },
   {
-    "moment_id": "m017-mo03",
+    "moment_id": "m017-mo02",
     "match_id": "m017",
     "type": "goal",
     "period": 1,
@@ -107,7 +107,7 @@
         ],
         "touches": 2,
         "top_speed_kmh": 28.8,
-        "distance_in_window_m": 72.6
+        "distance_in_window_m": 71.9
       },
       {
         "player_id": "ash-06",
@@ -118,7 +118,7 @@
         ],
         "touches": 2,
         "top_speed_kmh": 23.4,
-        "distance_in_window_m": 58.7
+        "distance_in_window_m": 58.8
       }
     ],
     "win_prob_before": {
@@ -172,10 +172,10 @@
       {
         "id": "ev4",
         "claim_type": "season",
-        "value": "Varrow now has 4 league goals this season",
+        "value": "Varrow now has 7 league goals this season",
         "source": "season:ash-09:goals",
         "numbers": {
-          "goals": 4.0
+          "goals": 7.0
         }
       },
       {
@@ -191,11 +191,20 @@
       {
         "id": "ev6",
         "claim_type": "table",
-        "value": "Ashmere started the day 3rd on 7 points",
+        "value": "Ashmere started the day 2nd on 13 points",
         "source": "table:ash",
         "numbers": {
-          "position": 3.0,
-          "points": 7.0
+          "position": 2.0,
+          "points": 13.0
+        }
+      },
+      {
+        "id": "ev7",
+        "claim_type": "table",
+        "value": "Ashmere 1st on the live table",
+        "source": "table:live:ash",
+        "numbers": {
+          "position": 1.0
         }
       }
     ],
@@ -206,7 +215,7 @@
           "subject_id": "ash-09",
           "kind": "box",
           "headline": "Varrow: 34.3 km/h, then 104 km/h",
-          "body": "Varrow hit 34.3 km/h onto the through ball and finished at 104 km/h. That's 4 league goals this season.",
+          "body": "Varrow hit 34.3 km/h onto the through ball and finished at 104 km/h. That's 7 league goals this season.",
           "evidence_ids": [
             "ev2",
             "ev3",
@@ -244,9 +253,10 @@
           "subject_id": "ash",
           "kind": "box",
           "headline": "Derby lead for Ashmere",
-          "body": "One up in the Kilnside derby, and the win chance jumps from 44% to 63%.",
+          "body": "One up in the Kilnside derby and top of the live table. Win chance up from 44% to 63%.",
           "evidence_ids": [
-            "ev5"
+            "ev5",
+            "ev7"
           ],
           "author": "agent",
           "agent": "club-agent:ash"
@@ -328,7 +338,7 @@
     "status": "scheduled"
   },
   {
-    "moment_id": "m017-mo04",
+    "moment_id": "m017-mo03",
     "match_id": "m017",
     "type": "card",
     "period": 1,

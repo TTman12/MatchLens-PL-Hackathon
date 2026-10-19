@@ -113,7 +113,14 @@ SURNAMES = [
     "Varrow", "Kestley", "Ostrand", "Brennick", "Halloway", "Penthorne", "Quillan", "Dravik",
     "Morrell", "Asquend", "Fenwright", "Lathrop", "Corvane", "Ibbotsen", "Tarrance", "Wexley",
     "Ruskin-Hale", "Delvaux", "Marchetti-Rowe", "Okonedo-Finch", "Sallow", "Thistlewood",
-    "Venn", "Harrowgate", "Pellow", "Strand", "Abernath", "Kiloran", "Duvessa", "Brightmoor",
+    "Venn", "Harrowgate", "Pellow", "Abernath", "Kiloran", "Duvessa", "Brightmoor",
+    "Caskell", "Orrin", "Feldane", "Mayhew-Stroud", "Quarrie", "Lindqvane", "Achterly", "Sorrel",
+    "Ballantrae-Cole", "Ellisande", "Garrowby", "Nkemdi-Vale", "Prothero-Lake", "Ravensholt",
+    "Tillery", "Wendover-Ash", "Yarrowfield", "Zelnick", "Hawtrey", "Ingleby-Moss",
+    "Crombeck", "Dunholt", "Esterbrook", "Fallowmere", "Gorrance", "Hesketh-Pryor", "Ivanek",
+    "Jessamy", "Korvath", "Lunnery", "Merrivale", "Nettleby", "Oakhanger", "Pardoe-Kyle",
+    "Quenby", "Rothwick", "Selbourne", "Tamsett", "Underhay", "Vassago", "Whitlam-Rees",
+    "Arkwell", "Belcastro", "Coldicott", "Dewhirst-Amo",
 ]  # fmt: skip
 
 # (shirt, position, role, slot) for each formation. Starters are shirts 1 to 11.
@@ -166,17 +173,18 @@ OVERRIDES: dict[str, dict[str, Any]] = {
 
 
 def build_league(rng: random.Random) -> League:
-    names = [(f, s) for f in FIRST_NAMES for s in SURNAMES]
-    rng.shuffle(names)
-    used = {o["name"] for o in OVERRIDES.values()}
-    names = [n for n in names if f"{n[0]} {n[1]}" not in used]
+    # Surnames are what name tags show, so each is used once in the whole league.
+    reserved = {o["short_name"] for o in OVERRIDES.values()}
+    surnames = [s for s in SURNAMES if s not in reserved]
+    rng.shuffle(surnames)
     clubs = []
     for club in CLUBS:
         squad = []
         roster = [(s, p, r) for s, p, r, _ in FORMATIONS[club["formation"]]] + BENCH
         for shirt, position, role in roster:
             pid = f"{club['team_id']}-{shirt:02d}"
-            first, last = names.pop()
+            first = rng.choice(FIRST_NAMES)
+            last = surnames.pop() if pid not in OVERRIDES else ""
             base = club["rating"]
             attrs = {
                 key: max(20, min(95, base + rng.randint(-12, 10)))
@@ -738,7 +746,7 @@ def build_meta(league: League) -> MatchMeta:
             "home": sheet(HOME),
             "away": sheet(AWAY),
             "home_attacks_in_period_1": HOME_DIRECTION,
-            "stakes": {"derby": True, "notes": ["Kilnside derby"]},
+            "stakes": {"derby": True, "notes": ["Kilnside derby", "A home win takes Ashmere top"]},
             "pre_match_win_prob": {"home": 0.44, "draw": 0.28, "away": 0.28},
         }
     )
@@ -795,9 +803,20 @@ def build_moments(
                   f"{table['ash'].points} points",
          "numbers": {"position": table["ash"].position, "points": table["ash"].points}},
     ]  # fmt: skip
+    # The live table if the score stays 1-0: Ashmere take three points, Brackenford none.
+    live = sorted(
+        season.table,
+        key=lambda r: -(r.points + (3 if r.team_id == HOME else 0)),
+    )
+    live_position = next(i for i, r in enumerate(live, start=1) if r.team_id == HOME)
+    evidence.append(
+        {"id": "ev7", "claim_type": "table", "source": "table:live:ash",
+         "value": f"Ashmere {_ordinal(live_position)} on the live table",
+         "numbers": {"position": live_position}}
+    )  # fmt: skip
     if drought is not None and drought >= 3:
         evidence.append(
-            {"id": "ev7", "claim_type": "milestone", "source": "season:ash-09:last_goal",
+            {"id": "ev8", "claim_type": "milestone", "source": "season:ash-09:last_goal",
              "value": f"First goal in {drought} league matches",
              "numbers": {"matches": drought}}
         )  # fmt: skip
@@ -813,7 +832,7 @@ def build_moments(
         f"{shot_q['shot_speed_kmh']} km/h. That's {goals_before + 1} league goals this season."
     )
     goal = {
-        "moment_id": f"{MATCH_ID}-mo03",
+        "moment_id": f"{MATCH_ID}-mo02",
         "match_id": MATCH_ID,
         "type": "goal",
         "period": 1,
@@ -863,9 +882,9 @@ def build_moments(
             "club": {
                 "ash": {"lens": "club", "subject_id": "ash",
                         "headline": "Derby lead for Ashmere",
-                        "body": "One up in the Kilnside derby, and the win chance jumps from "
-                                "44% to 63%.",
-                        "evidence_ids": ev_ids("ev5"), "agent": "club-agent:ash"},
+                        "body": f"One up in the Kilnside derby and {_table_place(live_position)}. "
+                                "Win chance up from 44% to 63%.",
+                        "evidence_ids": ev_ids("ev5", "ev7"), "agent": "club-agent:ash"},
                 "brk": {"lens": "club", "subject_id": "brk", "kind": "no_box",
                         "agent": "club-agent:brk"},
             },
@@ -929,7 +948,7 @@ def build_moments(
     opponent = next_fixture.away_id if next_fixture.home_id == HOME else next_fixture.home_id
     opponent_name = {c.team_id: c.short_name for c in league.clubs}[opponent]
     card = {
-        "moment_id": f"{MATCH_ID}-mo04",
+        "moment_id": f"{MATCH_ID}-mo03",
         "match_id": MATCH_ID,
         "type": "card",
         "period": 1,
@@ -972,6 +991,12 @@ def build_moments(
         "status": "scheduled",
     }  # fmt: skip
     return [Moment.model_validate(m).model_dump(mode="json") for m in (corner, goal, card)]
+
+
+def _table_place(position: int) -> str:
+    if position == 1:
+        return "top of the live table"
+    return f"{_ordinal(position)} on the live table"
 
 
 def _ordinal(n: int) -> str:
@@ -1070,7 +1095,7 @@ def _write_json(path: Path, data: Any) -> None:
 
 
 def build(out: Path) -> None:
-    rng = random.Random(17)
+    rng = random.Random(1325)  # chosen so the derby is a top-of-the-table match
     league = build_league(rng)
     season = build_season(rng, league)
     meta = build_meta(league)
