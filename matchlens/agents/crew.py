@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..explain.explainer import assemble, choose_stats, decide_cause
+from ..explain.explainer import assemble, choose_stats, decide_cause, standouts
 from ..explain.match import MatchData, load
 from ..explain.specialists import SPECIALISTS, Finding
 from ..explain.stories import BY_KEY as STORIES
@@ -163,6 +163,8 @@ def explainer_prompt(job: Job, rejected: tuple[dict[str, Any], list[str]] | None
         + "\n".join(json.dumps(r) for r in job.board.view()),
         "Play-style stories (two findings that together say how a team's play changed):\n"
         + ("\n".join(json.dumps(s) for s in story_menu(job)) or "none found"),
+        "Standout players (on the team that gained, clearly doing more):\n"
+        + (", ".join(str(job.board.id_of(f)) for f in standouts(job.m, job.board.by_agent())) or "none"),
     ]
     if rejected:
         draft, problems = rejected

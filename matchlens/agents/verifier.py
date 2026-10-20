@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..explain.explainer import STRONG, _partner, driver, fallback_stats
+from ..explain.explainer import STORY_CAUSES, STRONG, _partner, driver, fallback_stats, stands_out
 from ..explain.match import MatchData
 from ..explain.specialists import Finding, investigate
 from ..explain.stories import SHARES as LONE_SHARES
@@ -114,7 +114,8 @@ class Verifier:
                 continue
             about_player = cause["kind"] == "substitution_impact" and f.get("player") == cause.get("player")
             about_fade = cause["kind"] == "fatigue" and f["claim"] == "fatigue" and f["team"] == cause["team"]
-            if not (about_player or about_fade):
+            standout = cause["kind"] in STORY_CAUSES and stands_out(f, self.m.gainer)
+            if not (about_player or about_fade or standout):
                 problems.append(f"{fid_of(self.board, f)} is about a player, but the cause is not about that player")
         if cause["kind"] == "substitution_impact" and not any(f.get("player") == cause.get("player") for f in stats):
             problems.append("a substitution_impact card must show that substitute against the player he replaced")

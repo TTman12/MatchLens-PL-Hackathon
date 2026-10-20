@@ -66,13 +66,6 @@
   }
 
   // ---------- icons ----------
-  // icons drawn on the coloured tag of a card, in the tag's own ink
-  const TAG_ICONS = {
-    red_card: '<svg viewBox="0 0 20 20"><rect x="5.5" y="2.5" width="9" height="15" rx="1.2" fill="currentColor"/></svg>',
-    goal: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 5.8l3.4 2.5-1.3 4H7.9l-1.3-4z" fill="currentColor"/></svg>',
-    substitution: '<svg viewBox="0 0 20 20"><path d="M6 15V5M6 5l-3 3M6 5l3 3M14 5v10M14 15l-3-3M14 15l3-3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  };
-
   const ICONS = {
     goal: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.5" fill="#fff" stroke="#37003c" stroke-width="1.5"/><path d="M10 5.6l3.6 2.6-1.4 4.2H7.8L6.4 8.2z" fill="#37003c"/></svg>',
     red_card: '<svg viewBox="0 0 20 20"><rect x="5.5" y="2.5" width="9" height="15" rx="1.2" fill="#e90052" stroke="#fff" stroke-width="1"/></svg>',
@@ -244,16 +237,17 @@
   function statRow(s) {
     const team = teamById(s.team);
     const side = team === bundle.teams[0] ? "var(--home)" : "var(--away)";
-    const who = s.player ? s.player : team.short_name;
     const when = s.window ? ` · last ${s.window.replace("in ", "")}` : "";
+    // a player's row leads with his name; a team's with the stat
+    const [title, sub] = s.player ? [s.player, `${s.label}${when}`] : [s.label, `${team.short_name}${when}`];
     const unit = s.unit ? `<span class="stat-unit">${s.unit}</span>` : "";
     return `
       <div class="stat">
         <span class="stat-strip" style="background:${side}"></span>
         <span class="stat-code">${s.code}</span>
         <span class="stat-text">
-          <div class="stat-label">${s.label}</div>
-          <div class="stat-sub">${who}${when}</div>
+          <div class="stat-label">${esc(title)}</div>
+          <div class="stat-sub">${esc(sub)}</div>
         </span>
         <span class="stat-nums">
           <span class="stat-value"><span class="stat-arrow">${s.rise ? "▲" : "▼"}</span>${s.value}${unit}</span>
@@ -270,11 +264,9 @@
   function showCard(c) {
     const el = $("card");
     const [home, away] = bundle.teams;
-    const tagIcon = TAG_ICONS[c.kind] || ICONS[c.kind] || ICONS.shift;
     el.className = `card kind-${c.kind}`;
     el.innerHTML = `
       <div class="card-head">
-        <div class="card-tag">${tagIcon}<span>${c.tag}</span></div>
         <div class="card-anchor">${c.anchor}</div>
       </div>
       <div class="card-text" id="cardText">${esc(cardText(c))}</div>

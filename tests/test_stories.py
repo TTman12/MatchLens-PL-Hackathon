@@ -37,7 +37,7 @@ def test_the_sentence_is_written_for_each_club(tmp_path: Path) -> None:
     text = compose(md, {"kind": "play_change", "team": "ash"}, stats, "ash")
     assert set(text) == {"neutral", "ash", "brk"}
     assert text["brk"] == BY_KEY["sitting_deep"].own.format(T=md.short("brk"), O=md.short("ash"))
-    assert "can't score" in text["ash"] and md.short("ash") in text["ash"]
+    assert "which is why" not in " ".join(text.values())  # what the play style is, not what it caused
 
 
 def test_cards_never_show_a_share_alone_and_all_have_text(tmp_path: Path) -> None:
@@ -70,3 +70,11 @@ def test_bundle_carries_running_stats(tmp_path: Path) -> None:
     assert abs(sum(poss) - 100) <= 1
     for p in st["players"]:
         assert p["stats"]["minutes"][-1] == len(md.player[p["id"]])
+
+
+def test_a_standout_player_is_named_with_what_he_does_more(tmp_path: Path) -> None:
+    md = load(_write(tmp_path, "dun", "cal", 4))
+    p = {**_f("dun", "defensive_actions", 4.0, 1, 5), "claim": "player_change", "player": "x", "name": "Wexez"}
+    q = {**_f("dun", "distance_m", 3.8, 110, 125), "claim": "player_change", "player": "y", "name": "Pennholt"}
+    text = compose(md, {"kind": "play_change", "team": "dun"}, [p, q], "dun")
+    assert text["neutral"] == "Wexez is making more tackles, and Pennholt is covering more ground."

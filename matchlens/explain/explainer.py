@@ -118,6 +118,30 @@ def pick_stats(m: Moment, found: dict[str, list[Finding]], lead: Finding | None)
 
 
 STORY_CAUSES = {"play_change", "recovery", "goal_lift", "chasing_the_game"}
+# a player clearly doing more for the side that gained: his name goes on the card
+STANDOUT_METRICS = {"defensive_actions", "duels_won", "progressive_passes", "sprints", "distance_m"}
+STANDOUT = 3.5
+
+
+def stands_out(f: Finding, gainer: str | None) -> bool:
+    return bool(
+        f.get("claim") == "player_change"
+        and f["team"] == gainer
+        and f["metric"] in STANDOUT_METRICS
+        and f["after"] > f["before"]
+        and f["effect_sd"] >= STANDOUT
+        and _visible(f)
+    )
+
+
+def standouts(m: Moment, found: dict[str, list[Finding]]) -> list[Finding]:
+    """Up to two players on the side that gained who are clearly doing more, one stat each."""
+    pool = sorted((f for f in found["players"] if stands_out(f, m.gainer)), key=lambda f: -f["effect_sd"])
+    out: list[Finding] = []
+    for f in pool:
+        if len(out) < 2 and all(f["player"] != o["player"] and f["metric"] != o["metric"] for o in out):
+            out.append(f)
+    return out
 
 
 def _partner(m: Moment, found: dict[str, list[Finding]], chosen: list[Finding]) -> Finding | None:
@@ -142,6 +166,9 @@ def choose_stats(m: Moment, cause: dict[str, Any], found: dict[str, list[Finding
         stories = [s for s in find_stories(found["team_play"], m.gainer) if s["aligned"]]
         if stories:
             return list(stories[0]["stats"])
+        stars = standouts(m, found)
+        if stars:
+            return stars
     stats = pick_stats(m, found, lead) or fallback_stats(m, found)
     if len(stats) == 1 and stats[0]["metric"] in LONE_SHARES and not stats[0].get("player"):
         extra = _partner(m, found, stats)

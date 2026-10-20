@@ -59,4 +59,4 @@ The Director is `matchlens/explain/director.py`. The pipeline raises about 12 ca
 - At most 5 cards go up per half.
 - When candidates compete within those 5 minutes, the most salient one wins.
 
-Individual players appear on a card only when the card is about them, such as a substitute against the player they replaced. A single player's busy five minutes is noise next to what the team did. A "usual" needs at least 12 minutes of match before the anchor, so an early goal gets no card rather than a misleading one.
+Individual players appear on a card only when the card is about them: a substitute against the player they replaced, or a player on the side that gained who is clearly doing more (see [explainer.md](explainer.md)). A player's row leads with his name, then the stat. A "usual" needs at least 12 minutes of match before the anchor, so an early goal gets no card rather than a misleading one.

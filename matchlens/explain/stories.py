@@ -35,41 +35,41 @@ STORIES = [
         "safe_possession",
         (("possession", +1), ("own_half_passes", +1)),
         +1,
-        "{T} are keeping the ball in their own half and playing it safe, so {O} can't win it back to attack.",
-        "{T} are keeping the ball and playing it safe in their own half, starving {O} of the ball.",
-        "{T} are keeping the ball deep and playing it safe, which is why {O} can't win it back to attack.",
+        "{T} are keeping the ball in their own half and playing it safe.",
+        "{T} are keeping the ball and playing it safe in their own half.",
+        "{T} are keeping the ball deep and playing it safe.",
     ),
     Story(
         "sitting_deep",
         (("defending_height", -1), ("clearances", +1)),
         -1,
-        "{T} are sitting deeper and clearing the ball more, so {O} have it but can't break through.",
-        "{T} are defending much deeper and making more clearances, which is why they're under pressure.",
-        "{T} are sitting deep and clearing the ball, which is why {O} have plenty of it but can't score.",
+        "{T} are sitting deeper and clearing the ball more.",
+        "{T} are defending much deeper and making more clearances.",
+        "{T} are sitting deep and clearing the ball.",
     ),
     Story(
         "pushed_back",
         (("own_half_passes", +1), ("clearances", +1)),
         -1,
-        "{T} are stuck passing in their own half and clearing their lines, so {O} keep coming back at them.",
-        "{T} are stuck in their own half and clearing their lines, which is why they're under pressure.",
-        "{T} are stuck in their own half and clearing it, which is why {O} keep winning the ball back.",
+        "{T} are stuck passing in their own half and clearing their lines.",
+        "{T} are stuck in their own half and clearing their lines.",
+        "{T} are stuck in their own half and clearing it.",
     ),
     Story(
         "pushing_up",
         (("own_half_passes", -1), ("final_third_passes", +1)),
         +1,
         "{T} have pushed up: fewer passes in their own half, more in {O}'s final third.",
-        "{T} have pushed up the pitch and are passing in {O}'s final third, which is why they're on top.",
-        "{T} have pushed up and are passing in {O}'s final third, which is why {O} are on the back foot.",
+        "{T} have pushed up the pitch and are passing in {O}'s final third.",
+        "{T} have pushed up and are passing in {O}'s final third.",
     ),
     Story(
         "high_press",
         (("high_turnovers", +1), ("defending_height", +1)),
         +1,
         "{T} are pressing higher up the pitch and winning the ball back near {O}'s goal.",
-        "{T} are pressing higher and winning the ball back near goal, which is why they're on top.",
-        "{T} are pressing high and winning the ball back, which is why {O} can't play out from the back.",
+        "{T} are pressing higher and winning the ball back near goal.",
+        "{T} are pressing high and winning the ball back near {O}'s goal.",
     ),
     Story(
         "pinned_back",
@@ -77,7 +77,7 @@ STORIES = [
         +1,
         "{T} are passing in {O}'s final third and getting into the box more often.",
         "{T} are camped in {O}'s half, passing around the box and getting into it.",
-        "{T} are playing in {O}'s final third and getting into the box, which is why {O} are pinned back.",
+        "{T} are playing in {O}'s final third and getting into the box.",
     ),
     Story(
         "wing_play",
@@ -85,7 +85,7 @@ STORIES = [
         +1,
         "{T} are attacking down the wings and crossing into the box more.",
         "{T} are going down the wings and getting crosses into the box.",
-        "{T} are attacking down the wings and crossing, which is why {O} keep defending their box.",
+        "{T} are attacking down the wings and crossing into {O}'s box.",
     ),
     Story(
         "more_threat",
@@ -93,7 +93,7 @@ STORIES = [
         +1,
         "{T} are getting more shots away, and better ones.",
         "{T} are getting more shots away, and from better positions.",
-        "{T} are getting more shots away, and better ones: {O} are struggling to keep them out.",
+        "{T} are getting more shots away, and better ones.",
     ),
     Story(
         "driving_forward",
@@ -101,7 +101,7 @@ STORIES = [
         +1,
         "{T} are moving the ball forward quicker and getting it into the final third.",
         "{T} are moving the ball forward quicker and getting it into the final third.",
-        "{T} are moving the ball forward quicker, which is why {O} are spending more time defending.",
+        "{T} are moving the ball forward quicker and getting it into {O}'s final third.",
     ),
     Story(
         "taking_the_tempo",
@@ -109,7 +109,7 @@ STORIES = [
         +1,
         "{T} are passing more, and more accurately: they've taken control of the tempo.",
         "{T} are passing more, and more accurately: they've taken control of the tempo.",
-        "{T} are passing more, and more accurately, which is why {O} are chasing the ball.",
+        "{T} are passing more, and more accurately.",
     ),
     Story(
         "winning_battles",
@@ -117,7 +117,7 @@ STORIES = [
         +1,
         "The game has got more physical and {T} are winning more of the battles.",
         "The game has got more physical and {T} are winning more of the battles.",
-        "The game has got more physical and {T} are winning more of the battles, which is why {O} are losing the ball.",
+        "The game has got more physical and {T} are winning more of the battles.",
     ),
     Story(
         "going_long",
@@ -125,15 +125,15 @@ STORIES = [
         0,
         "{T} have started going long, skipping the midfield.",
         "{T} have started going long, skipping the midfield.",
-        "{T} have started going long, skipping the midfield to get past {O}'s press.",
+        "{T} have started going long, skipping the midfield.",
     ),
     Story(
         "losing_grip",
         (("pass_accuracy", -1), ("possession", -1)),
         -1,
         "{T}'s passing has gone loose and they keep giving the ball away.",
-        "{T}'s passing has gone loose and they keep giving the ball away, which is why they've lost control.",
-        "{T}'s passing has gone loose and they keep giving the ball away, which is why {O} are seeing more of it.",
+        "{T}'s passing has gone loose and they keep giving the ball away.",
+        "{T}'s passing has gone loose and they keep giving the ball away.",
     ),
 ]
 BY_KEY = {s.key: s for s in STORIES}
@@ -220,7 +220,7 @@ def _lower_first(s: str) -> str:
     return "the" + s[3:] if s.startswith("The ") else s
 
 
-def _fallback(md: MatchData, stats: list[Finding], gainer: str | None) -> str:
+def _fallback(md: MatchData, stats: list[Finding]) -> str:
     team_stats = [f for f in stats if not f.get("player")]
     if not team_stats:
         return ""
@@ -232,11 +232,28 @@ def _fallback(md: MatchData, stats: list[Finding], gainer: str | None) -> str:
     else:
         b = team_stats[1]
         s = f"{md.short(a['team'])} are {_phrase(a)}, while {md.short(b['team'])} are {_phrase(b)}."
-    if gainer is not None:
-        only = len({f["team"] for f in team_stats}) == 1
-        who = "they're" if only and a["team"] == gainer else f"{md.short(gainer)} are"
-        s = f"{s[:-1]}, which is why {who} on top."
     return s
+
+
+# a player doing more: what a fan reads
+PLAYER_PHRASES = {
+    "defensive_actions": "making more tackles",
+    "duels_won": "winning more duels",
+    "progressive_passes": "playing more passes forward",
+    "sprints": "sprinting more",
+    "distance_m": "covering more ground",
+    "duels": "getting into more duels",
+    "touches": "seeing more of the ball",
+}
+
+
+def _player_text(stats: list[Finding]) -> str:
+    """ "Wexez is making more tackles and winning more duels." or two players, one clause each."""
+    names: dict[str, list[str]] = {}
+    for f in stats:
+        names.setdefault(f["name"], []).append(PLAYER_PHRASES.get(f["metric"], f"doing more {f['label'].lower()}"))
+    parts = [f"{n} is {' and '.join(p)}" for n, p in names.items()]
+    return ", and ".join(parts) + "."
 
 
 def _story_text(md: MatchData, key: str, team: str, view: str) -> str:
@@ -280,25 +297,26 @@ def compose(md: MatchData, cause: dict[str, Any], stats: list[Finding], gainer: 
             s = f"Down to ten men, {md.short(team or '')} are holding their shape so far."
         elif kind in ("goal_no_reaction", "half_time_no_change"):
             s = "The goal hasn't swung momentum." if kind == "goal_no_reaction" else "Half-time hasn't swung momentum."
-            what = _fallback(md, stats, None)
+            what = _fallback(md, stats)
             if what:
                 s = f"{s[:-1]}: {what}"
         elif kind == "sub_no_change":
             s = "The change hasn't altered the pattern of play so far."
         elif kind == "fatigue" and team:
-            s = f"{md.short(team)}'s starters are tiring: they're sprinting much less than earlier"
-            s += "." if gainer is None else (f", which is why {md.short(gainer)} are on top.")
+            s = f"{md.short(team)}'s starters are tiring: they're sprinting much less than earlier."
         elif kind == "substitution_impact":
             sub = next((f for f in stats if f.get("replaced")), None)
             s = _sub_text(md, sub) if sub else ""
             rest = [f for f in stats if f is not sub]
             if rest:
-                s = (s + " " + _fallback(md, rest, None)).strip()
+                s = (s + " " + _fallback(md, rest)).strip()
+        elif stats and all(f.get("claim") == "player_change" for f in stats):
+            s = _prefixed(md, kind, team, "", _player_text(stats))
         elif story is not None:
             s = _prefixed(md, kind, team, stats[0]["team"], _story_text(md, story, stats[0]["team"], view))
         elif stats:
             about = next((f["team"] for f in stats if not f.get("player")), stats[0]["team"])
-            s = _prefixed(md, kind, team, about, _fallback(md, stats, None if kind == "recovery" else gainer))
+            s = _prefixed(md, kind, team, about, _fallback(md, stats))
         elif gainer is not None:
             s = f"{md.short(gainer)} have taken over, though no single stat stands out yet."
         else:

@@ -201,28 +201,13 @@ body { display: grid; place-items: center; overflow: hidden; }
 }
 .card[hidden] { display: block; visibility: hidden; }
 .card-head { display: flex; align-items: stretch; height: 2.5cqw; }
-.card-tag {
-  display: flex;
-  align-items: center;
-  gap: 0.55cqw;
-  padding: 0 1cqw;
-  background: var(--accent);
-  color: var(--secondary);
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 1.05cqw;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.card-tag svg { width: 1.15cqw; height: 1.15cqw; }
-.card.kind-red_card .card-tag { background: var(--pink); }
-.card.kind-goal .card-tag, .card.kind-recovery .card-tag { background: var(--secondary); color: var(--primary); }
 .card-anchor {
   display: flex;
   align-items: center;
   flex: 1;
   padding: 0 1.1cqw;
   background: var(--primary);
+  border-left: 0.35cqw solid var(--accent);
   font-family: var(--display);
   font-weight: 700;
   font-size: calc(var(--h1) * 0.82);
