@@ -343,7 +343,10 @@ def create_app(
         return JSONResponse(session.trace(), headers=NO_STORE)
 
     def health(_: Request) -> Response:
-        return JSONResponse({"ok": True, "clock": session.clock()}, headers=NO_STORE)
+        body: dict[str, Any] = {"ok": True, "clock": session.clock()}
+        if isinstance(session.provider, ReplayProvider):
+            body["models"] = session.provider.usage()
+        return JSONResponse(body, headers=NO_STORE)
 
     @contextlib.asynccontextmanager
     async def lifespan(_: Starlette) -> AsyncIterator[None]:

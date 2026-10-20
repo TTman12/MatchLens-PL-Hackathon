@@ -100,4 +100,5 @@ def test_a_store_carries_answers_and_the_count_across_restarts() -> None:
     restarted = ReplayProvider(model, daily_budget=1000, store=store)
     assert cues(restarted) == expected
     assert model.calls == 0
-    assert restarted._spent_today == first.model_calls
+    assert restarted.usage()["spent_today"] == first.model_calls
+    assert restarted.usage()["remembered"] == len(store.state["answers"])

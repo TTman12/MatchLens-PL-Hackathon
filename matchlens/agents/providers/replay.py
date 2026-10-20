@@ -87,6 +87,19 @@ class ReplayProvider:
         self._schedule_save()
         return text
 
+    def usage(self) -> dict[str, Any]:
+        """What this provider has done, for a health check: calls, replays, today's budget."""
+        return {
+            "provider": self.name,
+            "model_calls": self.model_calls,
+            "replayed": self.replayed,
+            "over_budget": self.over_budget,
+            "spent_today": self._spent_today if self._day == int(self.clock() // 86400) else 0,
+            "daily_budget": self.daily_budget,
+            "remembered": len(self._answers),
+            "state_loaded": self._loaded,
+        }
+
     def _spend(self) -> bool:
         """Count one model call against today's budget; False if none is left."""
         day = int(self.clock() // 86400)
