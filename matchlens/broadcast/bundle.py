@@ -91,6 +91,8 @@ def under_the_hood(card: dict[str, Any]) -> dict[str, Any] | None:
         if t["agent"] in ("explainer", "verifier"):
             continue
         specialists.append({"agent": t["agent"], "status": t["status"], "verdict": t.get("verdict"), "note": t.get("note", "")})
+    order = ["team_play", "players", "substitutions", "match_events"]
+    specialists.sort(key=lambda s: order.index(s["agent"]) if s["agent"] in order else len(order))
     rounds = [t for t in a["trace"] if t["agent"] == "verifier"]
     return {
         "runner": a["runner"],

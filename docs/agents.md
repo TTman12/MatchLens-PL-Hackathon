@@ -1,5 +1,7 @@
 # The agents
 
+![The under-the-hood panel next to a card explained by the agents on Foundry](img/agents.png)
+
 The Watcher, the specialists and the Explainer ([explainer.md](explainer.md)) also run as a crew of agents on Microsoft Foundry. The models reason, compare and choose. Tools compute every number, and a Verifier written in code checks every choice. The deterministic Explainer is still there as the fallback, and as the offline stand-in for the models.
 
 ```
