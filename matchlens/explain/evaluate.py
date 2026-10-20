@@ -128,9 +128,41 @@ def _one(args: tuple[Path, Path]) -> list[dict[str, Any]]:
     return rows + control(md, truth, random.Random(folder.name))
 
 
-def evaluate(out_dir: Path) -> dict[str, Any]:
+def _agents(jobs: list[tuple[Path, Path]], runner_name: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Score the agent crew (matchlens/agents) instead of the deterministic Explainer."""
+    import asyncio
+
+    from ..agents.crew import explain_match_async
+    from ..agents.runners import make_runner
+
+    async def one(runner: Any, folder: Path, truth_file: Path) -> list[dict[str, Any]]:
+        truth = json.loads(truth_file.read_text())
+        md = load(folder)
+        cards = (await explain_match_async(md, runner))["cards"]
+        rows = [score_card(c, truth) | {"fallback": c["agents"]["fallback"]} for c in cards]
+        return rows + control(md, truth, random.Random(folder.name))
+
+    async def go() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        runner = make_runner(runner_name)
+        try:
+            done = await asyncio.gather(*(one(runner, f, t) for f, t in jobs))
+            return [r for rs in done for r in rs], runner.usage.as_dict()
+        finally:
+            await runner.close()
+
+    return asyncio.run(go())
+
+
+def evaluate(out_dir: Path, runner: str | None = None) -> dict[str, Any]:
+    """Score every match in a generated folder. `runner` scores the agent crew on that runner."""
     folders = sorted((out_dir / "matches").iterdir())
     jobs = [(f, out_dir / "truth" / f"{f.name}.json") for f in folders]
+    if runner:
+        rows, usage = _agents(jobs, runner)
+        report = summarise(rows, len(folders))
+        cards = [r for r in rows if not r.get("control")]
+        report["agents"] = {"runner": runner, "fallback_rate": _rate(cards, "fallback"), "usage": usage}
+        return report
     with ProcessPoolExecutor() as pool:
         rows = [r for rs in pool.map(_one, jobs, chunksize=4) for r in rs]
     return summarise(rows, len(folders))
@@ -171,15 +203,16 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=9000, help="season seed; 2026 was used for tuning")
     ap.add_argument("--data", type=Path, help="score an existing generated folder instead")
     ap.add_argument("--check", action="store_true", help="exit non-zero if a headline number falls below its floor")
+    ap.add_argument("--agents", choices=["offline", "foundry"], help="score the agent crew on this runner instead")
     args = ap.parse_args()
     if args.data:
-        report = evaluate(args.data)
+        report = evaluate(args.data, args.agents)
     else:
         from ..gen.cli import write_season
 
         with tempfile.TemporaryDirectory() as tmp:
             write_season(Path(tmp), args.seed, args.matches)
-            report = evaluate(Path(tmp))
+            report = evaluate(Path(tmp), args.agents)
     print(json.dumps(report, indent=1))
     if args.check:
         failed = check(report)

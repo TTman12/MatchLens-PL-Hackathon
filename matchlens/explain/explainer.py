@@ -155,18 +155,35 @@ def _stat_out(md: MatchData, f: Finding) -> dict[str, Any]:
     return out
 
 
+def fallback_stats(m: Moment, found: dict[str, list[Finding]]) -> list[Finding]:
+    """A red card always gets a card; show how the 10 men are doing even if nothing moved much."""
+    if not m.events or m.events[0].kind != "red_card":
+        return []
+    ten = [f for f in found["team_play"] if f["team"] == m.events[0].team_id and f["metric"] in ("possession", "passes")]
+    return ten[:1]
+
+
 def explain(md: MatchData, m: Moment) -> dict[str, Any]:
     clock = md.clock_of(m.now - 1)
     md = md.until(m.now)  # the agents only ever see the match as it stood at that minute
     found = investigate(md, m)
     cause, lead = decide_cause(md, m, found)
-    stats = pick_stats(m, found, lead)
-    if not stats and m.events and m.events[0].kind == "red_card":
-        # a red card always gets a card; show how the 10 men are doing even if nothing moved much
-        ten = [f for f in found["team_play"] if f["team"] == m.events[0].team_id and f["metric"] in ("possession", "passes")]
-        stats = ten[:1]
+    stats = pick_stats(m, found, lead) or fallback_stats(m, found)
+    return assemble(md, m, clock, found, cause, stats)
+
+
+def assemble(
+    md: MatchData,
+    m: Moment,
+    clock: str,
+    found: dict[str, list[Finding]],
+    cause: dict[str, Any],
+    stats: list[Finding],
+    confidence_penalty: float = 0.0,
+) -> dict[str, Any]:
+    """The card for one moment, once the cause and stats are chosen (by this module or by agents)."""
     top = max((abs(s["effect_sd"]) for s in stats), default=0.0)
-    confidence = round(min(0.95, 0.35 + 0.12 * top), 2)
+    confidence = round(max(0.05, min(0.95, 0.35 + 0.12 * top) - confidence_penalty), 2)
     salience = round(max(m.swing / SWING_FULL, top / 3), 2)
     return {
         "match_id": md.meta["match_id"],
