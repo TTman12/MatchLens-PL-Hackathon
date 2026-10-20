@@ -11,6 +11,7 @@ import pytest
 
 from matchlens.agents.director import Director, DirectorConfig
 from matchlens.agents.lenses import AgentCaller, parse_json
+from matchlens.agents.pipeline import run_match
 from matchlens.agents.providers import (
     AgentFrameworkProvider,
     AgentTask,
@@ -27,6 +28,7 @@ from matchlens.contracts import Draft, Lens
 from matchlens.mcp_server import TOOL_NAMES, MatchStateStore
 
 from .agt_helpers import evals_module, moments, stats
+from .conftest import SAMPLE
 
 # -- Moment Detector ------------------------------------------------------------------------
 
@@ -284,3 +286,78 @@ def test_chaos_audits_pass() -> None:
     for name, report in reports.items():
         assert report.ok, (name, report.problems)
         assert report.numbers_checked > 0
+
+
+def test_each_role_is_one_foundry_agent() -> None:
+    from matchlens.agents.providers.foundry import foundry_agent_name
+
+    def task(agent: str, tier: str = "fast") -> AgentTask:
+        return AgentTask(agent=agent, instance=f"{agent}:x", instructions="", prompt="", tier=tier)  # type: ignore[arg-type]
+
+    assert foundry_agent_name(task("player")) == "matchlens-player"
+    assert foundry_agent_name(task("translator")) == "matchlens-translator"
+    assert foundry_agent_name(task("pundit", "strong")) == "matchlens-pundit-brief"
+
+
+def test_published_tool_schemas_are_strict() -> None:
+    pytest.importorskip("agent_framework_foundry")
+    from agent_framework import Agent
+    from agent_framework_foundry import FoundryChatClient
+
+    from matchlens.agents.providers.foundry import prompt_agent_definition
+
+    def lookup_next_fixture(team_id: str) -> str:
+        """A club's next league match.
+        Returns evidence ids you can cite."""
+        return team_id
+
+    client = FoundryChatClient(
+        project_endpoint="https://example.services.ai.azure.com/api/projects/p",
+        model="gpt-4.1-mini",
+        credential=object(),  # never used: nothing is sent
+    )
+    agent = Agent(
+        client=client,
+        instructions="Write a box.",
+        name="matchlens-club",
+        tools=[lookup_next_fixture],
+    )
+    definition = prompt_agent_definition(agent)
+    assert definition["model"] == "gpt-4.1-mini"
+    (tool,) = definition["tools"]
+    assert tool["name"] == "lookup_next_fixture"
+    assert tool["parameters"]["additionalProperties"] is False
+    assert tool["description"] == "A club's next league match.\nReturns evidence ids you can cite."
+
+
+def test_the_roster_matches_the_tasks_the_pipeline_sends() -> None:
+    from matchlens.agents.providers import ReplayProvider
+    from matchlens.agents.providers.foundry import foundry_agent_name
+    from matchlens.agents.roster import agent_roster, publish_agents
+
+    roster = {foundry_agent_name(t): t for t in agent_roster()}
+    assert set(roster) == {
+        "matchlens-player",
+        "matchlens-club",
+        "matchlens-pundit",
+        "matchlens-pundit-brief",
+        "matchlens-verifier",
+        "matchlens-translator",
+    }
+    seen: list[AgentTask] = []
+
+    class Recording(OfflineProvider):
+        async def complete(self, task: AgentTask) -> str:
+            seen.append(task)
+            return await super().complete(task)
+
+        async def publish(self, tasks: list[AgentTask]) -> dict[str, str | None]:
+            return {foundry_agent_name(t): "1" for t in tasks}
+
+    asyncio.run(run_match(SAMPLE, Recording(), languages=["en", "es"]))
+    for task in seen:
+        listed = roster[foundry_agent_name(task)]
+        assert (listed.instructions, listed.tier) == (task.instructions, task.tier)
+        assert [f.__name__ for f in listed.tools] == [f.__name__ for f in task.tools]
+    assert len(asyncio.run(publish_agents(ReplayProvider(Recording())))) == 6
+    assert asyncio.run(publish_agents(OfflineProvider())) == {}

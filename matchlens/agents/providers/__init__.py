@@ -15,6 +15,7 @@ from .foundry import (
     configure_tracing,
 )
 from .offline import OfflineProvider
+from .replay import BlobReplayStore, ReplayProvider, ReplayStore
 
 PROVIDER_VAR = "MATCHLENS_PROVIDER"
 
@@ -44,21 +45,26 @@ def provider_from_env(
 
 async def close_provider(provider: ModelProvider) -> None:
     """Release the provider's network sessions (the Azure credential's, for Foundry)."""
-    inner = getattr(provider, "inner", None)  # a ChaosProvider wraps the real one
-    close = getattr(inner if inner is not None else provider, "close", None)
+    close = getattr(provider, "close", None)
     if close is not None:
         await close()
+    inner = getattr(provider, "inner", None)  # Chaos and Replay providers wrap the real one
+    if inner is not None:
+        await close_provider(inner)
 
 
 __all__ = [
     "AgentFrameworkProvider",
     "AgentTask",
+    "BlobReplayStore",
     "ChaosProvider",
     "FoundryProvider",
     "FoundrySettings",
     "ModelProvider",
     "OfflineProvider",
     "ProviderError",
+    "ReplayProvider",
+    "ReplayStore",
     "Tier",
     "close_provider",
     "configure_tracing",

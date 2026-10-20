@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from matchlens.agents.providers import OfflineProvider
+from matchlens.agents.providers import ChaosProvider, OfflineProvider
 from matchlens.api.clock import MAX_RATE, Span, merge, rate_at, slow_spans
 from matchlens.api.live import LiveSession
 
@@ -162,3 +162,28 @@ def test_reset_goes_back_to_kick_off() -> None:
     session.reset()
     assert session.v == session.start
     assert session.released.moments == [] and session.released.cues == []
+
+
+def test_a_bare_link_opens_the_live_match(tmp_path: Any) -> None:
+    from starlette.testclient import TestClient
+
+    from matchlens.api.live import create_app
+
+    (tmp_path / "index.html").write_text("<html>player</html>")
+    app = create_app(LiveSession(SAMPLE, lambda: OfflineProvider()), web_dir=tmp_path)
+    client = TestClient(app)
+    bare = client.get("/", follow_redirects=False)
+    assert bare.status_code == 307 and bare.headers["location"] == "/?live"
+    assert client.get("/?live").text == "<html>player</html>"
+    assert client.get("/healthz").status_code == 200
+
+
+def test_live_replays_model_answers_with_the_budget_from_the_environment() -> None:
+    from matchlens.agents.providers import ReplayProvider
+    from matchlens.api.live import replay_from_env
+
+    assert isinstance(replay_from_env(OfflineProvider()), OfflineProvider)
+    wrapped = replay_from_env(
+        ChaosProvider(OfflineProvider()), {"MATCHLENS_DAILY_MODEL_CALLS": "850"}
+    )
+    assert isinstance(wrapped, ReplayProvider) and wrapped.daily_budget == 850

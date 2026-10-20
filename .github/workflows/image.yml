@@ -1,0 +1,40 @@
+name: Live image
+
+# Builds the MatchLens live image (player + live server) and publishes it to the GitHub
+# Container Registry, where Azure Container Apps pulls it. Tags: the commit SHA always,
+# and `latest` from main.
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths: [Dockerfile, .dockerignore, pyproject.toml, matchlens/**, web/**, data/season/**, .github/workflows/image.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: name
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}/live" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.name.outputs.image }}:${{ github.sha }}
+            ${{ github.ref == 'refs/heads/main' && format('{0}:latest', steps.name.outputs.image) || '' }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.description=MatchLens live match player and agent server
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -34,19 +34,24 @@ import bisect
 import contextlib
 import json
 import logging
+import os
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
 from matchlens.agents.pipeline import MatchRun, cue_track
 from matchlens.agents.providers import (
+    BlobReplayStore,
     ModelProvider,
+    OfflineProvider,
+    ReplayProvider,
     close_provider,
     configure_tracing,
     provider_from_env,
 )
+from matchlens.agents.roster import publish_agents
 from matchlens.agents.state import MomentContext
 from matchlens.contracts import EventType
 from matchlens.stats import MatchData, load_match
@@ -83,6 +88,26 @@ class Released:
     late: int = 0
 
 
+BUDGET_VAR = "MATCHLENS_DAILY_MODEL_CALLS"
+"""Most agent tasks a day that may reach the model; past it, unseen tasks use templates."""
+REPLAY_BLOB_VAR = "MATCHLENS_REPLAY_BLOB_URL"
+"""Azure blob that keeps remembered answers and today's count across restarts."""
+
+
+def replay_from_env(provider: ModelProvider, env: Mapping[str, str] | None = None) -> ModelProvider:
+    """Wrap a model provider for replay, with the budget and store the environment names."""
+    if isinstance(provider, OfflineProvider):
+        return provider
+    env = os.environ if env is None else env
+    budget = env.get(BUDGET_VAR, "").strip()
+    blob = env.get(REPLAY_BLOB_VAR, "").strip()
+    return ReplayProvider(
+        provider,
+        daily_budget=int(budget) if budget else None,
+        store=BlobReplayStore(blob) if blob else None,
+    )
+
+
 class LiveSession:
     """One match, one shared clock, and the agent pipeline running inside the delay."""
 
@@ -109,8 +134,9 @@ class LiveSession:
         self.max_rate = max_rate
         self.languages = languages or ["en", "es"]
         if provider_factory is None:
-            # One provider for every loop of the match, so one Azure credential is reused.
-            shared = provider_from_env()
+            # One provider for every loop of the match: one Azure credential, and each
+            # loop after the first replays the model's answers instead of paying again.
+            shared = replay_from_env(provider_from_env())
             provider_factory = lambda: shared  # noqa: E731
         self._provider_factory = provider_factory
         self.jobs: asyncio.Queue[tuple[int, MomentContext | float]] = asyncio.Queue()
@@ -292,7 +318,7 @@ def create_app(
 ) -> Any:
     from starlette.applications import Starlette
     from starlette.requests import Request
-    from starlette.responses import JSONResponse, Response
+    from starlette.responses import FileResponse, JSONResponse, RedirectResponse, Response
     from starlette.routing import Mount, Route
     from starlette.staticfiles import StaticFiles
 
@@ -318,13 +344,18 @@ def create_app(
         return JSONResponse(session.trace(), headers=NO_STORE)
 
     def health(_: Request) -> Response:
-        return JSONResponse({"ok": True, "clock": session.clock()}, headers=NO_STORE)
+        body: dict[str, Any] = {"ok": True, "clock": session.clock()}
+        if isinstance(session.provider, ReplayProvider):
+            body["models"] = session.provider.usage()
+        return JSONResponse(body, headers=NO_STORE)
 
     @contextlib.asynccontextmanager
     async def lifespan(_: Starlette) -> AsyncIterator[None]:
         tasks = [
             asyncio.create_task(clock_loop(session, loop_after_s)),
             asyncio.create_task(session.agents()),
+            # List every agent in Foundry Agent Service now, not on its first call.
+            asyncio.create_task(publish_agents(session.provider)),
         ]
         try:
             yield
@@ -341,7 +372,14 @@ def create_app(
         Route("/healthz", health),
     ]
     if web_dir is not None:
-        routes.append(Mount("/", StaticFiles(directory=web_dir, html=True)))
+
+        def home(request: Request) -> Response:
+            # A bare link opens the live match; ?data= and the like still reach the player.
+            if not request.query_params:
+                return RedirectResponse("/?live", status_code=307)
+            return FileResponse(web_dir / "index.html", headers=NO_STORE)
+
+        routes += [Route("/", home), Mount("/", StaticFiles(directory=web_dir, html=True))]
     return Starlette(routes=routes, lifespan=lifespan)
 
 
@@ -370,6 +408,7 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
+    logging.getLogger("azure").setLevel(logging.WARNING)  # one line per HTTP request
     match_dir = Path(args.match_dir)
     if not (match_dir / "frames.jsonl").exists():
         from .demo import build_demo
