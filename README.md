@@ -10,12 +10,16 @@ It is a fresh start for the Microsoft × Premier League hackathon. All match dat
 
 - **Synthetic match generator:** built, and passes the realism gate. A full generated season matches the real 2017-18 Premier League on all 31 numbers checked ([docs/realism.md](docs/realism.md)).
 - **Watcher, specialists and Explainer:** built as deterministic tools that work on any match in the public format. Scored against the hidden truth on unseen matches ([docs/explainer.md](docs/explainer.md)).
-- **Next:** run them as agents, then the broadcast graphics.
+- **Broadcast screen:** score and clock, an always-on momentum scale, a timeline with the momentum history, and pop-up cards chosen by a Director ([docs/broadcast.md](docs/broadcast.md)).
+- **Next:** run the specialists as Foundry agents, and add a stadium still.
+
+![The broadcast screen](docs/img/broadcast.png)
 
 ```
 pip install -e ".[dev]"
 matchlens-gen match --home ash --away brk --seed 7   # one match: events, minute tables, physical, hidden truth
 matchlens-explain out/matches/ash-brk-7              # the cards that would go on screen
+matchlens-broadcast --demo 6 && (cd web && python3 -m http.server 8000)   # the screen, at localhost:8000
 matchlens-realism                                     # generate 380 matches and check them against the real season
 matchlens-explain-eval                                # score the explainer against hidden truth on unseen matches
 pytest -q
@@ -26,6 +30,7 @@ pytest -q
 - [docs/design.md](docs/design.md): the design, covering the two modes, the agents, the graphic contract, the scoring and the decisions so far.
 - [docs/data-format.md](docs/data-format.md): the match format any match can be fed in as.
 - [docs/generator.md](docs/generator.md): how the generator works and what the hidden truth holds.
+- [docs/broadcast.md](docs/broadcast.md): the broadcast screen, its controls and the Director.
 - [docs/explainer.md](docs/explainer.md): the Watcher, the specialists and the Explainer, what stats can and can't tell you, and how well it scores.
 - [docs/research/](docs/research/): which football stats exist and what each one reveals, plus what 380 real matches show about momentum shifts.
 
@@ -33,7 +38,8 @@ pytest -q
 
 1. ~~Synthetic match generator, gated on a realism test against the real-season patterns.~~ Done.
 2. ~~A watcher that spots shifts, plus specialists that investigate them~~ (deterministic tools done; running them as agents is next).
-3. Broadcast graphics: a momentum scale, an event timeline, and the event, spontaneous and recovery cards.
+3. ~~Broadcast graphics: a momentum scale, an event timeline, and the event, spontaneous and recovery cards.~~ Done, apart from the stadium still.
+4. Specialists as Foundry agents, with an LLM Explainer and a Verifier.
 
 ## Research data
 

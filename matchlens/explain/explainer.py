@@ -17,6 +17,7 @@ EASY = {"possession", "duels_won", "defending_height", "shots", "long_balls", "d
 STRONG = 2.0  # effect, in random-window spreads, that counts as a clear change
 CONTROL = "field_tilt"
 SHARES = {"possession", "field_tilt"}
+OFF_SCREEN = {CONTROL, "hsr"}  # the bar already shows tilt; high-speed metres per player reads as jargon
 SWING_FULL = 40.0  # a field-tilt swing this big is as salient as a card gets  # the momentum bar already shows this one
 
 
@@ -95,9 +96,9 @@ def _visible(f: Finding) -> bool:
 
 
 def pick_stats(m: Moment, found: dict[str, list[Finding]], lead: Finding | None) -> list[Finding]:
-    pool = [f for f in found["team_play"] if f["metric"] != CONTROL] + [
-        f for f in found["players"] + found["substitutions"] if f["claim"] not in ("sub_no_difference",)
-    ]
+    # individual numbers only go on screen when the cause is about that player (a sub, a fade);
+    # one player's busy five minutes is noise next to what the team did
+    pool = [f for f in found["team_play"] if f["metric"] not in OFF_SCREEN]
     pool = [f for f in pool if abs(f["effect_sd"]) >= 1.5 and _visible(f)]
     pool.sort(key=lambda f: -_score(f, m.gainer))
     chosen = [lead] if lead is not None else []
@@ -108,7 +109,7 @@ def pick_stats(m: Moment, found: dict[str, list[Finding]], lead: Finding | None)
             continue
         if any(f["metric"] in SHARES and f["metric"] == c["metric"] for c in chosen):  # one side's share is the other's
             continue
-        if chosen and f["metric"] == chosen[0]["metric"] and f["team"] == chosen[0]["team"]:
+        if any(f["metric"] == c["metric"] for c in chosen):  # two rows never repeat a stat
             continue
         chosen.append(f)
     return chosen
@@ -160,6 +161,10 @@ def explain(md: MatchData, m: Moment) -> dict[str, Any]:
     found = investigate(md, m)
     cause, lead = decide_cause(md, m, found)
     stats = pick_stats(m, found, lead)
+    if not stats and m.events and m.events[0].kind == "red_card":
+        # a red card always gets a card; show how the 10 men are doing even if nothing moved much
+        ten = [f for f in found["team_play"] if f["team"] == m.events[0].team_id and f["metric"] in ("possession", "passes")]
+        stats = ten[:1]
     top = max((abs(s["effect_sd"]) for s in stats), default=0.0)
     confidence = round(min(0.95, 0.35 + 0.12 * top), 2)
     salience = round(max(m.swing / SWING_FULL, top / 3), 2)

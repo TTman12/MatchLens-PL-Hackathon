@@ -1,0 +1,62 @@
+[
+ {
+  "match_id": "ash-brk-31",
+  "home": "Ashmere",
+  "away": "Brackenford",
+  "score": [
+   1,
+   0
+  ],
+  "cards": 3
+ },
+ {
+  "match_id": "cal-dun-32",
+  "home": "Calderwick",
+  "away": "Dunmoor",
+  "score": [
+   0,
+   3
+  ],
+  "cards": 6
+ },
+ {
+  "match_id": "brk-cal-33",
+  "home": "Brackenford",
+  "away": "Calderwick",
+  "score": [
+   3,
+   3
+  ],
+  "cards": 6
+ },
+ {
+  "match_id": "dun-ash-34",
+  "home": "Dunmoor",
+  "away": "Ashmere",
+  "score": [
+   2,
+   1
+  ],
+  "cards": 9
+ },
+ {
+  "match_id": "ash-cal-35",
+  "home": "Ashmere",
+  "away": "Calderwick",
+  "score": [
+   2,
+   1
+  ],
+  "cards": 5
+ },
+ {
+  "match_id": "brk-dun-36",
+  "home": "Brackenford",
+  "away": "Dunmoor",
+  "score": [
+   1,
+   2
+  ],
+  "cards": 6
+ }
+]
