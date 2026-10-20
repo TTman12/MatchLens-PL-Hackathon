@@ -24,6 +24,9 @@ param model string = 'gpt-4.1-mini'
 @description('Most agent tasks a day that may reach the model. About 170 is one full match.')
 param dailyModelCalls int = 850
 
+@description('Blob for the replay state. Each image starts fresh, so a new match never replays old commentary.')
+param replayBlob string = '${last(split(image, ':'))}.json'
+
 @description('Existing Log Analytics workspace for the app logs.')
 param logAnalyticsName string = 'matchlens-foundry-812-logs'
 
@@ -126,7 +129,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'MATCHLENS_DAILY_MODEL_CALLS', value: string(dailyModelCalls) }
             {
               name: 'MATCHLENS_REPLAY_BLOB_URL'
-              value: '${storage.properties.primaryEndpoints.blob}replay/m291.json'
+              value: '${storage.properties.primaryEndpoints.blob}replay/${replayBlob}'
             }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: insights.properties.ConnectionString }
           ]

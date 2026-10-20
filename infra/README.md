@@ -17,6 +17,8 @@ No keys or secrets: the app signs in to Foundry and Storage with its managed ide
 - One replica at most: the match clock lives in memory, so every viewer shares one match.
 - `ReplayProvider` remembers every model answer in the replay blob, so replaying the
   match calls the model again only for tasks it has not seen.
+- Each image gets its own replay blob (named after its tag), so a redeploy with a new
+  match starts with fresh commentary and a fresh daily count.
 - `MATCHLENS_DAILY_MODEL_CALLS` (default 850, about 5 full matches) caps model calls a
   day; past it, unseen tasks get the offline templates.
 - A $20 monthly budget on the resource group emails at 50% spent and at a forecast of 100%.
