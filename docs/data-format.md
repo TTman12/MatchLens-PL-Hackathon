@@ -43,10 +43,10 @@ Every event has `id`, `period`, `t`, `m`, `clock`, `team_id`, `player_id` (null 
 **`team_minute.csv`** has one row per team per minute, made up of:
 
 - **Context:** `m`, `period`, `clock_minute`, `team_id`, the score at the start of the minute (`goals_for_before`, `goals_against_before`) and `players_on`.
-- **Passing:** passes, completed passes, passes in their own half, passes in the final third (attempted and completed), progressive passes, long passes and crosses.
+- **Passing:** passes, completed passes, passes in their own half, passes in their own 60% (`passes_build_up`, for the opponent's PPDA), the summed length of passes (`pass_length_sum`), passes in the final third (attempted and completed), progressive passes, long passes and crosses.
 - **Territory:** final-third and box entries, touches, and touches in the final third.
 - **Duels:** duels and duels won, and aerial duels and aerial duels won.
-- **Defending:** defensive actions, plus the sum of their x positions. Divide it by the count to get the average defending height.
+- **Defending:** defensive actions, plus the sum of their x positions. Divide it by the count to get the average defending height. `defensive_actions_high` counts those in the opponent's 60%; PPDA is the opponent's `passes_build_up` divided by it.
 - **Pressing:** `high_regains`, which counts balls won within 40 m of the opponent's goal.
 - **Attacking:** shots, shots on target, xG and goals.
 - **Discipline and set pieces:** fouls, yellow and red cards, corners and offsides.

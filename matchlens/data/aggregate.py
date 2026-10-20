@@ -15,12 +15,15 @@ PITCH = 105.0
 FINAL_THIRD = PITCH * 2 / 3
 BOX_X, BOX_Y = PITCH - 16.5, (68 - 40.3) / 2
 Counts = collections.defaultdict[str, float]
+BUILD_UP_X = PITCH * 0.6  # a team's own 60%: where PPDA counts the passes it is allowed
 OPEN_PLAY = {"short", "high", "header", "cross", "long", "through", "throw"}
 
 TEAM_COLUMNS = [
     "passes",
     "passes_completed",
     "passes_own_half",
+    "passes_build_up",
+    "pass_length_sum",
     "passes_final_third",
     "passes_final_third_completed",
     "progressive_passes",
@@ -36,6 +39,7 @@ TEAM_COLUMNS = [
     "aerial_won",
     "defensive_actions",
     "defensive_action_x_sum",
+    "defensive_actions_high",
     "high_regains",
     "shots",
     "shots_on_target",
@@ -118,6 +122,9 @@ def aggregate(
             pc["passes_completed"] += ok
             if x < PITCH / 2:
                 c["passes_own_half"] += 1
+            if x < BUILD_UP_X:
+                c["passes_build_up"] += 1
+            c["pass_length_sum"] += ((ex - x) ** 2 + (ey - y) ** 2) ** 0.5
             if x >= FINAL_THIRD:
                 c["passes_final_third"] += 1
                 c["passes_final_third_completed"] += ok
@@ -149,6 +156,7 @@ def aggregate(
             if e.get("duel_role") == "defending" or (sub != "ground" and won):
                 c["defensive_actions"] += 1
                 c["defensive_action_x_sum"] += x
+                c["defensive_actions_high"] += x >= PITCH - BUILD_UP_X
                 pc["defensive_actions"] += 1
                 pc["defensive_action_x_sum"] += x
                 if won and x >= PITCH - 40:
@@ -156,6 +164,7 @@ def aggregate(
         elif kind == "clearance":
             c["defensive_actions"] += 1
             c["defensive_action_x_sum"] += x
+            c["defensive_actions_high"] += x >= PITCH - BUILD_UP_X
             pc["defensive_actions"] += 1
             pc["defensive_action_x_sum"] += x
         elif kind == "shot":
@@ -173,6 +182,7 @@ def aggregate(
             pc["fouls"] += 1
             c["defensive_actions"] += 1
             c["defensive_action_x_sum"] += x
+            c["defensive_actions_high"] += x >= PITCH - BUILD_UP_X
             card = e.get("card")
             if card == "yellow":
                 c["yellow_cards"] += 1
@@ -209,7 +219,9 @@ def aggregate(
             }
             row.update(
                 {
-                    k: round(c.get(k, 0), 3) if k in ("xg", "distance_m", "hsr_m", "defensive_action_x_sum") else int(c.get(k, 0))
+                    k: round(c.get(k, 0), 3)
+                    if k in ("xg", "distance_m", "hsr_m", "defensive_action_x_sum", "pass_length_sum")
+                    else int(c.get(k, 0))
                     for k in TEAM_COLUMNS
                 }
             )

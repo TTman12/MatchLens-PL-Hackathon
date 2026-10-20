@@ -1,0 +1,107 @@
+{
+ "field_tilt": {
+  "beta": 1.0,
+  "resid_sd": 0.3,
+  "raw_sd": 1.798
+ },
+ "possession": {
+  "beta": 0.506,
+  "resid_sd": 1.29,
+  "raw_sd": 1.578
+ },
+ "pass_accuracy": {
+  "beta": 0.424,
+  "resid_sd": 1.735,
+  "raw_sd": 1.906
+ },
+ "final_third_passes": {
+  "beta": 0.645,
+  "resid_sd": 1.239,
+  "raw_sd": 1.697
+ },
+ "progressive_passes": {
+  "beta": 0.494,
+  "resid_sd": 1.387,
+  "raw_sd": 1.647
+ },
+ "box_entries": {
+  "beta": 0.448,
+  "resid_sd": 1.449,
+  "raw_sd": 1.657
+ },
+ "shots": {
+  "beta": 0.375,
+  "resid_sd": 1.501,
+  "raw_sd": 1.644
+ },
+ "xg": {
+  "beta": 0.377,
+  "resid_sd": 2.939,
+  "raw_sd": 3.015
+ },
+ "defending_height": {
+  "beta": 0.6,
+  "resid_sd": 1.401,
+  "raw_sd": 1.77
+ },
+ "ppda": {
+  "beta": -0.297,
+  "resid_sd": 2.405,
+  "raw_sd": 2.462
+ },
+ "high_turnovers": {
+  "beta": 0.328,
+  "resid_sd": 1.528,
+  "raw_sd": 1.637
+ },
+ "duels_won": {
+  "beta": 0.283,
+  "resid_sd": 1.483,
+  "raw_sd": 1.568
+ },
+ "long_balls": {
+  "beta": -0.173,
+  "resid_sd": 1.639,
+  "raw_sd": 1.671
+ },
+ "pass_length": {
+  "beta": -0.162,
+  "resid_sd": 1.636,
+  "raw_sd": 1.664
+ },
+ "passes": {
+  "beta": 0.364,
+  "resid_sd": 1.466,
+  "raw_sd": 1.606
+ },
+ "crosses": {
+  "beta": 0.427,
+  "resid_sd": 1.616,
+  "raw_sd": 1.788
+ },
+ "duels": {
+  "beta": -0.06,
+  "resid_sd": 1.584,
+  "raw_sd": 1.588
+ },
+ "fouls": {
+  "beta": -0.071,
+  "resid_sd": 1.529,
+  "raw_sd": 1.534
+ },
+ "distance": {
+  "beta": 0.144,
+  "resid_sd": 1.681,
+  "raw_sd": 1.702
+ },
+ "sprints": {
+  "beta": 0.017,
+  "resid_sd": 1.423,
+  "raw_sd": 1.423
+ },
+ "hsr": {
+  "beta": 0.07,
+  "resid_sd": 1.011,
+  "raw_sd": 1.021
+ }
+}

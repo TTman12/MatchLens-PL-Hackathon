@@ -60,6 +60,15 @@ def write_one(
     return folder
 
 
+def write_season(out: Path, seed: int = 2026, limit: int | None = None) -> None:
+    from .model import build_team
+
+    clubs = {c["team_id"]: c for c in load_league()["clubs"]}
+    for rec in generate_season(seed=seed, limit=limit):
+        home, away = build_team(clubs[rec["home"]], True), build_team(clubs[rec["away"]], False)
+        write_one(out, rec["match_id"], home, away, rec["seed"], rec["events"], rec["physical"], rec["decisions"], rec["minutes"])
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -86,14 +95,7 @@ def main() -> None:
         )
         print(f"{folder}  {m.home.short_name} {m.home.score}-{m.away.score} {m.away.short_name}  {len(m.events)} events")
         return
-    clubs = {c["team_id"]: c for c in load_league()["clubs"]}
-    from .model import build_team
-
-    for rec in generate_season(seed=args.seed, limit=args.limit):
-        home, away = build_team(clubs[rec["home"]], True), build_team(clubs[rec["away"]], False)
-        write_one(
-            args.out, rec["match_id"], home, away, rec["seed"], rec["events"], rec["physical"], rec["decisions"], rec["minutes"]
-        )
+    write_season(args.out, args.seed, args.limit)
     print(f"wrote {args.limit or 380} matches to {args.out}/matches")
 
 
