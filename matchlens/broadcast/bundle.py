@@ -6,6 +6,7 @@ Director put on screen, with their numbers already formatted.
 
     matchlens-broadcast out/matches/ash-brk-7 --out web/data      # one match folder
     matchlens-broadcast --demo 6 --out web/data                     # generate fresh demo matches
+    matchlens-broadcast --demo 6 --out web/data --agents foundry    # explained by the agents on Foundry
 """
 
 from __future__ import annotations
@@ -80,8 +81,34 @@ def card_kind(card: dict[str, Any]) -> str:
     return "substitution" if events else "shift"
 
 
-def build(md: MatchData) -> dict[str, Any]:
-    result = explain_match(md)
+def under_the_hood(card: dict[str, Any]) -> dict[str, Any] | None:
+    """What the agents did for this card, for the screen's under-the-hood drawer."""
+    a = card.get("agents")
+    if not a:
+        return None
+    specialists = []
+    for t in a["trace"]:
+        if t["agent"] in ("explainer", "verifier"):
+            continue
+        specialists.append({"agent": t["agent"], "status": t["status"], "verdict": t.get("verdict"), "note": t.get("note", "")})
+    order = ["team_play", "players", "substitutions", "match_events"]
+    specialists.sort(key=lambda s: order.index(s["agent"]) if s["agent"] in order else len(order))
+    rounds = [t for t in a["trace"] if t["agent"] == "verifier"]
+    return {
+        "runner": a["runner"],
+        "specialists": specialists,
+        "board": a["board"],
+        "why": a["why"],
+        "verifier": [{"round": t["round"], "status": t["status"], "problems": t["problems"]} for t in rounds],
+        "fallback": a["fallback"],
+        "missing": a["missing"],
+        "confidence": card["cause"]["confidence"],
+    }
+
+
+def build(md: MatchData, result: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The bundle for one match. `result` is an explained match (by default, the deterministic one)."""
+    result = result or explain_match(md)
     shown = direct(result["cards"])
     home, away = md.teams
     score: list[list[int]] = []
@@ -118,6 +145,7 @@ def build(md: MatchData) -> dict[str, Any]:
                 "momentum": {"before": c["momentum"]["before"], "now": c["momentum"]["now"], "gainer": c["momentum"]["gainer"]},
                 "cause": c["cause"]["kind"],
                 "shifted": c["shifted"],
+                "hood": under_the_hood(c),
             }
         )
     return {
@@ -145,15 +173,34 @@ def build(md: MatchData) -> dict[str, Any]:
         ],
         "cards": cards,
         "candidates": len(result["cards"]),
+        "agents": result.get("agents"),
     }
 
 
-def write_bundles(folders: list[Path], out: Path) -> list[dict[str, Any]]:
+def explain_with_agents(mds: list[MatchData], runner_name: str) -> list[dict[str, Any]]:
+    """Explain every match with the agent crew, sharing one runner (and one set of Foundry agents)."""
+    import asyncio
+
+    from ..agents.crew import explain_match_async
+    from ..agents.runners import make_runner
+
+    async def go() -> list[dict[str, Any]]:
+        runner = make_runner(runner_name)
+        try:
+            return list(await asyncio.gather(*(explain_match_async(md, runner) for md in mds)))
+        finally:
+            await runner.close()
+
+    return asyncio.run(go())
+
+
+def write_bundles(folders: list[Path], out: Path, agents: str | None = None) -> list[dict[str, Any]]:
     out.mkdir(parents=True, exist_ok=True)
     index = []
-    for f in folders:
-        md = load(f)
-        b = build(md)
+    mds = [load(f) for f in folders]
+    results: list[dict[str, Any] | None] = list(explain_with_agents(mds, agents)) if agents else [None] * len(mds)
+    for md, result in zip(mds, results, strict=True):
+        b = build(md, result)
         (out / f"{b['match_id']}.json").write_text(json.dumps(b, separators=(",", ":")))
         h, a = b["teams"]
         index.append(
@@ -178,6 +225,7 @@ def main() -> None:
     ap.add_argument("--demo", type=int, help="generate this many fresh demo matches instead")
     ap.add_argument("--seed", type=int, default=31)
     ap.add_argument("--out", type=Path, default=Path("web/data"))
+    ap.add_argument("--agents", choices=["offline", "foundry"], help="explain with the agent crew on this runner")
     args = ap.parse_args()
     if args.demo:
         from ..gen import generate_match
@@ -201,9 +249,9 @@ def main() -> None:
                         m.manager.minutes,
                     )
                 )
-            index = write_bundles(folders, args.out)
+            index = write_bundles(folders, args.out, args.agents)
     else:
-        index = write_bundles(args.folders, args.out)
+        index = write_bundles(args.folders, args.out, args.agents)
     for r in index:
         print(f"{r['match_id']:>20}  {r['home']} {r['score'][0]}-{r['score'][1]} {r['away']}  {r['cards']} cards")
 

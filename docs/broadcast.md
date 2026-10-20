@@ -16,21 +16,23 @@ The screen in `web/` plays a match on a condensed clock. By default 1 match minu
 
 Card types are **goal**, **red card**, **substitution**, **half-time**, **momentum shift** and **recovery**.
 
-The page does no analysis. `matchlens-broadcast` runs the Watcher, the specialists, the Explainer and the Director, and writes one JSON bundle per match to `web/data/`.
+The page does no analysis. `matchlens-broadcast` runs the Watcher, the specialists, the Explainer and the Director, and writes one JSON bundle per match to `web/data/`. With `--agents foundry`, the agent crew on Microsoft Foundry explains each moment instead ([agents.md](agents.md)). Each card then carries the agents' log, which the under-the-hood panel shows.
 
 ```
 matchlens-broadcast --demo 6 --out web/data            # six fresh generated matches
+matchlens-broadcast --demo 6 --out web/data --agents foundry   # explained by the agents on Foundry
 matchlens-broadcast out/matches/ash-brk-7 --out web/data   # or any match folder
 cd web && python3 -m http.server 8000                    # then open http://localhost:8000
 ```
 
-**URL options:** `?match=<id>`, `&speed=1|2|4`, `&autoplay=1`, and `&hide=1` to hide the operator controls for screen capture.
+**URL options:** `?match=<id>`, `&speed=1|2|4`, `&autoplay=1`, `&hide=1` to hide the operator controls for screen capture, and `&hood=1` to open the under-the-hood panel.
 
 **Keys:**
 - Space: play or pause.
 - N: jump to the next card.
 - R: restart.
 - H: hide the controls.
+- U: under the hood. For the card on screen, it shows each specialist's verdict, the Explainer's reason, and whether the Verifier passed the card.
 
 Click the timeline to scrub.
 

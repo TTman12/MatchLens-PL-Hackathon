@@ -13,6 +13,8 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
+# Running the agents on Microsoft Foundry (matchlens-agents --runner foundry).
+foundry = ["agent-framework-core>=1.22,<2", "agent-framework-foundry>=1.15,<2", "azure-identity>=1.26"]
 
 [project.scripts]
 matchlens-gen = "matchlens.gen.cli:main"
@@ -20,6 +22,7 @@ matchlens-realism = "matchlens.realism.gate:main"
 matchlens-explain = "matchlens.explain.cli:main"
 matchlens-explain-eval = "matchlens.explain.evaluate:main"
 matchlens-broadcast = "matchlens.broadcast.bundle:main"
+matchlens-agents = "matchlens.agents.crew:main"
 
 [tool.setuptools.packages.find]
 include = ["matchlens*"]
@@ -42,6 +45,11 @@ select = ["E", "F", "I", "UP", "B"]
 python_version = "3.11"
 strict = true
 files = ["matchlens"]
+
+[[tool.mypy.overrides]]
+# the Foundry SDKs are an optional extra, imported lazily
+module = ["agent_framework", "agent_framework.*", "agent_framework_foundry", "azure.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

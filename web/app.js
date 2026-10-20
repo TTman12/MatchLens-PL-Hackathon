@@ -2,7 +2,8 @@
 // condensed clock. The page does no analysis: everything it shows is in the bundle.
 //
 // URL options: ?match=<id>  &speed=1|2|4  &autoplay=1  &hide=1 (no operator controls, for capture)
-// Keys: space play/pause, H hide controls, N jump to the next card, R restart.
+//              &hood=1 (open the under-the-hood panel)
+// Keys: space play/pause, H hide controls, N jump to the next card, R restart, U under the hood.
 
 (() => {
   "use strict";
@@ -22,6 +23,8 @@
   let nextCard = 0;
   let cardUntil = 0; // performance.now() ms when the current card leaves
   let last = 0;
+  let hoodOpen = params.get("hood") === "1";
+  let hoodCard = null; // the card the panel describes
 
   // ---------- colour: keep the two sides apart ----------
   function hexToRgb(h) {
@@ -275,6 +278,59 @@
       }),
     );
     cardUntil = performance.now() + CARD_SECONDS * 1000;
+    hoodCard = c;
+    renderHood();
+  }
+
+  // ---------- under the hood ----------
+  const AGENT_NAMES = {
+    team_play: "Team play",
+    players: "Players",
+    substitutions: "Substitutions",
+    match_events: "Match events",
+  };
+  const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
+
+  function renderHood() {
+    const el = $("hood");
+    const h = hoodCard && hoodCard.hood;
+    el.hidden = !hoodOpen;
+    if (!hoodOpen) return;
+    if (!h) {
+      el.innerHTML = `<div class="hood-head"><span>Under the hood</span></div>
+        <p class="hood-empty">${hoodCard ? "This match was explained without the agents." : "Waiting for the first card."}</p>`;
+      return;
+    }
+    const runner = h.runner === "foundry" ? "Microsoft Foundry" : "Offline rules";
+    const rows = h.specialists
+      .map((s) => {
+        const state = s.status === "failed" ? "failed" : s.verdict === "not_me" ? "not me" : "relevant";
+        return `<li class="hood-row st-${state.replace(" ", "-")}">
+          <span class="hood-agent">${esc(AGENT_NAMES[s.agent] || s.agent)}</span>
+          <span class="hood-chip">${state}</span>
+          <span class="hood-note">${esc(s.note)}</span></li>`;
+      })
+      .join("");
+    const rounds = h.verifier || [];
+    const rejected = rounds.filter((r) => r.status === "rejected").length;
+    const verdict = h.fallback
+      ? "Fell back to the rules"
+      : rejected
+        ? `Passed after ${rejected} rejection${rejected > 1 ? "s" : ""}`
+        : "Passed first time";
+    el.innerHTML = `
+      <div class="hood-head"><span>Under the hood</span><span class="hood-runner">${runner}</span></div>
+      <ul class="hood-list">${rows}</ul>
+      <div class="hood-step"><span class="hood-agent">Explainer</span>
+        <span class="hood-why">${esc(h.fallback ? "No verified draft; the deterministic rules chose." : h.why)}</span></div>
+      <div class="hood-step"><span class="hood-agent">Verifier</span>
+        <span class="hood-chip ${h.fallback ? "st-failed" : "st-relevant"}">${verdict}</span>
+        <span class="hood-note">${h.board} findings on the board · confidence ${Math.round(100 * h.confidence)}%</span></div>`;
+  }
+
+  function toggleHood() {
+    hoodOpen = !hoodOpen;
+    renderHood();
   }
 
   function hideCard(now) {
@@ -338,9 +394,13 @@
       if (c) seek(c.at - 0.05);
     } else if (e.key === "r" || e.key === "R") {
       restart();
+    } else if (e.key === "u" || e.key === "U") {
+      toggleHood();
     }
   });
   if (params.get("hide") === "1") $("controls").classList.add("hidden");
+  $("hoodBtn").addEventListener("click", toggleHood);
+  renderHood();
 
   // a still frame dropped in web/assets/stadium.jpg replaces the drawn backdrop
   const still = new Image();

@@ -43,6 +43,9 @@
     <!-- the pop-up card -->
     <section class="card" id="card" aria-live="polite" hidden></section>
 
+    <!-- under the hood: what the agents did for the card on screen (U key) -->
+    <aside class="hood" id="hood" aria-label="Under the hood" hidden></aside>
+
     <!-- event timeline with the momentum history above it -->
     <section class="timeline" aria-label="Match timeline">
       <svg class="tl-chart" id="tlChart" preserveAspectRatio="none"></svg>
@@ -60,6 +63,7 @@
       <select id="matchSelect" aria-label="Match"></select>
       <button id="playBtn" type="button" aria-label="Play">Play</button>
       <button id="speedBtn" type="button" aria-label="Speed">1x</button>
+      <button id="hoodBtn" type="button" aria-label="Under the hood">Agents</button>
       <span class="ctl-note">Synthetic match · fictional clubs · running stats modelled</span>
     </nav>
   </main>
