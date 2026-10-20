@@ -7,6 +7,7 @@ pitch frame with ``matchlens.contracts.pitch``.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from matchlens.contracts import PITCH_LENGTH_M, PITCH_WIDTH_M
@@ -93,9 +94,7 @@ def shape_position(slot: str, ctx: ShapeContext) -> tuple[float, float]:
     bx, by = ctx.ball
     group = slot_group(slot)
     if group == "GK":
-        x = 4.0 + max(0.0, bx - 25.0) * (0.16 if ctx.in_possession else 0.09)
-        y = 34.0 + (by - 34.0) * 0.15
-        return (min(x, 18.0), y)
+        return keeper_position(ctx.ball, ctx.in_possession)
     push = _PUSH[group]
     if ctx.in_possession:
         x = sx + (bx - 52.5) * push + 5.0
@@ -115,6 +114,26 @@ def shape_position(slot: str, ctx: ShapeContext) -> tuple[float, float]:
             x = min(x, bx - 1.5)
         x = max(x, floor)
     return (_clamp(x, 2.0, PITCH_LENGTH_M - 2.0), _clamp(y, 1.5, PITCH_WIDTH_M - 1.5))
+
+
+def keeper_position(ball: tuple[float, float], in_possession: bool) -> tuple[float, float]:
+    """Where a goalkeeper stands, in his team's attacking frame (own goal at ``x = 0``).
+
+    Out of possession he sits on the line from the centre of his goal to the ball,
+    narrowing the angle: a step off his line with the ball in the box, up to about
+    11 m out (sweeping behind the back line) with the ball in the other half. In
+    possession he steps up further to offer a back pass.
+    """
+    bx, by = ball
+    dx, dy = bx, by - 34.0
+    d = max(math.hypot(dx, dy), 0.1)
+    if in_possession:
+        x = 5.0 + max(0.0, bx - 30.0) * 0.18
+        return (min(x, 20.0), 34.0 + dy * 0.12)
+    r = _clamp(1.0 + 0.11 * d, 1.0, 11.0)
+    x = max(0.8, dx / d * r)
+    y = 34.0 + _clamp(dy / d * r, -3.2, 3.2)
+    return (x, y)
 
 
 def _clamp(v: float, lo: float, hi: float) -> float:

@@ -38,22 +38,33 @@ Pt = tuple[float, float]
 
 TICKS_PER_S = 10
 PERIOD_TICKS = PERIOD_LENGTH_S * TICKS_PER_S
-MAX_STEP_TICKS = 20
-"""Longest gap between movement keyframes."""
+MAX_STEP_TICKS = 5
+"""Longest gap between movement keyframes (0.5 s), short enough to show acceleration."""
 PIN_SPEED = 0.64
 """Share of top speed a player may average between keyframes when part of the action."""
-SHAPE_SPEED = 0.50
-"""Share of top speed for repositioning with the team shape."""
+SHAPE_SPEED = 0.45
+"""Share of top speed for repositioning with the team shape: a jog."""
+RUN_SPEED = 0.72
+"""Share of top speed for a support run or getting back into shape in a hurry."""
+SPRINT_SPEED = 0.9
+"""Share of top speed for a run in behind the defence."""
+MAX_ACCEL = 7.0
+"""Steering acceleration limit, m/s^2 (elite players manage about 6 to 8 from a standing
+start). Players speed up and slow down; they never jump to a pace."""
+ARRIVE_S = 0.8
+"""Arrival: a player slows as they near their target, wanting to get there in about this long."""
 SHOT_COST = 0.002
 """Value penalty on a shot: most shots give the ball away."""
 CARRY_COST = 0.006
 """Value penalty on a carry, so players move the ball by passing as real teams do."""
-PRESS_SPEED = 0.60
+PRESS_SPEED = 0.70
 """Share of top speed a defender closes the ball down at."""
-WANDER = 0.2
+WANDER = 0.12
 """How restlessly players drift around their slot, metres per root second."""
-"""Share of top speed a defender closes the ball down at."""
-HOME_EDGE = 0.05
+SCRIPTED_GOAL_XG = 0.12
+"""A scripted goal only comes from a real chance: a shot worth at least this much xG
+(easing to half that once the beat is six minutes overdue)."""
+HOME_EDGE = 0.035
 """Home advantage: the home side's passes and finishing are this much better, the away side's
 this much worse (halved for passes)."""
 
@@ -100,13 +111,26 @@ class MatchPlayer:
     y: float = 0.0
     t_off: int | None = None
     keyframes: list[tuple[int, float, float]] = field(default_factory=list)
+    velocities: list[Pt] = field(default_factory=list)
+    """Velocity (m/s) at each keyframe, the curve's tangent when frames are rendered."""
     wander: Pt = (0.0, 0.0)
+    vx: float = 0.0
+    vy: float = 0.0
+    run: Pt | None = None
+    """Pitch-frame target of an off-ball run in progress (in behind, or to support)."""
+    run_until: int = 0
+    run_pace: float = SHAPE_SPEED
     yellow: bool = False
     sent_off: bool = False
 
     @property
     def pid(self) -> str:
         return self.info.player_id
+
+    def key(self, tick: int) -> None:
+        """Record a movement keyframe at ``tick`` (negative for a cut) with the velocity."""
+        self.keyframes.append((tick, self.x, self.y))
+        self.velocities.append((self.vx, self.vy))
 
     @property
     def pos(self) -> Pt:
@@ -218,6 +242,7 @@ class MatchEngine:
         )
         self.all_players: list[MatchPlayer] = [p for t in self.teams for p in t.on]
         self.pressers: set[str] = set()
+        self.paces: dict[str, float] = {}
 
     # ------------------------------------------------------------------------------
     # Set-up
@@ -339,33 +364,52 @@ class MatchEngine:
     # ------------------------------------------------------------------------------
 
     def shapes(self, ball: Pt, poss: int | None, kick_off: bool = False) -> dict[str, Pt]:
-        """Where every player wants to be, pitch frame, for the ball at ``ball``."""
+        """Where every player wants to be, pitch frame, for the ball at ``ball``.
+
+        The base is each team's shape for this ball position (a ball-driven formation,
+        as RoboCup teams interpolate theirs). On top of it the side in possession makes
+        off-ball runs (support angles, runs on the last defender's shoulder, overlaps)
+        and players drift into pockets of space; the defending side presses with the
+        nearest player, covers with the next and marks goal side of the attackers in
+        their zone. ``self.paces`` holds the share of top speed each player moves at.
+        """
         out: dict[str, Pt] = {}
         self.pressers = set()
+        self.paces = {}
         if kick_off or poss is None:
             for team in self.teams:
                 for p in team.on:
                     out[p.pid] = self.pitch(team.side, KICK_OFF_XY[p.slot])
+                    p.run = None
             return out
         defending = self.teams[1 - poss]
+        attacking = self.teams[poss]
         ball_def = self.att(defending.side, ball)
         deepest = PITCH_LENGTH_M
         for p in defending.on:
             sx, sy = shape_position(p.slot, ShapeContext(ball_def, False))
             out[p.pid] = self.pitch(defending.side, (sx, sy))
             if p.group != "GK":
-                deepest = min(deepest, sx)
+                deepest = min(deepest, self.att(defending.side, p.pos)[0])
+                if ball_def[0] < 60:
+                    # Ball in our half: everyone gets back into shape at a run.
+                    self.paces[p.pid] = RUN_SPEED
+            else:
+                self.paces[p.pid] = RUN_SPEED  # the keeper keeps cutting the angle
         ball_att = self.att(poss, ball)
         line = max(PITCH_LENGTH_M - deepest, ball_att[0])
-        for p in self.teams[poss].on:
-            out[p.pid] = self.pitch(
-                poss, shape_position(p.slot, ShapeContext(ball_att, True, line))
-            )
+        opp_att = [self.att(poss, o.pos) for o in defending.on]
+        att_pos: dict[str, Pt] = {
+            p.pid: shape_position(p.slot, ShapeContext(ball_att, True, line)) for p in attacking.on
+        }
+        self.off_ball(attacking, ball_att, line, att_pos, opp_att)
+        for pid, pt in att_pos.items():
+            out[pid] = self.pitch(poss, pt)
+        self.mark(defending, attacking, out)
         # The nearest defender presses the ball, goal side; the next one covers behind.
         outfield = sorted(
             (p for p in defending.on if p.group != "GK"), key=lambda p: _dist(p.pos, ball)
         )
-        self.pressers = set()
         for p, gap in zip(outfield[:2], (1.3, 5.0), strict=False):
             bx, by = ball_def
             toward_goal = math.atan2(34.0 - by, -bx)
@@ -373,6 +417,119 @@ class MatchEngine:
             out[p.pid] = self.pitch(defending.side, _on_pitch(spot))
             self.pressers.add(p.pid)
         return out
+
+    def off_ball(
+        self,
+        team: TeamState,
+        ball: Pt,
+        line: float,
+        pos: dict[str, Pt],
+        opps: list[Pt],
+    ) -> None:
+        """Off-ball movement for the side in possession, in its attacking frame.
+
+        Runs are kept for a few seconds once started, so a player commits to a run
+        rather than twitching between targets. The two nearest team-mates offer the ball
+        carrier a passing angle; forwards and wide players time runs along the last
+        defender; a full-back overlaps a winger on his flank; everyone else edges into
+        the most open spot near their slot (a cheap stand-in for pitch control).
+        """
+        side = team.side
+        holder = min(team.on, key=lambda p: _dist(self.att(side, p.pos), ball))
+        if _dist(self.att(side, holder.pos), ball) > 3.0:
+            holder = None  # type: ignore[assignment]
+        movers = [p for p in team.on if p is not holder and p.group != "GK"]
+        support = sorted(movers, key=lambda p: _dist(self.att(side, p.pos), ball))[:2]
+
+        def space(pt: Pt) -> float:
+            return min((min(_dist(pt, o), 10.0) for o in opps), default=10.0)
+
+        for p in movers:
+            if p.run is not None and self.tick < p.run_until:
+                pos[p.pid] = self.att(side, p.run)
+                self.paces[p.pid] = p.run_pace
+                continue
+            p.run = None
+            here = self.att(side, p.pos)
+            sx, sy = pos[p.pid]
+            target: Pt | None = None
+            pace = RUN_SPEED
+            hold_s = self.rng.uniform(1.5, 2.8)
+            roll = self.rng.random()
+            forward = p.group == "FW" or p.slot in ("CAM", "RAM", "LAM", "RW", "LW")
+            if p in support:
+                # Offer an angle: an open spot 8 to 14 m from the ball with a clear lane,
+                # level or behind it near the box (penetration is the runners' job).
+                best, best_v = None, -1e9
+                cap_x = line - 0.5 if ball[0] < 70 else ball[0] + 4.0
+                for k in range(8):
+                    ang = -2.4 + k * (4.8 / 7)
+                    r = self.rng.uniform(8, 14)
+                    cand = (ball[0] + math.cos(ang) * r, ball[1] + math.sin(ang) * r)
+                    cand = (min(cand[0], cap_x), _clamp(cand[1], 2.0, 66.0))
+                    lane = min(
+                        (min(_segment_gap(ball, cand, o)[0], 4.0) for o in opps), default=4.0
+                    )
+                    v = min(space(cand), 6.0) + lane - 0.15 * _dist(cand, (sx, sy))
+                    if v > best_v:
+                        best, best_v = cand, v
+                target = best
+            elif forward and ball[0] > 38 and here[0] > line - 14 and roll < 0.15:
+                # A run on the last defender's shoulder, diagonal into a channel.
+                ty = here[1] + (34.0 - here[1]) * 0.45 + self.rng.uniform(-7, 7)
+                target = (line - 0.6, _clamp(ty, 4.0, 64.0))
+                pace, hold_s = SPRINT_SPEED, self.rng.uniform(1.8, 3.2)
+            elif (
+                p.slot in ("RB", "LB", "RWB", "LWB")
+                and holder is not None
+                and ball[0] > 55
+                and abs(ball[1] - sy) < 16
+                and roll < 0.3
+            ):
+                # Overlap outside the ball on his flank.
+                wide = 3.0 if sy < 34 else 65.0
+                target = (min(ball[0] + 9.0, line - 0.5), wide)
+                pace, hold_s = SPRINT_SPEED, self.rng.uniform(2.5, 4.0)
+            if target is not None:
+                p.run = self.pitch(side, _on_pitch(target, 1.0))
+                p.run_until = self.tick + ticks(hold_s)
+                p.run_pace = pace
+                pos[p.pid] = target
+                self.paces[p.pid] = pace
+                continue
+            # Edge into the most open spot near the slot.
+            best_pt, best_v = (sx, sy), space((sx, sy))
+            for ox, oy in ((4.0, 0.0), (-4.0, 0.0), (0.0, 4.5), (0.0, -4.5)):
+                cand = (min(sx + ox, line - 0.5), _clamp(sy + oy, 1.5, 66.5))
+                v = space(cand) - 0.6
+                if v > best_v:
+                    best_pt, best_v = cand, v
+            pos[p.pid] = best_pt
+
+    def mark(self, defending: TeamState, attacking: TeamState, out: dict[str, Pt]) -> None:
+        """Zonal marking: each defender picks up the nearest free attacker in his zone and
+        stands goal side of where that attacker is heading, so runs are tracked, not
+        watched. A marker matches a running attacker's pace."""
+        goal = self.pitch(defending.side, (0.0, 34.0))
+        taken: set[str] = set()
+        threats = [p for p in attacking.on if p.group != "GK"]
+        for d in sorted(
+            (p for p in defending.on if p.group in ("DF", "MF")),
+            key=lambda p: 0 if p.group == "DF" else 1,
+        ):
+            home = out[d.pid]
+            cands = [a for a in threats if a.pid not in taken and _dist(out[a.pid], home) < 12.0]
+            if not cands:
+                continue
+            a = min(cands, key=lambda a: _dist(out[a.pid], home))
+            taken.add(a.pid)
+            ax, ay = out[a.pid]
+            gx, gy = goal[0] - ax, goal[1] - ay
+            g = math.hypot(gx, gy) or 1.0
+            spot = (ax + gx / g * 1.8, ay + gy / g * 1.8)
+            w = 0.75 if d.group == "DF" else 0.55
+            out[d.pid] = (home[0] * (1 - w) + spot[0] * w, home[1] * (1 - w) + spot[1] * w)
+            self.paces[d.pid] = max(RUN_SPEED, self.paces.get(a.pid, SHAPE_SPEED))
 
     def move(
         self,
@@ -386,18 +543,25 @@ class MatchEngine:
         """Advance the clock to ``tick_to``, moving every player and recording keyframes.
 
         ``pins`` must be reached exactly at ``tick_to`` (the engine only pins players to
-        points they can reach). ``targets`` override the team shape but are approached at
-        ``pace``, like the shape itself.
+        points they can reach). Everyone else steers toward their target (Reynolds-style
+        seek with arrival): they accelerate and decelerate within ``MAX_ACCEL``, slow down
+        as they arrive, and move at their own pace (a jog with the shape, a run to
+        support, a sprint in behind). ``targets`` override the team shape at ``pace``.
         """
         pins = pins or {}
         shape = self.shapes(shape_ball or self.ball, self.poss, kick_off)
+        paces = self.paces
         if targets:
             shape.update(targets)
+            for pid in targets:
+                paces.pop(pid, None)
+        first = self.tick
         while self.tick < tick_to:
             step = min(MAX_STEP_TICKS, tick_to - self.tick)
             remaining = tick_to - self.tick
             dt = step / TICKS_PER_S
             new_tick = self.tick + step
+            amax = MAX_ACCEL * dt
             for team in self.teams:
                 for p in team.on:
                     if p.pid in pins:
@@ -405,24 +569,52 @@ class MatchEngine:
                         frac = step / remaining
                         nx, ny = p.x + (tx - p.x) * frac, p.y + (ty - p.y) * frac
                         limit = PIN_SPEED * p.top_speed(self.tick) * dt * 1.02
-                    elif p.pid in self.pressers:
-                        nx, ny = shape[p.pid]
-                        limit = max(pace, PRESS_SPEED) * p.top_speed(self.tick) * dt
+                        d = math.hypot(nx - p.x, ny - p.y)
+                        if d > limit:
+                            nx = p.x + (nx - p.x) * limit / d
+                            ny = p.y + (ny - p.y) * limit / d
+                        cvx, cvy = (nx - p.x) / dt, (ny - p.y) / dt
+                        if self.tick == first and p.velocities:
+                            # Ease into the pinned run: the last tangent turns partly toward
+                            # it, so the curve doesn't swing wide (and too fast) to make it.
+                            ovx, ovy = p.velocities[-1]
+                            p.velocities[-1] = (0.7 * ovx + 0.3 * cvx, 0.7 * ovy + 0.3 * cvy)
+                        p.vx, p.vy = cvx, cvy
                     else:
-                        wx, wy = p.wander
-                        jitter = WANDER * (0.4 if p.group == "GK" else 1.0) * math.sqrt(dt)
-                        wx = _clamp(wx + self.rng.gauss(0, jitter), -3.0, 3.0)
-                        wy = _clamp(wy + self.rng.gauss(0, jitter), -3.0, 3.0)
-                        p.wander = (wx, wy)
-                        sx, sy = shape[p.pid]
-                        nx, ny = sx + wx, sy + wy
-                        limit = pace * p.top_speed(self.tick) * dt
-                    d = math.hypot(nx - p.x, ny - p.y)
-                    if d > limit:
-                        nx = p.x + (nx - p.x) * limit / d
-                        ny = p.y + (ny - p.y) * limit / d
-                    p.x, p.y = _on_pitch((nx, ny), 0.3)
-                    p.keyframes.append((new_tick, p.x, p.y))
+                        top = p.top_speed(self.tick)
+                        tx, ty = shape[p.pid]
+                        if p.pid in self.pressers:
+                            share = max(pace, PRESS_SPEED)
+                        else:
+                            share = paces.get(p.pid, pace)
+                            if p.run is None:
+                                wx, wy = p.wander
+                                jitter = WANDER * (0.3 if p.group == "GK" else 1.0) * math.sqrt(dt)
+                                wx = _clamp(wx + self.rng.gauss(0, jitter), -2.0, 2.0)
+                                wy = _clamp(wy + self.rng.gauss(0, jitter), -2.0, 2.0)
+                                p.wander = (wx, wy)
+                                tx, ty = tx + wx, ty + wy
+                        dx, dy = tx - p.x, ty - p.y
+                        d = math.hypot(dx, dy)
+                        if d > 25.0:
+                            share = max(share, SPRINT_SPEED)  # caught upfield: a recovery sprint
+                        elif d > 15.0:
+                            share = max(share, RUN_SPEED)  # out of position: hurry back
+                        want = min(share * top, d / ARRIVE_S) if d > 0.8 else 0.0
+                        wvx, wvy = (dx / d * want, dy / d * want) if d > 1e-6 else (0.0, 0.0)
+                        ax, ay = wvx - p.vx, wvy - p.vy
+                        a = math.hypot(ax, ay)
+                        if a > amax:
+                            ax, ay = ax * amax / a, ay * amax / a
+                        ox, oy = p.vx, p.vy
+                        p.vx, p.vy = p.vx + ax, p.vy + ay
+                        # Trapezoidal step: the rendered curve then never outruns the player.
+                        nx, ny = p.x + (ox + p.vx) / 2 * dt, p.y + (oy + p.vy) / 2 * dt
+                    cx, cy = _on_pitch((nx, ny), 0.3)
+                    if (cx, cy) != (nx, ny):
+                        p.vx, p.vy = (cx - p.x) / dt, (cy - p.y) / dt
+                    p.x, p.y = cx, cy
+                    p.key(new_tick)
             self.tick = new_tick
 
     def blockers(self, side: int, shooter: Pt) -> int:
@@ -525,6 +717,12 @@ class MatchEngine:
         beat = self.due_beat()
         return max(0.0, self.minute() - beat.minute) if beat else 0.0
 
+    def scripted_xg(self) -> float:
+        """The least xG a scripted goal may come from: a real chance, a little less
+        demanding once the beat is well overdue so the script still lands."""
+        late = _clamp((self.overdue() - 2.0) / 4.0, 0.0, 1.0)
+        return SCRIPTED_GOAL_XG * (1.0 - 0.5 * late)
+
     def protected(self, team: TeamState) -> set[int]:
         """Shirts named in beats still to come for ``team``: they stay on the pitch."""
         name = "home" if team.side == 0 else "away"
@@ -557,13 +755,15 @@ class MatchEngine:
                 for p in self.all_players:
                     if p in self.teams[p.side].on:
                         p.x, p.y = self.pitch(p.side, KICK_OFF_XY[p.slot])
-                        p.keyframes.append((-self.tick, p.x, p.y))  # negative: a cut
+                        p.vx = p.vy = 0.0
+                        p.run = None
+                        p.key(-self.tick)  # negative: a cut
                 kick_side = 1 - kick_side
             else:
                 for team in self.teams:
                     for p in team.on:
                         p.x, p.y = self.pitch(team.side, KICK_OFF_XY[p.slot])
-                        p.keyframes.append((self.tick, p.x, p.y))
+                        p.key(self.tick)
             self.emit("period_start")
             self.play_period(kick_side)
         for p in self.all_players:
@@ -722,7 +922,7 @@ class MatchEngine:
         new = MatchPlayer(
             info=on_info, side=team.side, slot=off.slot, t_on=self.tick, x=off.x, y=off.y
         )
-        new.keyframes.append((self.tick, new.x, new.y))
+        new.key(self.tick)
         team.on.append(new)
         self.all_players.append(new)
         team.subs_made += 1
@@ -822,9 +1022,10 @@ class MatchEngine:
                 q={"claim": True},
             )
             return self.keeper_has_ball(defender)
-        self.emit("interception", other.side, defender, land, q={"aerial": True})
         if self.rng.random() < 0.25:
-            return self.out_for(team.side, "corner", self.att(other.side, land))
+            # Headed behind under pressure: another corner.
+            return self.deflect_out(defender, "interception", q={"aerial": True})
+        self.emit("interception", other.side, defender, land, q={"aerial": True})
         return self.clearance(defender)
 
     def free_kick(self, r: Restart) -> MatchPlayer | Restart:
@@ -943,11 +1144,13 @@ class MatchEngine:
         if b[0] > 68 and c.group != "GK":
             xg = m.expected_goals(b[0], b[1], pressure, blockers=self.blockers(side, b))
             value = xg * (0.85 + 0.3 * c.info.attributes.finishing / 99) - SHOT_COST
-            if b[0] < 88:
-                # Good finishers try their luck from range.
-                value += 0.022 * c.info.attributes.finishing / 99
+            dist = m.goal_distance(*b)
+            if dist > 16:
+                # Good finishers try their luck from the edge of the box, less so from far out.
+                value += 0.08 * c.info.attributes.finishing / 99 * max(0.0, 1 - (dist - 16) / 22)
             if goal_beat and (scripted_scorer is None or scripted_scorer is c):
-                value = 1.0 if b[0] > 76 else value * 3
+                # A scripted goal still needs a real chance: shoot from one, else build.
+                value = 1.0 if xg >= self.scripted_xg() else value * 0.5
             elif goal_beat and scripted_scorer is not None:
                 value *= 0.2
             options.append((value, "shot", None))
@@ -1143,7 +1346,7 @@ class MatchEngine:
         }
         # Offside: a through ball or long ball to a runner level with the last defender.
         runner = pass_type == "through" or (lofted and mate.group == "FW")
-        if runner and self.rng.random() < (0.09 if pass_type == "through" else 0.04):
+        if runner and self.rng.random() < (0.11 if pass_type == "through" else 0.05):
             arrive = self.flight(target, secs, peak=3.0 if lofted else 0.0)
             self.move(arrive, pins={c.pid: c.pos, mate.pid: self.reach_point(mate, target, secs)})
             ev = self.emit(
@@ -1168,7 +1371,7 @@ class MatchEngine:
                 etype, side, c, start, out_pt, "out", mate, q=q, tick=arrive - ticks(secs_out)
             )
             ev["qualifiers"]["distance_m"] = round(_dist(start, out_pt), 1)
-            return self.out_for(1 - side, "auto", out_att, last_touch=side)
+            return self.restart_for(out_pt, side)
         if interceptor is not None and lane < 3.0 and self.rng.random() < 0.8:
             point = (
                 start[0] + (target[0] - start[0]) * along,
@@ -1200,13 +1403,13 @@ class MatchEngine:
             if (t_att_y < 6 or t_att_y > 62 or t_att_x > 96)
             else 0.4
             if pass_type == "through"
-            else 0.18
+            else 0.23
             if lofted
-            else 0.14
+            else 0.19
         )
         if self.rng.random() < out_chance:
             over = (t_att_x + (t_att_x - b_att[0]) * 0.35, t_att_y + (t_att_y - b_att[1]) * 0.35)
-            out_att = (_clamp(over[0], 0.0, 105.0), _clamp(over[1], 0.0, 68.0))
+            out_att = (_clamp(over[0], 1.0, 105.0), _clamp(over[1], 0.0, 68.0))
             if 0.5 < out_att[1] < 67.5 and out_att[0] < 104.5:
                 out_att = (out_att[0], 0.0 if out_att[1] < 34 else 68.0)
             out_pt = self.pitch(side, out_att)
@@ -1218,7 +1421,7 @@ class MatchEngine:
                 etype, side, c, start, out_pt, "out", mate, q=q, tick=arrive - ticks(secs_out)
             )
             ev["qualifiers"]["distance_m"] = round(_dist(start, out_pt), 1)
-            return self.out_for(1 - side, "auto", out_att, last_touch=side)
+            return self.restart_for(out_pt, side)
         # Lost at the receiver: the nearest opponent nicks it.
         defender = min(self.opponents(side), key=lambda o: _dist(o.pos, target))
         point = self.reach_point(defender, target, secs + 0.3)
@@ -1302,7 +1505,7 @@ class MatchEngine:
             )
             self.hold(r, touch, pins={nearest.pid: point})
             # A shove or a pull: a foul without a tackle.
-            if self.rng.random() < 0.031:
+            if self.rng.random() < 0.037:
                 return self.foul(nearest, r, severity=self.rng.uniform(0.1, 0.6), reason="holding")
         else:
             self.hold(r, touch)
@@ -1388,8 +1591,8 @@ class MatchEngine:
             return self.complete_pass(c, mate, target, etype, q, secs, lofted=True)
         if clearance and self.rng.random() < 0.3:
             if self.att(side, start)[0] < 20 and self.rng.random() < 0.35:
-                # Sliced behind: a corner to the attackers.
-                return self.out_for(1 - side, "corner", self.att(side, start), last_touch=side)
+                # Sliced behind his own goal line: a corner to the attackers.
+                return self.deflect_out(c, etype, q={**q, "pass_type": pass_type}, outcome="out")
             out_att = (self.att(side, target)[0], 0.0 if self.att(side, target)[1] < 34 else 68.0)
             out_pt = self.pitch(side, out_att)
             secs_out = m.flight_time(_dist(start, out_pt), speed, True)
@@ -1399,7 +1602,7 @@ class MatchEngine:
             self.emit(
                 etype, side, c, start, out_pt, "out", mate, q=q, tick=arrive - ticks(secs_out)
             )
-            return self.out_for(1 - side, "auto", out_att, last_touch=side)
+            return self.restart_for(out_pt, side)
         defender = min(self.opponents(side), key=lambda o: _dist(o.pos, target))
         point = self.reach_point(defender, target, secs + 0.4)
         arrive = self.flight(point, secs, peak=self.rng.uniform(6, 12))
@@ -1431,6 +1634,10 @@ class MatchEngine:
         aim = self.reach_point(mate, aim, secs + 0.2)
         pressure = m.pressure_from_distance(min(_dist(o.pos, start) for o in self.opponents(side)))
         p = 0.20 + 0.12 * c.info.attributes.passing / 99
+        # Crosses into a crowded box are cleared; a box with runners in it is a target.
+        in_box = [m.in_box(*self.att(side, q.pos)) for q in self.teams[side].on]
+        def_box = [m.in_box(*self.att(side, q.pos)) for q in self.opponents(side)]
+        p *= _clamp(1.0 + 0.1 * (sum(in_box) - sum(def_box) + 2), 0.5, 1.15)
         goal_beat = self.beat_for("goal", side)
         if goal_beat:
             p = 0.8
@@ -1446,7 +1653,7 @@ class MatchEngine:
             self.ball = aim
             self.emit(kind, side, c, start, aim, "complete", mate, q=q, tick=t0)
             self.last_pass = (c.pid, mate.pid)
-            if self.rng.random() < 0.7:
+            if self.rng.random() < 0.55:
                 return self.shot(mate, header=True)
             return self.receive(mate)
         other = self.teams[1 - side]
@@ -1459,7 +1666,7 @@ class MatchEngine:
             self.move(arrive)
             self.ball = out_pt
             self.emit(kind, side, c, start, out_pt, "out", mate, q=q, tick=t0)
-            return self.out_for(1 - side, "auto", out_att, last_touch=side)
+            return self.restart_for(out_pt, side)
         defender = self.nearest(other, aim, groups=("DF", "GK", "MF"))
         land = self.reach_point(defender, aim, secs + 0.3)
         t0 = self.tick
@@ -1480,10 +1687,10 @@ class MatchEngine:
                 q={"claim": True},
             )
             return self.keeper_has_ball(defender)
-        self.emit("interception", other.side, defender, land, q={"aerial": True})
         if self.rng.random() < 0.45:
             # Headed behind for a corner.
-            return self.out_for(side, "corner", self.att(other.side, land), last_touch=other.side)
+            return self.deflect_out(defender, "interception", q={"aerial": True})
+        self.emit("interception", other.side, defender, land, q={"aerial": True})
         return self.clearance(defender)
 
     # ------------------------------------------------------------------------------
@@ -1621,15 +1828,19 @@ class MatchEngine:
         keeper = self.keeper(self.teams[1 - side])
         fin = s.info.attributes.finishing
         keep = keeper.info.attributes.keeping if keeper.group == "GK" else 20
-        p_goal = xg * (0.70 + 0.55 * fin / 99) * (1.30 - 0.55 * keep / 99)
+        p_goal = xg * (0.60 + 0.55 * fin / 99) * (1.30 - 0.55 * keep / 99)
         p_goal *= self.edge(side, 2.0)
         if penalty:
             p_goal = _clamp(0.62 + 0.25 * fin / 99 - 0.12 * keep / 99, 0.6, 0.88)
         goal_beat = self.beat_for("goal", side)
-        forced = goal_beat is not None and (
-            goal_beat.shirt is None
-            or goal_beat.shirt == s.info.shirt
-            or self.beat_player(goal_beat, side) is None
+        forced = (
+            goal_beat is not None
+            and (
+                goal_beat.shirt is None
+                or goal_beat.shirt == s.info.shirt
+                or self.beat_player(goal_beat, side) is None
+            )
+            and xg >= self.scripted_xg()
         )
         body = "head" if header else ("left_foot" if s.info.foot == "left" else "right_foot")
         if s.info.foot == "both" and not header:
@@ -1645,7 +1856,7 @@ class MatchEngine:
             block_p = 0.0 if penalty else 0.12 + 0.22 * pressure + (0.06 if b[0] < 88 else 0.0)
             if rest < block_p:
                 outcome = "blocked"
-            elif rest < block_p + (1 - block_p) * (0.36 + 0.10 * fin / 99):
+            elif rest < block_p + (1 - block_p) * (0.33 + 0.10 * fin / 99):
                 outcome = "saved"
             elif rest < block_p + (1 - block_p) * 0.95:
                 outcome = "off_target"
@@ -1660,6 +1871,7 @@ class MatchEngine:
         end_h = round(
             self.rng.uniform(0.1, 2.3) if outcome != "off_target" else self.rng.uniform(0.2, 4.5), 2
         )
+        blocker: MatchPlayer | None = None
         if outcome == "blocked":
             blocker = min(
                 (o for o in opps if o.group != "GK"),
@@ -1685,9 +1897,10 @@ class MatchEngine:
         t0 = self.tick
         ball_end = end
         save_pt = end
+        dive = self.reach_point(keeper, self.pitch(side, (104.0, goal_y)), secs + 0.3)
         if outcome == "saved":
             # The ball ends in the keeper's hands, wherever they got to.
-            save_pt = self.reach_point(keeper, self.pitch(side, (103.5, goal_y)), secs + 0.3)
+            save_pt = dive
             ball_end = save_pt
         height = end_h if outcome not in ("blocked", "saved") else min(end_h, 1.8)
         self.ball_segments.append(
@@ -1695,10 +1908,16 @@ class MatchEngine:
         )
         self.emit("shot", side, s, start, end, outcome, q=q)
         self.close_pressure()
+        # The keeper goes for it: all the way for a save, most of the way when beaten.
+        reach = 0.65 if outcome == "goal" else 0.35 if outcome == "off_target" else 1.0
+        dive_pin = (
+            keeper.x + (dive[0] - keeper.x) * reach,
+            keeper.y + (dive[1] - keeper.y) * reach,
+        )
         if outcome == "goal":
             if goal_beat is not None and forced:
                 self.beats.pop(0)
-            self.move(t0 + ticks(secs), pins={s.pid: s.pos})
+            self.move(t0 + ticks(secs), pins={s.pid: s.pos, keeper.pid: dive_pin})
             self.ball = end
             return self.goal(s, t0)
         if outcome == "saved":
@@ -1706,6 +1925,10 @@ class MatchEngine:
             self.move(t0 + ticks(secs), pins={keeper.pid: save_pt})
             self.ball = keeper.pos
             self.new_possession(1 - side)
+            save_q = {"xg_faced": round(xg, 3)}
+            if not catch and self.rng.random() < 0.45:
+                # Tipped round the post or over the bar.
+                return self.deflect_out(keeper, "save", save_q, outcome="parried", related=s)
             self.emit(
                 "save",
                 1 - side,
@@ -1713,34 +1936,35 @@ class MatchEngine:
                 keeper.pos,
                 outcome="caught" if catch else "parried",
                 related=s,
-                q={"xg_faced": round(xg, 3)},
+                q=save_q,
             )
             if catch:
                 return self.keeper_has_ball(keeper)
             return self.loose_ball(
-                side, (self.rng.uniform(92, 104), 34 + self.rng.uniform(-14, 14)), corner_p=0.6
+                side, (self.rng.uniform(92, 104), 34 + self.rng.uniform(-14, 14))
             )
         if outcome == "blocked":
-            blocker_pt = end
-            self.move(t0 + ticks(secs))
-            self.ball = blocker_pt
-            return self.loose_ball(side, self.att(side, blocker_pt), corner_p=0.6)
+            self.move(t0 + ticks(secs), pins={keeper.pid: dive_pin})
+            self.ball = end
+            if blocker is not None and self.rng.random() < 0.5:
+                # Deflected behind off the blocker.
+                return self.deflect_out(blocker, "interception", {"block": True})
+            return self.loose_ball(side, self.att(side, end))
         if outcome == "post":
-            self.move(t0 + ticks(secs))
+            self.move(t0 + ticks(secs), pins={keeper.pid: dive_pin})
             self.ball = end
             return self.loose_ball(
-                side, (self.rng.uniform(94, 103), 34 + self.rng.uniform(-10, 10)), corner_p=0.15
+                side, (self.rng.uniform(94, 103), 34 + self.rng.uniform(-10, 10))
             )
-        self.move(t0 + ticks(secs + 0.6))
+        self.move(t0 + ticks(secs), pins={keeper.pid: dive_pin})
+        self.move(self.tick + ticks(0.6))
         self.ball = self.pitch(side, (105.0, goal_y))
         return Restart(
             "goal_kick", 1 - side, self.pitch(1 - side, (5.5, 34)), self.rng.uniform(22, 38)
         )
 
-    def loose_ball(self, attacking: int, where_att: Pt, corner_p: float) -> MatchPlayer | Restart:
-        """After a block, parry or post: a corner, or whoever reaches the ball first."""
-        if self.rng.random() < corner_p:
-            return self.out_for(attacking, "corner", where_att, last_touch=1 - attacking)
+    def loose_ball(self, attacking: int, where_att: Pt) -> MatchPlayer | Restart:
+        """After a block, parry or post: whoever reaches the loose ball first."""
         spot = self.pitch(attacking, _on_pitch(where_att, 1.5))
         everyone = [p for t in self.teams for p in t.on]
         weights = [
@@ -1803,30 +2027,61 @@ class MatchEngine:
             "kick_off", 1 - side, (PITCH_LENGTH_M / 2, PITCH_WIDTH_M / 2), self.rng.uniform(4, 8)
         )
 
-    def out_for(
-        self, side: int, kind: str, where_att: Pt, last_touch: int | None = None
-    ) -> Restart:
-        """Ball out of play at ``where_att`` (in ``side``'s opponents' frame if a corner)."""
-        if kind == "corner":
-            # where_att is in the defending team's frame; the corner is at their goal line.
-            defending = 1 - side
-            pt = self.pitch(defending, (0.5, 0.5 if where_att[1] < 34 else 67.5))
-            return Restart("corner", side, pt, self.rng.uniform(28, 45))
-        # where_att is in the frame of the team that last touched it.
-        lt = 1 - side if last_touch is None else last_touch
-        x, y = where_att
-        if x >= 104.5:
-            # Over the goal line the toucher was attacking: goal kick to ``side``.
-            return Restart("goal_kick", side, self.pitch(side, (5.5, 34)), self.rng.uniform(22, 38))
-        if x <= 0.5:
+    def restart_for(self, out_pt: Pt, last_touch: int) -> Restart:
+        """The restart for a ball that has left the pitch at ``out_pt`` (pitch frame).
+
+        Decided only by where the ball crossed and who touched it last, as the Laws
+        say: over a goal line off the defending side is a corner, off the attacking
+        side a goal kick; over a touchline it is a throw-in to the other side there.
+        """
+        x, y = out_pt
+        if x <= 0.5 or x >= PITCH_LENGTH_M - 0.5:
+            # Whose goal line is it? The side whose own goal line (x = 0) it is.
+            owner = 0 if self.att(0, out_pt)[0] < PITCH_LENGTH_M / 2 else 1
+            if last_touch == owner:
+                flag = (0.5 if x <= 0.5 else PITCH_LENGTH_M - 0.5, 0.5 if y < 34 else 67.5)
+                return Restart("corner", 1 - owner, flag, self.rng.uniform(28, 45))
             return Restart(
-                "corner",
-                side,
-                self.pitch(lt, (0.5, 0.5 if y < 34 else 67.5)),
-                self.rng.uniform(28, 45),
+                "goal_kick", owner, self.pitch(owner, (5.5, 34)), self.rng.uniform(22, 38)
             )
-        spot = self.pitch(lt, (_clamp(x, 1.0, 104.0), 0.0 if y < 34 else 68.0))
-        return Restart("throw_in", side, spot, self.rng.uniform(14, 30))
+        spot = (_clamp(x, 1.0, PITCH_LENGTH_M - 1.0), 0.0 if y < 34 else PITCH_WIDTH_M)
+        return Restart("throw_in", 1 - last_touch, spot, self.rng.uniform(14, 30))
+
+    def deflect_out(
+        self,
+        p: MatchPlayer,
+        etype: str,
+        q: dict[str, Any] | None = None,
+        outcome: str | None = None,
+        related: MatchPlayer | None = None,
+    ) -> Restart:
+        """``p`` (a defender or keeper near his own goal) sends the ball behind his own
+        goal line: a header behind, a block or a save tipped round the post. The ball
+        flies there visibly before the corner is given."""
+        side = p.side
+        here = self.att(side, p.pos)
+        wide = self.rng.uniform(4.5, 14.0)
+        y = 34.0 - wide if here[1] < 34 else 34.0 + wide
+        if self.rng.random() < 0.25 and abs(here[1] - 34.0) < 10:
+            y = 34.0 + self.rng.uniform(-3.0, 3.0)  # over the bar
+        out_att = (0.0, _clamp(y, 1.0, 67.0))
+        out_pt = self.pitch(side, out_att)
+        d = _dist(self.ball, out_pt)
+        secs = max(0.5, d / self.rng.uniform(9.0, 15.0))
+        self.emit(
+            etype,
+            side,
+            p,
+            p.pos,
+            out_pt,
+            outcome=outcome,
+            related=related,
+            q={**(q or {}), "out_of_play": True},
+        )
+        arrive = self.flight(out_pt, secs, peak=self.rng.uniform(1.0, 3.5))
+        self.move(arrive)
+        self.ball = out_pt
+        return self.restart_for(out_pt, side)
 
 
 def _beat_period(beat: Beat) -> int:
