@@ -98,6 +98,7 @@ class ReplayProvider:
             "daily_budget": self.daily_budget,
             "remembered": len(self._answers),
             "state_loaded": self._loaded,
+            "foundry_agents": dict(getattr(self.inner, "versions", {})),
         }
 
     def _spend(self) -> bool:
