@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matchlens"
+version = "0.2.0"
+description = "Explains why momentum shifts in football matches, from minute-by-minute statistics."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
+
+[project.scripts]
+matchlens-gen = "matchlens.gen.cli:main"
+matchlens-realism = "matchlens.realism.gate:main"
+
+[tool.setuptools.packages.find]
+include = ["matchlens*"]
+
+[tool.setuptools.package-data]
+"matchlens.gen" = ["priors.json.gz"]
+"matchlens.realism" = ["targets.json"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py311"
+# one-off analysis scripts kept as they were run; learn_priors.py is linted
+extend-exclude = ["research/prep.py", "research/analyse.py", "research/null.py", "research/drivers.py", "research/followthrough.py", "research/leadlag.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["matchlens"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

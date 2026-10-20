@@ -8,21 +8,31 @@ It is a fresh start for the Microsoft × Premier League hackathon. All match dat
 
 ## Status
 
-This is a clean slate. The plan and the evidence behind it:
+The **synthetic match generator** is built and passes the realism gate. A full generated season matches the real 2017-18 Premier League on all 31 numbers checked ([docs/realism.md](docs/realism.md)). Next are the agents that spot and explain momentum shifts, then the broadcast graphics.
 
-- [docs/design.md](docs/design.md): the design, including the two modes, the data model, the generator, the agents, the graphic contract and the scoring.
-- [docs/research/football-stats-for-tactical-inference.md](docs/research/football-stats-for-tactical-inference.md): which football stats exist and what each one reveals about how a team is playing.
-- [docs/research/real-momentum-patterns.md](docs/research/real-momentum-patterns.md): what 380 real matches show about momentum shifts. The synthetic data is tested against these numbers.
+```
+pip install -e ".[dev]"
+matchlens-gen match --home ash --away brk --seed 7   # one match: events, minute tables, physical, hidden truth
+matchlens-realism                                     # generate 380 matches and check them against the real season
+pytest -q
+```
+
+## Docs
+
+- [docs/design.md](docs/design.md): the design, covering the two modes, the agents, the graphic contract, the scoring and the decisions so far.
+- [docs/data-format.md](docs/data-format.md): the match format any match can be fed in as.
+- [docs/generator.md](docs/generator.md): how the generator works and what the hidden truth holds.
+- [docs/research/](docs/research/): which football stats exist and what each one reveals, plus what 380 real matches show about momentum shifts.
 
 ## Build order
 
-1. Synthetic match generator, gated on a realism test against the real-season patterns.
+1. ~~Synthetic match generator, gated on a realism test against the real-season patterns.~~ Done.
 2. A watcher that spots shifts, plus specialist agents that investigate them.
 3. Broadcast graphics: a momentum scale, an event timeline, and the event, spontaneous and recovery cards.
 
 ## Research data
 
-`research/` holds the scripts that measured the real-season patterns. They read the public Wyscout event dataset (Pappalardo et al., 2019, *Scientific Data* 6:236, [figshare](https://doi.org/10.6084/m9.figshare.c.4415000), CC BY 4.0). That data is downloaded on demand to measure patterns only. None of it is committed or shipped.
+`research/` holds the scripts that measured the real-season patterns, and `learn_priors.py`, which turns that season into the generator's aggregate tables (`matchlens/gen/priors.json.gz`). They read the public Wyscout event dataset (Pappalardo et al., 2019, *Scientific Data* 6:236, [figshare](https://doi.org/10.6084/m9.figshare.c.4415000), CC BY 4.0). That data is downloaded on demand to measure patterns only. None of it is committed or shipped.
 
 ## Licence
 

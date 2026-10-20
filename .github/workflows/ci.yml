@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check matchlens tests research/learn_priors.py
+      - run: mypy
+      - run: pytest -q
+
+  realism:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Generate a full season and check it against the real one
+        run: matchlens-realism --matches 380 --out realism.md
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: realism-report
+          path: realism.md
