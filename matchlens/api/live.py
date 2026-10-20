@@ -51,6 +51,7 @@ from matchlens.agents.providers import (
     configure_tracing,
     provider_from_env,
 )
+from matchlens.agents.roster import publish_agents
 from matchlens.agents.state import MomentContext
 from matchlens.contracts import EventType
 from matchlens.stats import MatchData, load_match
@@ -353,6 +354,8 @@ def create_app(
         tasks = [
             asyncio.create_task(clock_loop(session, loop_after_s)),
             asyncio.create_task(session.agents()),
+            # List every agent in Foundry Agent Service now, not on its first call.
+            asyncio.create_task(publish_agents(session.provider)),
         ]
         try:
             yield
@@ -405,6 +408,7 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
+    logging.getLogger("azure").setLevel(logging.WARNING)  # one line per HTTP request
     match_dir = Path(args.match_dir)
     if not (match_dir / "frames.jsonl").exists():
         from .demo import build_demo

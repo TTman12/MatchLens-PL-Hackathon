@@ -175,6 +175,12 @@ class FoundryProvider(AgentFrameworkProvider):
             tools=list(task.tools) or None,
         )
 
+    async def publish(self, tasks: list[AgentTask]) -> dict[str, str | None]:
+        """Publish the Foundry agent for each task now, rather than on its first call."""
+        for task in tasks:
+            await self._published(foundry_agent_name(task), task)
+        return dict(self.versions)
+
     async def _published(self, name: str, task: AgentTask) -> str | None:
         async with self._publishing:
             if name in self.versions:
@@ -252,6 +258,8 @@ def configure_tracing(env: Mapping[str, str] | None = None) -> bool:
         from azure.monitor.opentelemetry import configure_azure_monitor
     except ImportError:  # pragma: no cover - optional extra
         return False
-    configure_azure_monitor(connection_string=connection)
+    # Export spans from every library, but log records only from MatchLens itself: the
+    # Azure SDK logs every HTTP request, and the exporter logs every export.
+    configure_azure_monitor(connection_string=connection, logger_name="matchlens")
     enable_instrumentation()
     return True

@@ -11,6 +11,7 @@ import pytest
 
 from matchlens.agents.director import Director, DirectorConfig
 from matchlens.agents.lenses import AgentCaller, parse_json
+from matchlens.agents.pipeline import run_match
 from matchlens.agents.providers import (
     AgentFrameworkProvider,
     AgentTask,
@@ -27,6 +28,7 @@ from matchlens.contracts import Draft, Lens
 from matchlens.mcp_server import TOOL_NAMES, MatchStateStore
 
 from .agt_helpers import evals_module, moments, stats
+from .conftest import SAMPLE
 
 # -- Moment Detector ------------------------------------------------------------------------
 
@@ -324,3 +326,36 @@ def test_published_tool_schemas_are_strict() -> None:
     (tool,) = definition["tools"]
     assert tool["name"] == "lookup_next_fixture"
     assert tool["parameters"]["additionalProperties"] is False
+
+
+def test_the_roster_matches_the_tasks_the_pipeline_sends() -> None:
+    from matchlens.agents.providers import ReplayProvider
+    from matchlens.agents.providers.foundry import foundry_agent_name
+    from matchlens.agents.roster import agent_roster, publish_agents
+
+    roster = {foundry_agent_name(t): t for t in agent_roster()}
+    assert set(roster) == {
+        "matchlens-player",
+        "matchlens-club",
+        "matchlens-pundit",
+        "matchlens-pundit-brief",
+        "matchlens-verifier",
+        "matchlens-translator",
+    }
+    seen: list[AgentTask] = []
+
+    class Recording(OfflineProvider):
+        async def complete(self, task: AgentTask) -> str:
+            seen.append(task)
+            return await super().complete(task)
+
+        async def publish(self, tasks: list[AgentTask]) -> dict[str, str | None]:
+            return {foundry_agent_name(t): "1" for t in tasks}
+
+    asyncio.run(run_match(SAMPLE, Recording(), languages=["en", "es"]))
+    for task in seen:
+        listed = roster[foundry_agent_name(task)]
+        assert (listed.instructions, listed.tier) == (task.instructions, task.tier)
+        assert [f.__name__ for f in listed.tools] == [f.__name__ for f in task.tools]
+    assert len(asyncio.run(publish_agents(ReplayProvider(Recording())))) == 6
+    assert asyncio.run(publish_agents(OfflineProvider())) == {}
