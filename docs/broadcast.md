@@ -1,6 +1,6 @@
 # The broadcast screen
 
-![A half-time card written for Brackenford fans, with the club stats panel](img/broadcast.png)
+![A card naming a player who is making more tackles, with the club stats panel](img/broadcast.png)
 
 The screen in `web/` plays a match on a condensed clock. By default 1 match minute takes 1.6 seconds, so a full match runs about 2.5 minutes. It is laid out like a stream, over a blurred photo of a stadium:
 
