@@ -55,7 +55,24 @@ One record per finding, as in [design.md](design.md) section 5:
 
 ## How it scores
 
-RESULTS
+On 30 unseen matches (season seed 9000), scored against the generator's hidden truth the same way as [explainer.md](explainer.md):
+
+| | Deterministic Explainer | Agents on Foundry (gpt-4.1-mini) |
+|---|---|---|
+| Cards per match (before the Director) | 12.2 | 12.2 |
+| Shifts matching a hidden swing (random windows: 69%) | 81% | 81% |
+| Event shifts backed by a real decision | 84% | 84% |
+| Checked cause claims correct | 71% (49 claims) | 70% (43 claims) |
+| Cards that fell back to the rules | | 3.6% |
+| Model calls, tokens | | 1,826 calls, 3.1M in, 110k out (about $1.40 in all, 5 cents a match) |
+
+The Watcher is the same code in both columns, so the first three rows match by construction. The test is the claims, and the agents hold the same accuracy while making their own choices:
+- They call a substitute's impact less often (47 cards against 77) and say the change made no visible difference more often (66 against 38).
+- They put fewer cards down to fatigue (14 against 20), at about the same accuracy (79% against 80%).
+
+The truth can't score substitution claims yet, so it can't say whether the agents' extra caution there is right.
+
+Run it with `matchlens-explain-eval --matches 30 --agents foundry`. CI runs the offline crew only, which gives the same cards as the deterministic Explainer.
 
 ## Code
 
