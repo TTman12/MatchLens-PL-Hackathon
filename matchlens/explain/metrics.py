@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from .match import MatchData
 
 Fn = Callable[[MatchData, str, int, int], float | None]
+MIN_BASELINE = 12  # minutes of match before the anchor needed for a fair "usual"
 
 
 @dataclass(frozen=True)
@@ -132,6 +133,8 @@ class Change:
 
 def change(md: MatchData, metric: Metric, team: str, lo: int, hi: int, baseline: list[tuple[int, int]]) -> Change | None:
     """`after` is the window [lo, hi); `before` is the baseline (a list of minute ranges)."""
+    if sum(b - a for a, b in baseline) < MIN_BASELINE:
+        return None
     after = metric.fn(md, team, lo, hi)
     if after is None:
         return None

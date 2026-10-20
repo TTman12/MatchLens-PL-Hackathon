@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MatchLens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="stage" id="stage">
+    <div class="backdrop" id="backdrop" aria-hidden="true">
+      <div class="stands"></div>
+      <div class="pitch"></div>
+      <div class="vignette"></div>
+    </div>
+
+    <!-- score and clock -->
+    <section class="scorebug" id="scorebug" aria-label="Score">
+      <div class="sb-team sb-home"><span class="sb-strip"></span><span class="sb-code" id="sbHomeCode">HOM</span></div>
+      <div class="sb-score"><span id="sbHomeGoals">0</span><span class="sb-sep">-</span><span id="sbAwayGoals">0</span></div>
+      <div class="sb-team sb-away"><span class="sb-code" id="sbAwayCode">AWY</span><span class="sb-strip"></span></div>
+      <div class="sb-clock" id="sbClock">0:00</div>
+    </section>
+
+    <!-- momentum scale, always on -->
+    <section class="momentum" aria-label="Momentum">
+      <div class="mo-label">Momentum</div>
+      <div class="mo-row">
+        <span class="mo-code" id="moHome">HOM</span>
+        <div class="mo-track" id="moTrack">
+          <div class="mo-fill mo-fill-home" id="moFillHome"></div>
+          <div class="mo-fill mo-fill-away" id="moFillAway"></div>
+          <div class="mo-mid"></div>
+          <div class="mo-marker" id="moMarker"></div>
+        </div>
+        <span class="mo-code" id="moAway">AWY</span>
+      </div>
+    </section>
+
+    <!-- the pop-up card -->
+    <section class="card" id="card" aria-live="polite" hidden></section>
+
+    <!-- event timeline with the momentum history above it -->
+    <section class="timeline" aria-label="Match timeline">
+      <svg class="tl-chart" id="tlChart" preserveAspectRatio="none"></svg>
+      <div class="tl-track" id="tlTrack">
+        <div class="tl-progress" id="tlProgress"></div>
+        <div class="tl-ht" id="tlHt"><span>HT</span></div>
+        <div class="tl-events" id="tlEvents"></div>
+        <div class="tl-head" id="tlHead"></div>
+      </div>
+      <div class="tl-ticks" id="tlTicks"></div>
+    </section>
+
+    <!-- operator controls (hidden for capture with the H key) -->
+    <nav class="controls" id="controls" aria-label="Playback">
+      <select id="matchSelect" aria-label="Match"></select>
+      <button id="playBtn" type="button" aria-label="Play">Play</button>
+      <button id="speedBtn" type="button" aria-label="Speed">1x</button>
+      <span class="ctl-note">Synthetic match · fictional clubs · running stats modelled</span>
+    </nav>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

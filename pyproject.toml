@@ -19,6 +19,7 @@ matchlens-gen = "matchlens.gen.cli:main"
 matchlens-realism = "matchlens.realism.gate:main"
 matchlens-explain = "matchlens.explain.cli:main"
 matchlens-explain-eval = "matchlens.explain.evaluate:main"
+matchlens-broadcast = "matchlens.broadcast.bundle:main"
 
 [tool.setuptools.packages.find]
 include = ["matchlens*"]
