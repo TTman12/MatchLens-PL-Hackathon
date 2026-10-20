@@ -230,6 +230,7 @@ def prompt_agent_definition(agent: Any) -> Any:
     Foundry checks function tools strictly, so every tool's parameters must say that no
     other properties are allowed.
     """
+    import inspect
     import warnings
 
     from agent_framework_foundry import to_prompt_agent
@@ -240,6 +241,8 @@ def prompt_agent_definition(agent: Any) -> Any:
     for tool in definition.get("tools") or []:
         if tool.get("type") == "function":
             tool["parameters"]["additionalProperties"] = False
+            # Python 3.13 dedents docstrings and 3.12 does not; publish the same text from both.
+            tool["description"] = inspect.cleandoc(tool.get("description") or "")
     return definition
 
 

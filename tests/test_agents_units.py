@@ -307,7 +307,8 @@ def test_published_tool_schemas_are_strict() -> None:
     from matchlens.agents.providers.foundry import prompt_agent_definition
 
     def lookup_next_fixture(team_id: str) -> str:
-        """A club's next league match."""
+        """A club's next league match.
+        Returns evidence ids you can cite."""
         return team_id
 
     client = FoundryChatClient(
@@ -326,6 +327,7 @@ def test_published_tool_schemas_are_strict() -> None:
     (tool,) = definition["tools"]
     assert tool["name"] == "lookup_next_fixture"
     assert tool["parameters"]["additionalProperties"] is False
+    assert tool["description"] == "A club's next league match.\nReturns evidence ids you can cite."
 
 
 def test_the_roster_matches_the_tasks_the_pipeline_sends() -> None:
