@@ -78,3 +78,6 @@ def test_a_standout_player_is_named_with_what_he_does_more(tmp_path: Path) -> No
     q = {**_f("dun", "distance_m", 3.8, 110, 125), "claim": "player_change", "player": "y", "name": "Pennholt"}
     text = compose(md, {"kind": "play_change", "team": "dun"}, [p, q], "dun")
     assert text["neutral"] == "Wexez is making more tackles, and Pennholt is covering more ground."
+    team = _f("dun", "high_turnovers", 2.0, 1, 4)
+    mixed = compose(md, {"kind": "play_change", "team": "dun"}, [p, team], "dun")["neutral"]
+    assert mixed.startswith("Wexez is making more tackles.") and md.short("dun") in mixed

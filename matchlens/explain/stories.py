@@ -310,8 +310,10 @@ def compose(md: MatchData, cause: dict[str, Any], stats: list[Finding], gainer: 
             rest = [f for f in stats if f is not sub]
             if rest:
                 s = (s + " " + _fallback(md, rest)).strip()
-        elif stats and all(f.get("claim") == "player_change" for f in stats):
-            s = _prefixed(md, kind, team, "", _player_text(stats))
+        elif any(f.get("claim") == "player_change" for f in stats):
+            stars = [f for f in stats if f.get("claim") == "player_change"]
+            body = " ".join(x for x in (_player_text(stars), _fallback(md, stats)) if x)
+            s = _prefixed(md, kind, team, "", body)
         elif story is not None:
             s = _prefixed(md, kind, team, stats[0]["team"], _story_text(md, story, stats[0]["team"], view))
         elif stats:
