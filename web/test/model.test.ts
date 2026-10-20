@@ -3,6 +3,7 @@ import { boxAt, localise, scheduleBoxes, MAX_BOX_DELAY_S } from "../src/model/cu
 import { replayCameraFor, replayPlan, replayTime, slotAt } from "../src/model/replays";
 import type { Viewer } from "../src/model/viewer";
 import type { Cue } from "../src/contracts";
+import { colourDistance, keeperKits } from "../src/model/kits";
 import { sampleMatch } from "./sample";
 
 const m = sampleMatch();
@@ -114,5 +115,17 @@ describe("match", () => {
     expect(m.markers.map((k) => k.kind)).toEqual(["corner", "goal", "card"]);
     // Brackenford attack -x in the first half, so their corner is at the left end.
     expect(m.markers[0]!.at[0]).toBeLessThan(1);
+  });
+});
+
+describe("keeper kits", () => {
+  it("dresses each keeper in a colour far from both teams and from each other", () => {
+    const [home, away] = keeperKits(m.home, m.away);
+    expect(home.primary).not.toBe(away.primary);
+    for (const kit of [home, away]) {
+      for (const shirt of [m.home.colours.primary, m.away.colours.primary]) {
+        expect(colourDistance(kit.primary, shirt)).toBeGreaterThan(150);
+      }
+    }
   });
 });

@@ -54,8 +54,19 @@ recorded between events.
   player has a slot that shifts with the ball: up and wide in possession, compact and
   goal-side out of it, with the back line never sinking onto its own goal line and
   attackers held onside of the last defender
-  ([formations.py](../matchlens/sim/formations.py)). The nearest defender presses the ball
-  and the next one covers.
+  ([formations.py](../matchlens/sim/formations.py)).
+- **Off the ball.** The side in possession moves to create options: the two nearest
+  team-mates move to an open spot with a clear passing lane (level or behind the ball near
+  the box), forwards and wide players time runs along the last defender's shoulder,
+  full-backs overlap a winger on their flank, and everyone else edges into the most open
+  pocket near their slot. Runs are held for a few seconds once started. Out of
+  possession the nearest defender presses the ball, the next covers, and the rest mark
+  zonally: each picks up the nearest attacker heading into his zone and stands goal side
+  of where that attacker is going, at the runner's pace.
+- **Goalkeepers** stand on the line from the centre of their goal to the ball, a step off
+  the line with the ball in the box and up to about 11 m out (sweeping) when it is in the
+  other half. On a shot the keeper goes for the ball: all the way for a save, most of the
+  way when beaten.
 - **Decisions.** Whenever a player has the ball they score every option from the current
   positions of all 22 players: a pass to each team-mate, a through ball into space, a
   cross, a carry in five directions, a shot, or a clearance. Each option's value is its
@@ -65,9 +76,16 @@ recorded between events.
   pass success from distance, how open the lane is, pressure on the passer and receiver,
   and the passer's rating (the same factors without the rating give the pass difficulty);
   carries succeed less for every defender in the way; xG from distance, goal-mouth
-  angle, pressure, headers and how many defenders stand between shooter and goal; goals
-  against keeper rating. A failed pass is intercepted in the lane, overhit out of play,
-  or lost at the receiver, which gives throw-ins, goal kicks and corners.
+  angle, pressure, headers and how many defenders stand between shooter and goal (about
+  0.66 from the six-yard line, 0.25 from the penalty spot, 0.09 from the edge of the box,
+  0.02 from 25 m); goals against keeper rating, so about one shot in ten goes in and
+  long-range efforts rarely do. A failed pass is intercepted in the lane, overhit out of
+  play, or lost at the receiver.
+- **Restarts have causes.** The ball is always seen to leave the pitch before a restart,
+  and the restart follows the Laws from where it crossed and who touched it last: behind
+  off a defender (a header, a block, a save tipped round the post, a sliced clearance) is
+  a corner, behind off an attacker a goal kick, over a touchline a throw-in to the other
+  side at that spot. A free kick or penalty only follows a foul or an offside.
 - **Duels and discipline.** Defenders close down receivers (pressure events) and
   sometimes tackle. Fouls come from mistimed tackles and holding; a card depends on the
   foul's severity and the player's discipline, and a booked player is more careful.
@@ -78,14 +96,33 @@ recorded between events.
 - **Fatigue and home advantage.** Top speed drops with minutes played, less for players
   with high stamina. The home side passes and finishes slightly better.
 
-Movement is speed-limited per player. Between events each player heads for their slot
-(or, when part of the action, a pin they can reach: the receiver running onto a pass, the
-tackler arriving at the ball). [render.py](../matchlens/sim/render.py) then draws each
-player along a smooth curve through those keyframes, so velocities in the frames are
-continuous and stay under each player's top speed, and the ball follows passes, shots,
-carries and restarts without jumping.
+Movement is steered, as in Reynolds' steering behaviours: between events each player
+seeks their target (slot, run, marking spot or press) with arrival, accelerating at up to
+7 m/s^2 and slowing as they arrive, at their own pace (a jog with the shape, a run to
+support or recover, a sprint in behind). Players part of the action are pinned to a
+point they can reach: the receiver running onto a pass, the tackler arriving at the ball.
+Keyframes are recorded every half second with the player's velocity, and
+[render.py](../matchlens/sim/render.py) draws each player along a smooth curve through
+them using those velocities, so frames are continuous and stay under each player's top
+speed, and the ball follows passes, shots, carries and restarts without jumping.
 
 Time is kept in ticks of 0.1 s, so every event lands exactly on a frame.
+
+## Approaches it borrows
+
+The engine adopts ideas from proven football simulation and analytics work:
+
+- **Ball-driven formations** from RoboCup 2D simulation (the HELIOS team's
+  triangulation-based formations, where each player's position is a function of the
+  ball's position).
+- **Steering behaviours** (seek, arrival, pursuit) from Craig Reynolds' work on
+  autonomous characters, for movement that accelerates and decelerates.
+- **Space and pitch control** (Fernandez and Bornn; Spearman's off-ball scoring
+  opportunity) as a cheap proxy: support runners pick open spots with clear lanes.
+- **Distance-and-angle xG** as in public open-play models built on StatsBomb-style event
+  data, with pressure and defenders in the shooting triangle as modifiers.
+- **Event conventions** (a restart always follows a ball-out, foul or offside event; the
+  last touch decides corner or goal kick) as in StatsBomb, Wyscout and Opta event data.
 
 ## Scripted storylines
 
@@ -93,7 +130,9 @@ A storyline is a list of beats: a goal or a card, for a side, at a minute, optio
 a shirt number ([storyline.py](../matchlens/sim/storyline.py)). Once a beat is due the
 engine tilts play toward it (the scripted side wins the ball back and its attacks run at
 goal; for a card, the booked side is defending when the challenge comes) and it usually
-lands within a few minutes. The build-up is still simulated, so it looks like football.
+lands within a few minutes. The build-up is still simulated, so it looks like football,
+and the scripted goal only comes from a real chance: a shot worth at least 0.12 xG
+(easing to 0.06 if the beat runs six minutes late), never a hopeful strike from 40 m.
 In `strict` mode every other goal and dismissal is turned into a near miss, so the
 scoreline is exactly the script's. Players a later beat needs are not substituted.
 
@@ -153,9 +192,16 @@ likely to win, not betting odds.
 - over 24 matches, per-match averages of goals, shots, shots on target, xG per shot,
   passes, pass completion, corners, fouls, cards, offsides, throw-ins, ball in play and
   match length fall in football-like ranges;
-- each storyline produces its script (score, order, timing, scorer);
+- each storyline produces its script (score, order, timing, scorer), and scripted goals
+  come from real chances, never a speculative shot from distance;
 - the schedule is a valid double round robin; a short season's table, goals and player
   stats add up; bans follow the rules.
+
+`tests/test_sim_causality.py` checks that every corner, goal kick and throw-in follows
+the ball going out at the right line off the right team, that the ball visibly reaches
+the line first, that free kicks and penalties follow fouls or offsides, that shots
+convert at real-world rates (about one in ten, long shots rarely), and that keepers stay
+at their goal.
 
 The full calibration over a season's worth of matches is in
 [calibration.md](calibration.md).
@@ -164,9 +210,8 @@ The full calibration over a season's worth of matches is in
 
 - Events come from the simulator, not from video. The engine is where a vision model
   would plug in for auto-eventing; we did not build that.
-- Player movement is a shape model with pressing, not full off-ball intelligence: runs
-  in behind and overlaps appear through the shape and through balls, not as planned
-  patterns.
+- Off-ball movement is rule-based (support angles, runs, overlaps, zonal marking), not a
+  learned model from tracking data, and runs are not coordinated as set patterns.
 - At half-time the frames cut from one end to the other (the break is not on the
   timeline), so don't difference positions across the first frame of period 2.
 - Positions can sit a little outside the touchline when a player takes a throw-in.

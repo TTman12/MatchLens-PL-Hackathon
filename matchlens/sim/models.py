@@ -41,13 +41,14 @@ def expected_goals(
 ) -> float:
     """xG of a shot from ``(x, y)``: logistic in distance and goal-mouth angle.
 
-    With one defender between shooter and goal and no pressure: about 0.65 from the
-    six-yard line, 0.28 from the penalty spot, 0.13 from the edge of the box and 0.03
-    from 25 m. Pressure lowers it, as does a header; a clear sight of goal (no outfield
-    defender in the triangle to the posts) raises it, two or more defenders lower it.
+    With one defender between shooter and goal and no pressure: about 0.66 from the
+    six-yard line, 0.25 from the penalty spot, 0.09 from the edge of the box and 0.02
+    from 25 m, in line with public open-play xG models built on distance and angle.
+    Pressure lowers it, as does a header; a clear sight of goal (no outfield defender in
+    the triangle to the posts) raises it, two or more defenders lower it.
     """
     d = goal_distance(x, y)
-    logit = -0.6 - 0.13 * d + 1.7 * goal_angle(x, y)
+    logit = -0.45 - 0.16 * d + 1.7 * goal_angle(x, y)
     xg = 1.0 / (1.0 + math.exp(-logit))
     if header:
         xg *= 0.6

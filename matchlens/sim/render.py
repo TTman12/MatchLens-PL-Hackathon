@@ -2,9 +2,9 @@
 
 Players move along a cubic Hermite curve through their keyframes, so position and
 velocity are smooth and every keyframe (a pass arriving at a receiver's feet, a tackle)
-is hit exactly. Tangents are the duration-weighted average of the neighbouring chords,
-and zero where the player reverses, which keeps the curve from overshooting. The
-period-2 kick-off is a cut: nothing is interpolated across half-time.
+is hit exactly. Tangents are the velocities the engine steered with, so the curve is
+the motion the engine simulated. The period-2 kick-off is a cut: nothing is
+interpolated across half-time.
 """
 
 from __future__ import annotations
@@ -67,37 +67,24 @@ class Track:
 
 def build_tracks(player: MatchPlayer) -> list[Track]:
     """A player's keyframes split at half-time cuts, each turned into a :class:`Track`."""
-    runs: list[list[tuple[int, float, float]]] = [[]]
-    for tick, x, y in player.keyframes:
+    runs: list[list[tuple[int, float, float, float, float]]] = [[]]
+    vels = player.velocities or [(0.0, 0.0)] * len(player.keyframes)
+    for (tick, x, y), (vx, vy) in zip(player.keyframes, vels, strict=True):
         if tick < 0:
-            runs.append([(-tick, x, y)])
+            runs.append([(-tick, x, y, vx, vy)])
             continue
         run = runs[-1]
         if run and run[-1][0] == tick:
-            run[-1] = (tick, x, y)
+            run[-1] = (tick, x, y, vx, vy)
         else:
-            run.append((tick, x, y))
+            run.append((tick, x, y, vx, vy))
     return [_track(run) for run in runs if run]
 
 
-def _track(run: list[tuple[int, float, float]]) -> Track:
-    ticks = [k[0] for k in run]
-    points = [(k[1], k[2]) for k in run]
-    n = len(run)
-    chords: list[Vec] = []
-    for i in range(n - 1):
-        h = (ticks[i + 1] - ticks[i]) / TICKS_PER_S
-        chords.append(
-            ((points[i + 1][0] - points[i][0]) / h, (points[i + 1][1] - points[i][1]) / h)
-        )
-    tangents: list[Vec] = [(0.0, 0.0)] * n
-    for i in range(1, n - 1):
-        s0, s1 = chords[i - 1], chords[i]
-        if s0[0] * s1[0] + s0[1] * s1[1] <= 0:
-            continue
-        h0, h1 = ticks[i] - ticks[i - 1], ticks[i + 1] - ticks[i]
-        tangents[i] = ((s0[0] * h1 + s1[0] * h0) / (h0 + h1), (s0[1] * h1 + s1[1] * h0) / (h0 + h1))
-    return Track(ticks, points, tangents)
+def _track(run: list[tuple[int, float, float, float, float]]) -> Track:
+    """Tangents are the engine's own velocities, which agree with the steps it took, so
+    the curve neither overshoots a keyframe nor outruns the player between them."""
+    return Track([k[0] for k in run], [(k[1], k[2]) for k in run], [(k[3], k[4]) for k in run])
 
 
 def iter_frames(result: EngineResult) -> Iterator[dict[str, object]]:

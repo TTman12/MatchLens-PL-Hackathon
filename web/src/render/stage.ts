@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { keeperKits } from "../model/kits";
 import type { Match } from "../model/match";
 import type { Trail } from "../model/trails";
 import type { Pose } from "./cameras";
@@ -150,8 +151,10 @@ export class Stage {
     const glowGeo = new THREE.PlaneGeometry(3.4, 3.4).rotateX(-Math.PI / 2);
     const discGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.3, 40);
 
+    // Keepers wear their own colours, as on a real pitch, so they stand out from both teams.
+    const keepers = keeperKits(match.home, match.away);
     for (const p of match.players.values()) {
-      const col = p.club.colours;
+      const col = p.position === "GK" ? keepers[p.teamId === match.home.team_id ? 0 : 1] : p.club.colours;
       const side = new THREE.MeshStandardMaterial({ color: col.secondary, roughness: 0.6 });
       const top = new THREE.MeshStandardMaterial({
         map: discTexture(col.primary, col.secondary, col.text, p.shirt),

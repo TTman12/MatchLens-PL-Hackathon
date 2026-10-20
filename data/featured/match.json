@@ -46,7 +46,7 @@
         "slot": "RCM"
       },
       {
-        "player_id": "ash-10",
+        "player_id": "ash-14",
         "slot": "LCM"
       },
       {
@@ -65,7 +65,6 @@
     "bench": [
       "ash-12",
       "ash-13",
-      "ash-14",
       "ash-15",
       "ash-16",
       "ash-17",
@@ -113,11 +112,11 @@
         "slot": "CAM"
       },
       {
-        "player_id": "brk-14",
+        "player_id": "brk-11",
         "slot": "LAM"
       },
       {
-        "player_id": "brk-17",
+        "player_id": "brk-09",
         "slot": "ST"
       }
     ],
@@ -126,6 +125,7 @@
       "brk-13",
       "brk-15",
       "brk-16",
+      "brk-17",
       "brk-18"
     ]
   },
@@ -133,19 +133,20 @@
   "stakes": {
     "derby": true,
     "notes": [
-      "Ashmere are 1st on 53 points",
-      "A win keeps Ashmere top",
-      "Brackenford are 11th on 42 points",
+      "Ashmere are 3rd on 62 points",
+      "A win would take Ashmere top",
+      "Brackenford are 7th on 50 points",
       "Local derby",
-      "Marrow (Ashmere) is one booking from a ban",
-      "Gorrow (Brackenford) is one booking from a ban",
-      "Dunanu (Brackenford) is suspended",
-      "Kestade (Brackenford) is suspended"
+      "Marrow (Ashmere) is suspended",
+      "Gorrelli (Ashmere) is one booking from a ban",
+      "Corvwell (Ashmere) is one booking from a ban",
+      "Dewworth (Brackenford) is suspended",
+      "Cromton (Brackenford) is one booking from a ban"
     ]
   },
   "pre_match_win_prob": {
-    "home": 0.48,
+    "home": 0.481,
     "draw": 0.253,
-    "away": 0.267
+    "away": 0.266
   }
 }
