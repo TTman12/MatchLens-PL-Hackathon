@@ -11,61 +11,63 @@
 </head>
 <body>
   <main class="stage" id="stage">
-    <div class="backdrop" id="backdrop" aria-hidden="true">
-      <div class="stands"></div>
-      <div class="pitch"></div>
-      <div class="vignette"></div>
-    </div>
+    <div class="backdrop" aria-hidden="true"></div>
 
-    <!-- score and clock -->
-    <section class="scorebug" id="scorebug" aria-label="Score">
-      <div class="sb-team sb-home"><span class="sb-strip"></span><span class="sb-code" id="sbHomeCode">HOM</span></div>
-      <div class="sb-score"><span id="sbHomeGoals">0</span><span class="sb-sep">-</span><span id="sbAwayGoals">0</span></div>
-      <div class="sb-team sb-away"><span class="sb-code" id="sbAwayCode">AWY</span><span class="sb-strip"></span></div>
-      <div class="sb-clock" id="sbClock">0:00</div>
+    <!-- the "video": a still of the stadium stands in for the match feed -->
+    <section class="video" aria-label="Match feed">
+      <div class="feed" aria-hidden="true"></div>
+      <div class="feed-note">Synthetic match · no video</div>
+
+      <!-- score and clock -->
+      <div class="scorebug" id="scorebug" aria-label="Score">
+        <div class="sb-team sb-home"><span class="sb-strip"></span><span class="sb-code" id="sbHomeCode">HOM</span></div>
+        <div class="sb-score"><span id="sbHomeGoals">0</span><span class="sb-sep">-</span><span id="sbAwayGoals">0</span></div>
+        <div class="sb-team sb-away"><span class="sb-code" id="sbAwayCode">AWY</span><span class="sb-strip"></span></div>
+        <div class="sb-clock" id="sbClock">0:00</div>
+      </div>
+
+      <!-- the pop-up card, as a lower third over the feed -->
+      <div class="card" id="card" aria-live="polite" hidden></div>
     </section>
 
-    <!-- momentum scale, always on -->
-    <section class="momentum" aria-label="Momentum">
-      <div class="mo-label">Momentum</div>
+    <!-- club and player stats, and what the agents did -->
+    <aside class="panel" id="panel" aria-label="Stats">
+      <div class="fan" role="group" aria-label="Your club">
+        <span class="fan-label">Your club</span>
+        <div class="fan-opts" id="fanOpts"></div>
+      </div>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="clubs">Clubs</button>
+        <button type="button" role="tab" data-tab="players">Players</button>
+        <button type="button" role="tab" data-tab="agents">Agents</button>
+      </div>
+      <div class="panel-body" id="panelBody"></div>
+    </aside>
+
+    <!-- momentum now, and the match so far -->
+    <section class="bottom" aria-label="Momentum and timeline">
       <div class="mo-row">
+        <span class="mo-label">Momentum</span>
         <span class="mo-code" id="moHome">HOM</span>
-        <div class="mo-track" id="moTrack">
-          <div class="mo-fill mo-fill-home" id="moFillHome"></div>
-          <div class="mo-fill mo-fill-away" id="moFillAway"></div>
-          <div class="mo-mid"></div>
-          <div class="mo-marker" id="moMarker"></div>
-        </div>
+        <div class="grad-bar mo-track" id="moTrack"><div class="gb-mid"></div><div class="gb-now"></div></div>
         <span class="mo-code" id="moAway">AWY</span>
+        <nav class="controls" id="controls" aria-label="Playback">
+          <select id="matchSelect" aria-label="Match"></select>
+          <button id="playBtn" type="button" aria-label="Play">Play</button>
+          <button id="speedBtn" type="button" aria-label="Speed">1x</button>
+        </nav>
+      </div>
+      <div class="timeline">
+        <svg class="tl-chart" id="tlChart" preserveAspectRatio="none"></svg>
+        <div class="tl-track" id="tlTrack">
+          <div class="tl-progress" id="tlProgress"></div>
+          <div class="tl-ht" id="tlHt"><span>HT</span></div>
+          <div class="tl-events" id="tlEvents"></div>
+          <div class="tl-head" id="tlHead"></div>
+        </div>
+        <div class="tl-ticks" id="tlTicks"></div>
       </div>
     </section>
-
-    <!-- the pop-up card -->
-    <section class="card" id="card" aria-live="polite" hidden></section>
-
-    <!-- under the hood: what the agents did for the card on screen (U key) -->
-    <aside class="hood" id="hood" aria-label="Under the hood" hidden></aside>
-
-    <!-- event timeline with the momentum history above it -->
-    <section class="timeline" aria-label="Match timeline">
-      <svg class="tl-chart" id="tlChart" preserveAspectRatio="none"></svg>
-      <div class="tl-track" id="tlTrack">
-        <div class="tl-progress" id="tlProgress"></div>
-        <div class="tl-ht" id="tlHt"><span>HT</span></div>
-        <div class="tl-events" id="tlEvents"></div>
-        <div class="tl-head" id="tlHead"></div>
-      </div>
-      <div class="tl-ticks" id="tlTicks"></div>
-    </section>
-
-    <!-- operator controls (hidden for capture with the H key) -->
-    <nav class="controls" id="controls" aria-label="Playback">
-      <select id="matchSelect" aria-label="Match"></select>
-      <button id="playBtn" type="button" aria-label="Play">Play</button>
-      <button id="speedBtn" type="button" aria-label="Speed">1x</button>
-      <button id="hoodBtn" type="button" aria-label="Under the hood">Agents</button>
-      <span class="ctl-note">Synthetic match · fictional clubs · running stats modelled</span>
-    </nav>
   </main>
   <script src="app.js"></script>
 </body>

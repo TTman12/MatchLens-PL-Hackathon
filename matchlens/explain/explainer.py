@@ -11,6 +11,8 @@ from typing import Any
 
 from .match import MatchData
 from .specialists import Finding, investigate
+from .stories import SHARES as LONE_SHARES
+from .stories import compose, find_stories, match_story
 from .watcher import Moment, watch
 
 EASY = {"possession", "duels_won", "defending_height", "shots", "long_balls", "distance", "sprints", "high_turnovers", "xg"}
@@ -115,7 +117,69 @@ def pick_stats(m: Moment, found: dict[str, list[Finding]], lead: Finding | None)
     return chosen
 
 
-def anchor_label(md: MatchData, m: Moment) -> str:
+STORY_CAUSES = {"play_change", "recovery", "goal_lift", "chasing_the_game"}
+# a player clearly doing more for the side that gained: his name goes on the card
+STANDOUT_METRICS = {"defensive_actions", "duels_won", "progressive_passes", "sprints", "distance_m"}
+STANDOUT = 3.5
+
+
+def stands_out(f: Finding, gainer: str | None) -> bool:
+    return bool(
+        f.get("claim") == "player_change"
+        and f["team"] == gainer
+        and f["metric"] in STANDOUT_METRICS
+        and f["after"] > f["before"]
+        and f["effect_sd"] >= STANDOUT
+        and _visible(f)
+    )
+
+
+def standouts(m: Moment, found: dict[str, list[Finding]]) -> list[Finding]:
+    """Up to two players on the side that gained who are clearly doing more, one stat each."""
+    pool = sorted((f for f in found["players"] if stands_out(f, m.gainer)), key=lambda f: -f["effect_sd"])
+    out: list[Finding] = []
+    for f in pool:
+        if len(out) < 2 and all(f["player"] != o["player"] and f["metric"] != o["metric"] for o in out):
+            out.append(f)
+    return out
+
+
+def _partner(m: Moment, found: dict[str, list[Finding]], chosen: list[Finding]) -> Finding | None:
+    """A second stat for a share shown alone: possession on its own explains nothing."""
+    pool = [
+        f
+        for f in found["team_play"]
+        if f["metric"] not in OFF_SCREEN
+        and abs(f["effect_sd"]) >= 1.0
+        and _visible(f)
+        and all(f["metric"] != c["metric"] and f.get("family") != c.get("family") for c in chosen)
+        and f["metric"] not in LONE_SHARES
+    ]
+    pool.sort(key=lambda f: (f["team"] != chosen[0]["team"], -_score(f, m.gainer)))
+    return pool[0] if pool else None
+
+
+def choose_stats(m: Moment, cause: dict[str, Any], found: dict[str, list[Finding]], lead: Finding | None) -> list[Finding]:
+    """The one or two numbers for the card. A play-style story (two stats that together say how the
+    play changed) beats two unrelated numbers, and a share like possession never stands alone."""
+    if cause["kind"] in STORY_CAUSES:
+        stories = [s for s in find_stories(found["team_play"], m.gainer) if s["aligned"]]
+        if stories:
+            return list(stories[0]["stats"])
+        stars = standouts(m, found)
+        if stars:
+            return stars
+    stats = pick_stats(m, found, lead) or fallback_stats(m, found)
+    if len(stats) == 1 and stats[0]["metric"] in LONE_SHARES and not stats[0].get("player"):
+        extra = _partner(m, found, stats)
+        if extra is not None:
+            stats.append(extra)
+    return stats
+
+
+def anchor_label(md: MatchData, m: Moment, cause: dict[str, Any] | None = None) -> str:
+    if cause and cause["kind"] == "substitution_impact" and cause.get("player") and len(m.events) == 1:
+        return f"Since {md.names.get(cause['player'], '')} came on"  # the sub the card is about
     if not m.events:
         return f"Since {md.clock_of(m.anchor_m)}"
     e = m.events[0]
@@ -168,7 +232,7 @@ def explain(md: MatchData, m: Moment) -> dict[str, Any]:
     md = md.until(m.now)  # the agents only ever see the match as it stood at that minute
     found = investigate(md, m)
     cause, lead = decide_cause(md, m, found)
-    stats = pick_stats(m, found, lead) or fallback_stats(m, found)
+    stats = choose_stats(m, cause, found, lead)
     return assemble(md, m, clock, found, cause, stats)
 
 
@@ -194,7 +258,7 @@ def assemble(
         "mode": m.mode,
         "shifted": m.shifted,
         "anchor": {
-            "label": anchor_label(md, m),
+            "label": anchor_label(md, m, cause),
             "m": m.anchor_m,
             "event_ids": [e.event_id for e in m.events if e.event_id],
         },
@@ -208,6 +272,8 @@ def assemble(
             "swing": round(m.swing, 1),
         },
         "cause": {**cause, "confidence": confidence},
+        "story": match_story(stats),
+        "text": compose(md, cause, stats, m.gainer),
         "findings": {k: v[:8] for k, v in found.items()},
     }
 

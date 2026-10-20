@@ -2,7 +2,7 @@
 // condensed clock. The page does no analysis: everything it shows is in the bundle.
 //
 // URL options: ?match=<id>  &speed=1|2|4  &autoplay=1  &hide=1 (no operator controls, for capture)
-//              &hood=1 (open the under-the-hood panel)
+//              &tab=clubs|players|agents  &fan=<team id> (whose fans the card text speaks to)
 // Keys: space play/pause, H hide controls, N jump to the next card, R restart, U under the hood.
 
 (() => {
@@ -23,8 +23,22 @@
   let nextCard = 0;
   let cardUntil = 0; // performance.now() ms when the current card leaves
   let last = 0;
-  let hoodOpen = params.get("hood") === "1";
-  let hoodCard = null; // the card the panel describes
+  let hoodCard = null; // the card the agents tab describes
+  let tab = ["clubs", "players", "agents"].includes(params.get("tab")) ? params.get("tab") : params.get("hood") === "1" ? "agents" : "clubs";
+  let fan = params.get("fan") || store("matchlens.fan") || "neutral"; // a team id, or "neutral"
+  let club = null; // the club the players tab lists
+  let player = null; // the player the players tab shows
+  let panelMinute = -1;
+
+  function store(k, v) {
+    try {
+      if (v === undefined) return localStorage.getItem(k);
+      localStorage.setItem(k, v);
+    } catch {
+      return null; // private windows and blocked storage: the setting just isn't remembered
+    }
+    return null;
+  }
 
   // ---------- colour: keep the two sides apart ----------
   function hexToRgb(h) {
@@ -52,13 +66,6 @@
   }
 
   // ---------- icons ----------
-  // icons drawn on the coloured tag of a card, in the tag's own ink
-  const TAG_ICONS = {
-    red_card: '<svg viewBox="0 0 20 20"><rect x="5.5" y="2.5" width="9" height="15" rx="1.2" fill="currentColor"/></svg>',
-    goal: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 5.8l3.4 2.5-1.3 4H7.9l-1.3-4z" fill="currentColor"/></svg>',
-    substitution: '<svg viewBox="0 0 20 20"><path d="M6 15V5M6 5l-3 3M6 5l3 3M14 5v10M14 15l-3-3M14 15l3-3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  };
-
   const ICONS = {
     goal: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.5" fill="#fff" stroke="#37003c" stroke-width="1.5"/><path d="M10 5.6l3.6 2.6-1.4 4.2H7.8L6.4 8.2z" fill="#37003c"/></svg>',
     red_card: '<svg viewBox="0 0 20 20"><rect x="5.5" y="2.5" width="9" height="15" rx="1.2" fill="#e90052" stroke="#fff" stroke-width="1"/></svg>',
@@ -93,6 +100,9 @@
     $("sbAwayCode").textContent = away.code;
     $("moHome").textContent = home.code;
     $("moAway").textContent = away.code;
+    club = home.team_id;
+    player = null;
+    drawFan();
     drawTimeline();
     restart();
   }
@@ -102,6 +112,7 @@
     nextCard = 0;
     hideCard(true);
     render();
+    renderPanel();
   }
 
   // ---------- timeline ----------
@@ -196,10 +207,7 @@
     if (setText(hEl, h) && t > 0) bump(hEl);
     if (setText(aEl, a) && t > 0) bump(aEl);
 
-    const share = momentumAt(t);
-    $("moFillHome").style.width = `${share}%`;
-    $("moFillAway").style.width = `${100 - share}%`;
-    $("moMarker").style.left = `${share}%`;
+    $("moTrack").style.setProperty("--m", `${momentumAt(t)}%`);
 
     const p = (100 * t) / bundle.minutes;
     $("tlProgress").style.width = `${p}%`;
@@ -211,6 +219,8 @@
       el.classList.toggle("done", done);
       el.classList.toggle("fresh", done && t - Number(el.dataset.m) < 1.5);
     }
+    const minute = Math.min(bundle.minutes - 1, Math.floor(t));
+    if (minute !== panelMinute && tab !== "agents") renderPanel();
   }
 
   function bump(el) {
@@ -227,59 +237,58 @@
   function statRow(s) {
     const team = teamById(s.team);
     const side = team === bundle.teams[0] ? "var(--home)" : "var(--away)";
-    const who = s.player ? s.player : team.short_name;
     const when = s.window ? ` · last ${s.window.replace("in ", "")}` : "";
+    // a player's row leads with his name; a team's with the stat
+    const [title, sub] = s.player ? [s.player, `${s.label}${when}`] : [s.label, `${team.short_name}${when}`];
     const unit = s.unit ? `<span class="stat-unit">${s.unit}</span>` : "";
     return `
       <div class="stat">
         <span class="stat-strip" style="background:${side}"></span>
         <span class="stat-code">${s.code}</span>
         <span class="stat-text">
-          <div class="stat-label">${s.label}</div>
-          <div class="stat-sub">${who}${when}</div>
+          <div class="stat-label">${esc(title)}</div>
+          <div class="stat-sub">${esc(sub)}</div>
         </span>
         <span class="stat-nums">
-          <span class="stat-value">${s.value}${unit}</span>
+          <span class="stat-value"><span class="stat-arrow">${s.rise ? "▲" : "▼"}</span>${s.value}${unit}</span>
           <span class="stat-usual">${s.usual_label}<b>${s.usual}</b></span>
         </span>
       </div>`;
   }
 
+  function cardText(c) {
+    const text = c.text || {};
+    return text[fan] ?? text.neutral ?? "";
+  }
+
   function showCard(c) {
     const el = $("card");
     const [home, away] = bundle.teams;
-    const tagIcon = TAG_ICONS[c.kind] || ICONS[c.kind] || ICONS.shift;
     el.className = `card kind-${c.kind}`;
     el.innerHTML = `
       <div class="card-head">
-        <div class="card-tag">${tagIcon}<span>${c.tag}</span></div>
         <div class="card-anchor">${c.anchor}</div>
       </div>
+      <div class="card-text" id="cardText">${esc(cardText(c))}</div>
       <div class="card-body">${c.stats.map(statRow).join("")}</div>
       <div class="card-foot">
         <span class="cf-label">Momentum</span>
-        <div class="cf-bar">
-          <div class="mo-fill mo-fill-home" style="width:${c.momentum.before}%"></div>
-          <div class="mo-fill mo-fill-away" style="width:${100 - c.momentum.before}%"></div>
-          <div class="cf-ghost" style="left:${c.momentum.before}%"></div>
-          <div class="cf-now" style="left:${c.momentum.before}%"></div>
+        <span class="cf-code">${home.code}</span>
+        <div class="grad-bar cf-bar" style="--m:${c.momentum.before}%;--was:${c.momentum.before}%">
+          <div class="gb-was"></div><div class="gb-now"></div>
         </div>
-        <span class="cf-codes">${home.code} · ${away.code}</span>
+        <span class="cf-code">${away.code}</span>
       </div>`;
     el.hidden = false;
     void el.offsetWidth;
     el.classList.add("on");
-    // after the entry, slide the bar from before to now
+    // after the entry, move the bar from where momentum was to where it is; a faded line stays at "was"
     requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        el.querySelector(".mo-fill-home").style.width = `${c.momentum.now}%`;
-        el.querySelector(".mo-fill-away").style.width = `${100 - c.momentum.now}%`;
-        el.querySelector(".cf-now").style.left = `${c.momentum.now}%`;
-      }),
+      requestAnimationFrame(() => el.querySelector(".cf-bar").style.setProperty("--m", `${c.momentum.now}%`)),
     );
     cardUntil = performance.now() + CARD_SECONDS * 1000;
     hoodCard = c;
-    renderHood();
+    if (tab === "agents") renderPanel();
   }
 
   // ---------- under the hood ----------
@@ -291,15 +300,12 @@
   };
   const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 
-  function renderHood() {
-    const el = $("hood");
+  function hoodHtml() {
     const h = hoodCard && hoodCard.hood;
-    el.hidden = !hoodOpen;
-    if (!hoodOpen) return;
     if (!h) {
-      el.innerHTML = `<div class="hood-head"><span>Under the hood</span></div>
-        <p class="hood-empty">${hoodCard ? "This match was explained without the agents." : "Waiting for the first card."}</p>`;
-      return;
+      return `<p class="hood-empty">${
+        hoodCard ? "This match was explained without the agents." : "What the agents found for each card shows here when it comes up."
+      }</p>`;
     }
     const runner = h.runner === "foundry" ? "Microsoft Foundry" : "Offline rules";
     const rows = h.specialists
@@ -318,8 +324,8 @@
       : rejected
         ? `Passed after ${rejected} rejection${rejected > 1 ? "s" : ""}`
         : "Passed first time";
-    el.innerHTML = `
-      <div class="hood-head"><span>Under the hood</span><span class="hood-runner">${runner}</span></div>
+    return `
+      <div class="hood-head"><span>${esc(hoodCard.clock)} · ${esc(hoodCard.tag)}</span><span>${runner}</span></div>
       <ul class="hood-list">${rows}</ul>
       <div class="hood-step"><span class="hood-agent">Explainer</span>
         <span class="hood-why">${esc(h.fallback ? "No verified draft; the deterministic rules chose." : h.why)}</span></div>
@@ -328,9 +334,106 @@
         <span class="hood-note">${h.board} findings on the board · confidence ${Math.round(100 * h.confidence)}%</span></div>`;
   }
 
-  function toggleHood() {
-    hoodOpen = !hoodOpen;
-    renderHood();
+  // ---------- the stats panel ----------
+  const dot = (id) => `<span class="chip-dot" style="background:${id === bundle.teams[0].team_id ? "var(--home)" : "var(--away)"}"></span>`;
+
+  function fmt(v, unit) {
+    const n = Number.isInteger(v) ? v : v.toFixed(v < 10 ? 2 : 1).replace(/\.?0+$/, "");
+    return unit ? `${n}<span class="u">${unit}</span>` : `${n}`;
+  }
+
+  function clubsHtml(m) {
+    const st = bundle.stats;
+    const [home, away] = bundle.teams;
+    const head = (tm) => `<th><button type="button" data-club="${tm.team_id}">${dot(tm.team_id)}${tm.code}</button></th>`;
+    const rows = st.team_stats
+      .map((d) => {
+        const a = st.teams[home.team_id][d.key][m];
+        const b = st.teams[away.team_id][d.key][m];
+        const lead = (x, y) => (x > y && d.key !== "fouls" && d.key !== "yellow_cards" && d.key !== "offsides" ? "lead" : "");
+        return `<tr><td>${d.label}${d.modelled ? '<span class="mod">*</span>' : ""}</td>
+          <td class="${lead(a, b)}">${fmt(a, d.unit)}</td><td class="${lead(b, a)}">${fmt(b, d.unit)}</td></tr>`;
+      })
+      .join("");
+    return `<table class="ct"><thead><tr><th>At ${bundle.clock[m]}</th>${head(home)}${head(away)}</tr></thead><tbody>${rows}</tbody></table>
+      <p class="note">* modelled from tracking-style data. Tap a club for its players.</p>`;
+  }
+
+  function playersHtml(m) {
+    const st = bundle.stats;
+    const switcher = `<div class="club-switch">${bundle.teams
+      .map((tm) => `<button type="button" data-club="${tm.team_id}" class="${tm.team_id === club ? "on" : ""}">${dot(tm.team_id)}${tm.short_name}</button>`)
+      .join("")}</div>`;
+    const p = player && st.players.find((x) => x.id === player);
+    if (p) {
+      const tm = teamById(p.team);
+      const on = p.from <= m;
+      const grid = st.player_stats.map((d) => `<div><span>${d.label}${d.modelled ? '<span class="mod">*</span>' : ""}</span><b>${fmt(p.stats[d.key][m], d.unit)}</b></div>`).join("");
+      return `${switcher}<div class="pd-head"><button type="button" data-back="1">Back</button>
+        <div><div class="pd-name">${esc(p.name)}</div><div class="pd-sub">${dot(p.team)} ${tm.short_name} · ${p.role}${p.from > 0 ? ` · on ${bundle.clock[p.from]}` : ""} · at ${bundle.clock[m]}</div></div></div>
+        ${on ? `<div class="pd-grid">${grid}</div>` : `<p class="hood-empty">Not on the pitch yet.</p>`}
+        <p class="note">* modelled from tracking-style data.</p>`;
+    }
+    const list = st.players
+      .filter((x) => x.team === club)
+      .map((x) => {
+        const on = x.from <= m;
+        const meta = !on ? "sub" : x.from > 0 ? `on ${bundle.clock[x.from]}` : `${fmt(x.stats.passes[m])} passes`;
+        return `<li class="${on ? "" : "off"}"><button type="button" data-player="${x.id}">
+          <span class="role">${x.role}</span><span>${esc(x.name)}</span><span class="meta">${meta}</span></button></li>`;
+      })
+      .join("");
+    return `${switcher}<ul class="pl">${list}</ul>`;
+  }
+
+  function renderPanel() {
+    if (!bundle) return;
+    const m = Math.min(bundle.minutes - 1, Math.floor(t));
+    panelMinute = m;
+    for (const b of document.querySelectorAll(".tabs button")) b.classList.toggle("on", b.dataset.tab === tab);
+    const body = $("panelBody");
+    if (tab === "agents") body.innerHTML = hoodHtml();
+    else if (!bundle.stats) body.innerHTML = `<p class="hood-empty">This match bundle has no stats tables.</p>`;
+    else body.innerHTML = tab === "clubs" ? clubsHtml(m) : playersHtml(m);
+  }
+
+  function setTab(name) {
+    tab = name;
+    renderPanel();
+  }
+
+  $("panel").addEventListener("click", (ev) => {
+    const b = ev.target.closest("button");
+    if (!b) return;
+    if (b.dataset.tab) setTab(b.dataset.tab);
+    else if (b.dataset.fan) setFan(b.dataset.fan);
+    else if (b.dataset.club) {
+      club = b.dataset.club;
+      player = null;
+      setTab("players");
+    } else if (b.dataset.player) {
+      player = b.dataset.player;
+      renderPanel();
+    } else if (b.dataset.back) {
+      player = null;
+      renderPanel();
+    }
+  });
+
+  // ---------- favourite club ----------
+  function drawFan() {
+    const ids = bundle.teams.map((x) => x.team_id);
+    if (fan !== "neutral" && !ids.includes(fan)) fan = "neutral";
+    const opt = (id, label) => `<button type="button" data-fan="${id}" class="${id === fan ? "on" : ""}">${label}</button>`;
+    $("fanOpts").innerHTML = opt("neutral", "Neutral") + bundle.teams.map((x) => opt(x.team_id, `${dot(x.team_id)}${x.code}`)).join("");
+  }
+
+  function setFan(id) {
+    fan = id;
+    store("matchlens.fan", id);
+    drawFan();
+    const txt = $("cardText");
+    if (txt && hoodCard) txt.textContent = cardText(hoodCard);
   }
 
   function hideCard(now) {
@@ -395,22 +498,10 @@
     } else if (e.key === "r" || e.key === "R") {
       restart();
     } else if (e.key === "u" || e.key === "U") {
-      toggleHood();
+      setTab(tab === "agents" ? "clubs" : "agents");
     }
   });
   if (params.get("hide") === "1") $("controls").classList.add("hidden");
-  $("hoodBtn").addEventListener("click", toggleHood);
-  renderHood();
-
-  // a still frame dropped in web/assets/stadium.jpg replaces the drawn backdrop
-  const still = new Image();
-  still.onload = () => {
-    const bd = $("backdrop");
-    bd.style.setProperty("--still", `url("${still.src}")`);
-    bd.classList.add("has-image");
-  };
-  still.src = "assets/stadium.jpg";
-
   requestAnimationFrame(frame);
   loadIndex();
 })();

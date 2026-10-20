@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from ..explain.explainer import OFF_SCREEN, _visible
+from ..explain.explainer import OFF_SCREEN, STANDOUT, STANDOUT_METRICS, _visible
 from ..explain.specialists import Finding
 
 SPECIALISTS = ("team_play", "players", "substitutions", "match_events")
@@ -27,11 +27,14 @@ def is_stat(f: Finding) -> bool:
 
 
 def eligible(f: Finding) -> bool:
-    """Worth offering for the screen: a team stat that clearly moved, or a player finding (a sub, a fade)."""
+    """Worth offering for the screen: a team stat that clearly moved, or a player finding (a sub, a
+    fade, a player clearly doing more)."""
     if not is_stat(f):
         return False
     if f["agent"] == "team_play":
         return f["metric"] not in OFF_SCREEN and _visible(f) and abs(f["effect_sd"]) >= 1.0
+    if f["claim"] == "player_change":
+        return f["metric"] in STANDOUT_METRICS and f["after"] > f["before"] and f["effect_sd"] >= STANDOUT and _visible(f)
     return f["claim"] in ("sub_vs_replaced", "fatigue")
 
 

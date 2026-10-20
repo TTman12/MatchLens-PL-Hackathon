@@ -26,9 +26,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..explain.explainer import assemble, decide_cause, fallback_stats, pick_stats
+from ..explain.explainer import assemble, choose_stats, decide_cause, standouts
 from ..explain.match import MatchData, load
 from ..explain.specialists import SPECIALISTS, Finding
+from ..explain.stories import BY_KEY as STORIES
+from ..explain.stories import find_stories
 from ..explain.watcher import Moment, momentum_series, watch
 from .board import Board, is_stat
 from .roles import EXPLAINER, SPECIALIST_ROLES, Role
@@ -159,11 +161,32 @@ def explainer_prompt(job: Job, rejected: tuple[dict[str, Any], list[str]] | None
         "Specialists' verdicts:\n" + "\n".join(f"{k}: {json.dumps(v)}" for k, v in job.board.notes.items()),
         "Findings board (stats that could go on screen, largest effect first, then match context):\n"
         + "\n".join(json.dumps(r) for r in job.board.view()),
+        "Play-style stories (two findings that together say how a team's play changed):\n"
+        + ("\n".join(json.dumps(s) for s in story_menu(job)) or "none found"),
+        "Standout players (on the team that gained, clearly doing more):\n"
+        + (", ".join(str(job.board.id_of(f)) for f in standouts(job.m, job.board.by_agent())) or "none"),
     ]
     if rejected:
         draft, problems = rejected
         parts.append(f"Your draft {json.dumps(draft)} was rejected by the Verifier:\n- " + "\n- ".join(problems) + "\nFix it.")
     return "\n\n".join(parts)
+
+
+def story_menu(job: Job) -> list[dict[str, Any]]:
+    out = []
+    for s in find_stories(job.board.by_agent()["team_play"], job.m.gainer)[:5]:
+        ids = [job.board.id_of(f) for f in s["stats"]]
+        t = s["team"]
+        out.append(
+            {
+                "story": s["key"],
+                "team": job.md.short(t),
+                "stats": ids,
+                "fits_the_shift": s["aligned"],
+                "reads": STORIES[s["key"]].neutral.format(T=job.md.short(t), O=job.md.short(job.md.opp(t))),
+            }
+        )
+    return out
 
 
 async def run_explainer(runner: Runner, job: Job) -> tuple[Option, list[Finding], str] | None:
@@ -205,13 +228,11 @@ async def explain_moment(runner: Runner, md_full: MatchData, m: Moment) -> dict[
     fallback = result is None
     if result is None:
         cause_d, lead = decide_cause(job.md, m, found)
-        stats = pick_stats(m, found, lead)
+        stats = choose_stats(m, cause_d, found, lead)
         why = "deterministic fallback"
     else:
         option, stats, why = result
         cause_d = _cause(option)
-    if not stats:
-        stats = fallback_stats(m, found)
     penalty = MISSING_PENALTY * reported.count(False) + (0.05 if fallback else 0.0)
     card = assemble(job.md, m, job.clock, found, cause_d, stats, penalty)
     card["agents"] = {
@@ -236,7 +257,7 @@ def offline_answer(role: Role, tools: list[ToolSpec], job: Job) -> str:
         return json.dumps({"verdict": "relevant" if highlights else "not_me", "highlights": highlights, "note": ""})
     found = job.board.by_agent()
     cause, lead = decide_cause(job.md, job.m, found)
-    stats = pick_stats(job.m, found, lead)
+    stats = choose_stats(job.m, cause, found, lead)
     option = next(
         (
             o
