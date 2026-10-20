@@ -26,7 +26,10 @@ matchlens-explain-eval --matches 380 --seed 9000               # score against h
 
 3. **Explainer** (`explainer.py`). It settles on a cause and picks the 1 or 2 stats that show it.
    - It prefers numbers that moved in the direction of the shift and that a fan can read.
+   - When the shift is about how play changed, it looks for a **play-style story** first: two stats that moved together for one team and together mean something (`stories.py`). Possession up *and* more passes in their own half means a team is keeping the ball and playing it safe, so the other side can't attack. Defending deeper *and* more clearances means a team is sitting deep, which is why the other side has the ball but can't score. There are 13 stories; each needs both stats to move at least 1 spread, one of them at least 1.5.
+   - A share (possession, field tilt) never goes on a card alone: on its own it says nothing about why. If no story fits, it gets the partner stat that moved most with it.
    - It shows one stat per idea, and never shows both sides of the same possession split.
+   - Every card carries one sentence saying what changed in the way a team plays, written three ways: for a neutral and for fans of each team (`text`). For the parked team's fans: "Brackenford are defending much deeper and making more clearances, which is why they're under pressure." For the other side: "Brackenford are sitting deep and clearing the ball, which is why Ashmere have plenty of it but can't score." The sentences are templates filled from the stats on the card, so they never claim more than the numbers show.
    - Rates are shown as counts over the window against what was usual for that many minutes, for example "Shots: 4 in 7 min, usual 0.8". A count must differ from the usual by at least 2 to be shown.
 
    This is the deterministic reference. An LLM agent can take the Explainer's place and reason over the same findings, but every number still comes from the findings.

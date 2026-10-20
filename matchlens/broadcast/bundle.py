@@ -20,6 +20,7 @@ from typing import Any
 from ..explain.director import direct
 from ..explain.explainer import explain_match
 from ..explain.match import MatchData, load
+from .tables import stats_tables
 
 MODE_TAG = {
     "red_card": "Red card",
@@ -60,7 +61,7 @@ def format_stat(md: MatchData, s: dict[str, Any]) -> dict[str, Any]:
         "player": s.get("name"),
         "value": value,
         "usual": usual,
-        "usual_label": f"{s['vs']} (off)" if s.get("vs") else ("own avg" if s.get("name") else "match avg"),
+        "usual_label": f"{s['vs']} (off)" if s.get("vs") else "before",
         "window": unit if unit.startswith("in ") else None,
         "unit": "" if unit in ("", "m") or unit.startswith("in ") else unit,
         "rise": after > before,
@@ -144,6 +145,8 @@ def build(md: MatchData, result: dict[str, Any] | None = None) -> dict[str, Any]
                 "stats": [format_stat(md, s) for s in c["stats"]],
                 "momentum": {"before": c["momentum"]["before"], "now": c["momentum"]["now"], "gainer": c["momentum"]["gainer"]},
                 "cause": c["cause"]["kind"],
+                "story": c.get("story"),
+                "text": c.get("text", {}),
                 "shifted": c["shifted"],
                 "hood": under_the_hood(c),
             }
@@ -173,6 +176,7 @@ def build(md: MatchData, result: dict[str, Any] | None = None) -> dict[str, Any]
         ],
         "cards": cards,
         "candidates": len(result["cards"]),
+        "stats": stats_tables(md),
         "agents": result.get("agents"),
     }
 

@@ -87,6 +87,10 @@ You get the moment, a cause menu and the shared findings board written by four s
    When "play_change" or "recovery" is the honest answer, choose it: never imply a reason the
    numbers do not show.
 2. Choose one or two findings by id, the numbers a fan reads at a glance as the reason.
+   - Best is a play-style story: two findings that together say how a team's play changed,
+     such as more possession AND more passes in their own half (keeping it safe). The story
+     list shows the ones the board supports; prefer one that fits the shift.
+   - Possession on its own explains nothing: pair it with a stat that shows how play changed.
    - Prefer large effect_sd, changes in the direction of the team that gained, and plain stats
      (possession, shots, duels won, defending height, long balls, high turnovers, xG).
    - A player finding goes on screen only when the cause is about him: a substitution_impact

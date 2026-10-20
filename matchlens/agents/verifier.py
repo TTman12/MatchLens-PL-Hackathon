@@ -10,9 +10,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..explain.explainer import STRONG, driver
+from ..explain.explainer import STRONG, _partner, driver, fallback_stats
 from ..explain.match import MatchData
 from ..explain.specialists import Finding, investigate
+from ..explain.stories import SHARES as LONE_SHARES
 from ..explain.watcher import Moment
 from .board import Board, eligible
 
@@ -76,6 +77,8 @@ class Verifier:
         self.md, self.m, self.board, self.menu = md, m, board, menu
         # recompute every specialist from the tables, independently of what was posted
         self._truth = {_key(f): f for fs in investigate(md, m).values() for f in fs}
+        # a red card always gets a card, even when the 10 men's numbers barely moved
+        self._fallback = [id(f) for f in fallback_stats(m, board.by_agent())]
 
     def check(self, cause_id: str, stat_ids: list[str]) -> list[str]:
         problems: list[str] = []
@@ -90,7 +93,7 @@ class Verifier:
             if f is None:
                 problems.append(f"{fid} is not on the board")
                 continue
-            if not eligible(f):
+            if not eligible(f) and id(f) not in self._fallback:
                 problems.append(f"{fid} can't go on screen (no clear change, too small to see, or not a stat)")
                 continue
             ref = self._truth.get(_key(f))
@@ -101,6 +104,11 @@ class Verifier:
         metrics = [f["metric"] for f in stats]
         if len(set(metrics)) < len(metrics):
             problems.append("two stats on the same metric")
+        lone = len(stats) == 1 and stats[0]["metric"] in LONE_SHARES and not stats[0].get("player")
+        if lone and _partner(self.m, self.board.by_agent(), stats) is not None:
+            problems.append(
+                f"{stats[0]['label']} on its own explains nothing: pair it with a stat that shows how the play changed"
+            )
         for f in stats:
             if f["agent"] == "team_play":
                 continue

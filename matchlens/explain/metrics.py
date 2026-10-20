@@ -86,6 +86,8 @@ METRICS: list[Metric] = [
     Metric("long_balls", "Long balls", "% of passes", ratio("long_passes", "passes", 15), 0, 2, "directness"),
     Metric("pass_length", "Average pass length", "m", ratio("pass_length_sum", "passes", 15, 1), 0, 0.8, "directness"),
     Metric("passes", "Passes", "per 10 min", per10("passes"), 0, 3, "tempo"),
+    Metric("own_half_passes", "Passes in own half", "% of passes", ratio("passes_own_half", "passes", 15), 0, 3, "depth"),
+    Metric("clearances", "Clearances", "per 10 min", per10("clearances"), -1, 0.5, "defending"),
     Metric("crosses", "Crosses", "per 10 min", per10("crosses"), 0, 0.5, "width"),
     Metric("duels", "Duels", "per 10 min", per10("duels"), 0, 1.5, "intensity"),
     Metric("fouls", "Fouls", "per 10 min", per10("fouls"), 0, 0.5, "intensity"),

@@ -40,6 +40,7 @@ TEAM_COLUMNS = [
     "defensive_actions",
     "defensive_action_x_sum",
     "defensive_actions_high",
+    "clearances",
     "high_regains",
     "shots",
     "shots_on_target",
@@ -162,6 +163,7 @@ def aggregate(
                 if won and x >= PITCH - 40:
                     c["high_regains"] += 1
         elif kind == "clearance":
+            c["clearances"] += 1
             c["defensive_actions"] += 1
             c["defensive_action_x_sum"] += x
             c["defensive_actions_high"] += x >= PITCH - BUILD_UP_X
