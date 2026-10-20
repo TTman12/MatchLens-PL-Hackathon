@@ -2,7 +2,7 @@
 
 Measured on 20 Oct 2026 from the Wyscout public event data for the full 2017-18 Premier League season. That is 380 matches and 643,150 events, released under CC BY 4.0 by Pappalardo et al. (2019, *Scientific Data* 6:236), via figshare collection 4415000. The data was used only to measure patterns. None of it is shipped, and no real names are used.
 
-Scripts are in `research/`: `prep.py` builds the per team-minute and per player-minute aggregates, and `analyse.py`, `null.py` and `drivers.py` run the analyses. Run them with `python3 -I scripts/prep.py <wyscout_dir> agg.pkl` and then `python3 -I scripts/analyse.py agg.pkl`. Download links: events `https://ndownloader.figshare.com/files/14464685`, matches `https://ndownloader.figshare.com/files/14464622`.
+Scripts are in `research/`: `prep.py` builds the per team-minute and per player-minute aggregates, and `analyse.py`, `null.py` and `drivers.py` run the analyses. Run them with `python3 -I research/prep.py <wyscout_dir> agg.pkl` and then `python3 -I research/analyse.py agg.pkl`. Download links: events `https://ndownloader.figshare.com/files/14464685`, matches `https://ndownloader.figshare.com/files/14464622`.
 
 **Sanity check.** The data averages 432 passes per team per match at 82.5% accuracy. It has 999 goals (the official total is 1,018; own-goal tagging accounts for most of the gap), 41 red cards, and every substitution with its minute.
 
