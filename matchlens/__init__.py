@@ -1,3 +1,1 @@
-"""MatchLens: synthetic football events turned into explainable match intelligence."""
-
-__version__ = "0.1.0"
+"""MatchLens: explains why momentum shifts, from minute-by-minute match statistics."""

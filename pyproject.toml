@@ -1,74 +1,44 @@
 [build-system]
-requires = ["hatchling>=1.27"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "matchlens"
-version = "0.1.0"
-description = "Synthetic football events turned into explainable, personalised match intelligence."
+version = "0.2.0"
+description = "Explains why momentum shifts in football matches, from minute-by-minute statistics."
 readme = "README.md"
-license = "MIT"
+license = { text = "MIT" }
 requires-python = ">=3.11"
-dependencies = [
-  "pydantic>=2.7,<3",
-]
+dependencies = []
 
 [project.optional-dependencies]
-# The agent pipeline: Microsoft Agent Framework workflows and the Match-State MCP server.
-agents = [
-  "agent-framework-core>=1.22,<2",
-  "mcp>=2.3,<3",
-]
-# The live server: one match on a broadcast delay, with the agents running inside it.
-live = [
-  "matchlens[agents]",
-  "starlette>=0.40",
-  "uvicorn>=0.30",
-]
-# Running the agents on Microsoft Foundry, with Content Safety and Application Insights.
-foundry = [
-  "matchlens[agents]",
-  "agent-framework-foundry>=1.15,<2",
-  "azure-identity>=1.26",
-  "azure-ai-contentsafety>=1.0",
-  "azure-monitor-opentelemetry>=1.8",
-]
-dev = [
-  "jsonschema>=4.22",
-  "mypy>=1.10",
-  "pytest>=8",
-  "ruff>=0.6",
-]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
 
 [project.scripts]
-matchlens-schemas = "matchlens.contracts.export:main"
-matchlens-agents = "matchlens.agents.pipeline:main"
-matchlens-mcp = "matchlens.mcp_server.server:main"
-matchlens-evals = "matchlens.agents.audit:main"
-matchlens-sim = "matchlens.sim.cli:main"
-matchlens-demo = "matchlens.api.demo:main"
-matchlens-live = "matchlens.api.live:main"
+matchlens-gen = "matchlens.gen.cli:main"
+matchlens-realism = "matchlens.realism.gate:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["matchlens"]
+[tool.setuptools.packages.find]
+include = ["matchlens*"]
+
+[tool.setuptools.package-data]
+"matchlens.gen" = ["priors.json.gz"]
+"matchlens.realism" = ["targets.json"]
 
 [tool.ruff]
-line-length = 100
+line-length = 130
 target-version = "py311"
+# one-off analysis scripts kept as they were run; learn_priors.py is linted
+extend-exclude = ["research/prep.py", "research/analyse.py", "research/null.py", "research/drivers.py", "research/followthrough.py", "research/leadlag.py"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+select = ["E", "F", "I", "UP", "B"]
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
-plugins = ["pydantic.mypy"]
-packages = ["matchlens"]
-
-[[tool.mypy.overrides]]
-module = ["azure.*", "agent_framework_foundry"]
-ignore_missing_imports = true
+files = ["matchlens"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra"
+pythonpath = ["."]
