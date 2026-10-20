@@ -2,18 +2,22 @@
 
 **Everyone can see when the tide turns. MatchLens shows why.**
 
-MatchLens watches every team and player statistic minute by minute. When a match changes, it finds out where the change came from and puts it on screen as a broadcast graphic: one or two numbers and a momentum bar, with no sentences. The change can follow an event (a red card, a substitution, a goal) or happen with no event at all (a change of instructions, tiredness, a duel battle turning).
+MatchLens watches every team and player statistic minute by minute. When a match changes, it finds out where the change came from and puts it on screen as a broadcast graphic: one or two numbers and a momentum bar, with no sentences. The change can follow an event (a red card, a substitution, a goal) or happen with no event at all (tiredness, a duel battle turning, the ordinary ebb and flow).
 
 It is a fresh start for the Microsoft × Premier League hackathon. All match data is synthetic and the clubs are fictional.
 
 ## Status
 
-The **synthetic match generator** is built and passes the realism gate. A full generated season matches the real 2017-18 Premier League on all 31 numbers checked ([docs/realism.md](docs/realism.md)). Next are the agents that spot and explain momentum shifts, then the broadcast graphics.
+- **Synthetic match generator:** built, and passes the realism gate. A full generated season matches the real 2017-18 Premier League on all 31 numbers checked ([docs/realism.md](docs/realism.md)).
+- **Watcher, specialists and Explainer:** built as deterministic tools that work on any match in the public format. Scored against the hidden truth on unseen matches ([docs/explainer.md](docs/explainer.md)).
+- **Next:** run them as agents, then the broadcast graphics.
 
 ```
 pip install -e ".[dev]"
 matchlens-gen match --home ash --away brk --seed 7   # one match: events, minute tables, physical, hidden truth
+matchlens-explain out/matches/ash-brk-7              # the cards that would go on screen
 matchlens-realism                                     # generate 380 matches and check them against the real season
+matchlens-explain-eval                                # score the explainer against hidden truth on unseen matches
 pytest -q
 ```
 
@@ -22,12 +26,13 @@ pytest -q
 - [docs/design.md](docs/design.md): the design, covering the two modes, the agents, the graphic contract, the scoring and the decisions so far.
 - [docs/data-format.md](docs/data-format.md): the match format any match can be fed in as.
 - [docs/generator.md](docs/generator.md): how the generator works and what the hidden truth holds.
+- [docs/explainer.md](docs/explainer.md): the Watcher, the specialists and the Explainer, what stats can and can't tell you, and how well it scores.
 - [docs/research/](docs/research/): which football stats exist and what each one reveals, plus what 380 real matches show about momentum shifts.
 
 ## Build order
 
 1. ~~Synthetic match generator, gated on a realism test against the real-season patterns.~~ Done.
-2. A watcher that spots shifts, plus specialist agents that investigate them.
+2. ~~A watcher that spots shifts, plus specialists that investigate them~~ (deterministic tools done; running them as agents is next).
 3. Broadcast graphics: a momentum scale, an event timeline, and the event, spontaneous and recovery cards.
 
 ## Research data

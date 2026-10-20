@@ -17,6 +17,8 @@ dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
 [project.scripts]
 matchlens-gen = "matchlens.gen.cli:main"
 matchlens-realism = "matchlens.realism.gate:main"
+matchlens-explain = "matchlens.explain.cli:main"
+matchlens-explain-eval = "matchlens.explain.evaluate:main"
 
 [tool.setuptools.packages.find]
 include = ["matchlens*"]
@@ -24,6 +26,7 @@ include = ["matchlens*"]
 [tool.setuptools.package-data]
 "matchlens.gen" = ["priors.json.gz"]
 "matchlens.realism" = ["targets.json"]
+"matchlens.explain" = ["calibration.json"]
 
 [tool.ruff]
 line-length = 130

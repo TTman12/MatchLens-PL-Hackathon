@@ -34,3 +34,14 @@ jobs:
         with:
           name: realism-report
           path: realism.md
+
+  explainer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Score the explainer against hidden truth on unseen matches
+        run: matchlens-explain-eval --matches 100 --seed 9000 --check
