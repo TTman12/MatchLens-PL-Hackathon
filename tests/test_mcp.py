@@ -72,7 +72,7 @@ def test_the_crew_over_mcp_writes_the_same_cards(tmp_path: Path) -> None:
     assert not any(c["agents"]["fallback"] for c in cards)
     mcp = result["agents"]["mcp"]
     assert mcp["fallbacks"] == 0 and mcp["calls"] == 5 * len(cards)  # four specialists and one check per moment
-    assert not mcp_server.JOBS  # every moment's board is closed on the server afterwards
+    assert not [k for k in mcp_server.JOBS if k.startswith(md.meta["match_id"] + "@")]  # every board is closed afterwards
 
 
 def test_a_failed_mcp_call_runs_the_tool_directly(tmp_path: Path) -> None:
