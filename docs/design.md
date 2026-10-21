@@ -1,6 +1,6 @@
-# MatchLens: Momentum Explainer design (draft for Tristan)
+# MatchLens: Momentum Explainer design
 
-Status: draft, 20 Oct 2026. Nothing has been built yet.
+Status: written as a draft on 20 Oct 2026 before anything was built, and brought up to date on 21 Oct 2026. Everything below is now built. Sections 1 to 4 and 7 are the design as agreed; sections 5, 6 and 8 describe what was built where it differs from the draft; section 10 holds Tristan's decisions. For how each part works today, the per-part docs are the reference: [agents.md](agents.md), [explainer.md](explainer.md), [broadcast.md](broadcast.md), [generator.md](generator.md), [live-feed.md](live-feed.md) and [generate-match.md](generate-match.md).
 
 This builds on two earlier files:
 - `docs/research/football-stats-for-tactical-inference.md`, for the metric vocabulary;
@@ -17,7 +17,7 @@ Everyone can see when the tide turns; MatchLens shows *why*. Agents watch every 
 | | **Event mode** | **Spontaneous mode** |
 |---|---|---|
 | Trigger | A discrete event: goal, red card, substitution, half-time, injury | A detected shift (or recovery) with no event that explains it |
-| Anchor label | "Since A. Johnson red card" / "Since the double sub" | "Last 6 minutes" (since the change started) [Choice: measure from the start of the change rather than a fixed 15 min, and say how long that is] |
+| Anchor label | "Since A. Johnson red card" / "Since the double sub" | "Last 7 minutes": the real window since the change started, not rounded to 5, 10 or 15 |
 | Question the agents answer | What changed after the event, and did momentum move? | What changed in play, and what kind of cause does it look like (instruction, fatigue, a duel battle turning, opponent adjustment)? |
 | Momentum outcome | Any. "No shift, the block is holding" is a valid graphic. | A shift or recovery by definition |
 | Real frequency | Events barely raise the chance of a sustained shift: 22 to 29% after an event against 21% after a random minute [Real] | About 30% of shifts have no event in the 15 minutes before [Real] |
@@ -90,42 +90,50 @@ A metric passes if it falls inside the real spread. The comparison chart becomes
 
 ## 5. Agents
 
-These are built on the existing stack (Agent Framework, Foundry prompt agents, the Match-State MCP server, Verifier, Translator, cue feed). Specialists call **deterministic tools** for every number; the LLM reasons, compares and chooses, and never does arithmetic.
+As built. The agents run on Microsoft Foundry through Microsoft Agent Framework. Specialists call **deterministic tools** for every number; the models reason, compare and choose, and never do arithmetic. Code decides when to act, what is allowed and what reaches the screen. The full crew, with each agent's checks, is in [agents.md](agents.md).
 
-| Agent | Role | Reads |
-|---|---|---|
-| **Watcher** (master) | Runs continuously. Keeps the momentum series against a long baseline (match so far plus expected level for strength and game state). Fires on (a) any discrete event, (b) a sustained shift above the noise floor, or (c) a recovery. Assigns the mode and the anchor time. | team_minute, events |
-| **Team-play analyst** | What changed in team behaviour since the anchor: pass share, defending height, directness, duel share, accuracy by third, PPDA. Ranks changes by effect size against both the team's own baseline and random-window spread. | team_minute |
-| **Player analyst** | Which individuals changed: biggest movers in duels, defensive actions, involvement and physical output. Flags fatigue fades. | player_minute |
-| **Substitutions analyst** | Each sub since the anchor: incoming player against the player he replaced (rates per minute), and whether the team's change lines up with his zone or role. Must be willing to say "not me". | player_minute, events |
-| **Match-events analyst** | Goals, cards and game state: score effects (a trailing team pushing), a 10-man reshape, a leading team managing the game. | events, team_minute |
-| **Explainer** (selector) | Collects the findings, decides the cause chain, and picks the **1 or 2 stats** that best show it plus the anchor label. It prefers numbers that are both large and easy for a fan to read. It may conclude "no clear single cause". | all findings |
-| **Verifier** | Recomputes every number from the tables, and rejects anything that doesn't match or lacks evidence. (Exists already.) | tables |
-| **Director** | Decides when the graphic goes on screen: quiet spell, attention budget, cooldown. (Exists already.) | cue queue |
-| **Translator** | Translates labels only, since there are no sentences. (Exists already.) | cue |
+| Agent | Kind | Role | Reads |
+|---|---|---|---|
+| **Watcher** | code | Keeps the momentum scale (the home side's share of final-third touches). Fires on a sustained shift, a recovery, or a discrete event, from 20' on, and never looks ahead. Assigns the mode and the anchor. | team_minute, events |
+| **Team-play analyst** | Foundry agent + tool | What changed in team behaviour since the anchor across 21 stats, ranked by effect size against random windows of the same match. | team_minute |
+| **Player analyst** | Foundry agent + tool | Which individuals changed most, and a team-wide fatigue fade. | player_minute |
+| **Substitutions analyst** | Foundry agent + tool | Each sub since the anchor against the player he replaced. Must be willing to say "not me". | player_minute, events |
+| **Match-events analyst** | Foundry agent + tool | Goals, cards and game state: a trailing team pushing, a 10-man reshape, a leading team managing the game. | events, team_minute |
+| **Explainer** | Foundry agent | Reads the findings board, picks a cause from those the evidence allows and the **1 or 2 stats** that best show it. It may conclude there's no clear single cause. | the board |
+| **Verifier** | code | Re-runs the specialists on the tables, compares every number and enforces the screen rules. A rejected draft goes back once, then the rules' card is used. | tables |
+| **Director** | code | Decides on the spot whether a card goes on screen: 5 minutes apart, 5 a half, goals and reds can break in. | cards |
+| **Interpreter** | Foundry agent | One line per viewer (neutral and each club's fans) on what the card means for the game, held to the facts by a check in code. | the verified card |
+| **Analyst** | Foundry agent | The MatchLens analysis card: what each club could do, picked from levers a stat backs. | the verified card |
+| **Recapper** | Foundry agent | The full-time headline per viewer. | the recap facts |
+| **Translator** | Foundry agent or Azure AI Translator | Every on-screen line in Spanish, checked in code for names and numbers. Labels and anchors use a fixed glossary. | the bundle's lines |
 
-**Shared state.** Each finding is one record: `{agent, claim_type, metric, team or player, before, after, effect_sd, confidence, evidence_ids}`. The record is shared through the MCP server so that every agent sees the others' findings. That shared-state handoff is what the multi-agent judges look for.
+**Shared state.** Each finding is one record on the findings board (`matchlens/agents/board.py`): `{id, agent, claim_type, metric, team or player, before, after, effect_sd, polarity, ...}`. Every specialist posts to it and the Explainer reads it; models refer to findings by id, so the number on screen is always the tool's number. The draft planned to share the board through an MCP server; it is shared in process instead, and there is no MCP server on the crew's path.
 
-**Failure recovery.** If a specialist times out, the Explainer works with what it has and lowers its confidence. If the Verifier rejects a number, the Explainer must pick the next-best stat. Both paths are shown in the existing "under the hood" drawer.
+**Failure recovery.** If a specialist fails or times out, the Explainer works with what it has and the card's confidence drops by 0.1 per missing specialist. If the Verifier rejects a draft, it goes back once with the problems listed; a second miss falls back to the deterministic choice. The Interpreter, Analyst, Recapper and Translator agent each get one retry and then fall back to the rules' lines (the Azure AI Translator backend falls back straight away). Every step is logged on the card and shown in the admin screen's Agents tab.
 
 ## 6. Graphic contract
 
+As built, one card in a match bundle (`web/data/<match>.json`, written by `matchlens-broadcast`), trimmed:
+
 ```json
 {
-  "mode": "event | spontaneous | recovery",
-  "anchor": {"label": "Since A. Johnson red card", "t": 3720, "event_id": "m042-e0811"},
+  "at": 27, "clock": "27'", "kind": "shift", "tag": "Momentum shift",
+  "anchor": "Last 9 minutes", "anchor_m": 18,
   "stats": [
-    {"label": "Possession", "team": "ash", "before": 54, "after": 31, "unit": "%"},
-    {"label": "Defending height", "team": "ash", "before": 41, "after": 28, "unit": "m"}
+    {"label": "Passes in own half", "team": "brk", "player": null, "value": "62%", "usual": "73%", "usual_label": "before", "unit": "of passes", "rise": false},
+    {"label": "Passes in final third", "team": "brk", "player": null, "value": "6", "usual": "2", "window": "in 9 min", "rise": true}
   ],
-  "momentum": {"before": 0.12, "now": -0.38, "home": "ash", "away": "bry"},
-  "cause": {"kind": "red_card_reshape", "confidence": 0.8},
-  "evidence": ["m042-e0811", "..."],
-  "duration_s": 12
+  "momentum": {"before": 84.9, "now": 63.6, "gainer": "brk"},
+  "cause": "play_change", "story": "pushing_up",
+  "text": {"neutral": "...", "ash": "...", "brk": "..."},
+  "analysis": {"...": "the MatchLens analysis card that follows"},
+  "detail": {"...": "the expanded table"},
+  "hood": {"runner": "foundry", "specialists": ["..."], "verifier": ["..."], "confidence": 0.71},
+  "i18n": {"es": {"anchor": "Últimos 9 minutos", "text": {"...": "..."}}}
 }
 ```
 
-On screen this reads: the anchor label, 1 or 2 before → after numbers, and the momentum bar moving from before to now. Analyst mode can open an evidence panel. Casual mode shows only the bar and one number.
+`kind` is one of goal, red card, substitution, half-time, shift and recovery. On screen a card reads as the anchor, one line for the viewer's club, and one big before → after number. It starts simple for a casual fan; **Expand** opens the analyst's view: the cause, momentum before and now, and four stats for both clubs. The momentum bar along the bottom of the screen shows the swing, so the card doesn't repeat it. Each card is timed (`at`) and machine-readable, so it could drive a graphics engine over a real feed as well as our screen.
 
 ## 7. How we score it (the evaluation story)
 
@@ -138,20 +146,21 @@ On 100 or more generated matches with hidden truth:
 
 These sit beside the realism gate as the two headline charts for the judges.
 
-## 8. What carries over from the current repo
+## 8. What changed from the draft
 
-- **Keep:** the fictional league and clubs, the event schema, the agent framework and Foundry roster, the MCP server, the Verifier, the Director, the Translator, the cue feed, the live Azure site and CI.
-- **Drop or freeze:** the movement simulator, 10 Hz frames, and the camera and replay system.
-- **Change:**
-  - the stats engine gains `team_minute`, `player_minute` and the long-baseline Watcher;
-  - the current Moment Detector becomes the Watcher.
+- **Clean slate.** The old repo (movement simulator, 10 Hz frames, camera and replay, the earlier Match-State MCP server) was wiped on 20 Oct. It stays in git history only.
+- **No MCP server on the crew's path.** The findings board is shared in process between the crew's agents. Anything offered to outside tools is listed in the README's Built on Microsoft section.
+- **The Translator translates sentences,** not just labels, because each card now has a line written for the viewer. A check in code compares each translation with the English.
+- **Agents after the card.** The Interpreter, the Analyst and the Recapper were added so the screen can say what a card means, what a club could do about it, and how the match went, each held to the facts by code and screened by Azure AI Content Safety.
+- **Strictly live.** The Watcher and the Director decide minute by minute with no look-ahead, so a recorded match and a live feed give the same cards ([live-feed.md](live-feed.md)). A feed adapter takes another provider's per-minute tables, and Generate match on the live site plays brand-new matches through the agents ([generate-match.md](generate-match.md)).
+- **Two screens.** A fan screen (pick a club crest and a player on a pitch, video-player controls) and an admin screen (stats, the agents' log, the match list, Generate match), plus notifications for goals, subs, reds and momentum shifts, follow-a-player, the full-time recap and Spanish ([broadcast.md](broadcast.md)).
 
-## 9. Open questions for Tristan
+## 9. Open questions (answered)
 
-1. **What sits behind the graphics in the demo?** Options are a static broadcast-style frame, the existing 2D pitch with no players, or a simple "match feed" of the score and clock.
-2. **Physical stats (distance, sprints):** include them as modelled and labelled, or leave them out?
-3. **Graphic styles for the first build:** I'd start with three: the event-mode card, the spontaneous-mode card, and the recovery card.
-4. **Build order:** I'd do the generator first and gate it on the realism test, then the Watcher and specialists, then the graphics.
+1. **What sits behind the graphics?** A stadium still (section 10, point 5).
+2. **Physical stats?** Included, modelled and labelled as modelled.
+3. **First graphic styles?** Event, spontaneous and recovery cards, all built.
+4. **Build order?** Generator first, gated on the realism test; all four steps are done.
 
 ## 10. Decisions (Tristan, 20 Oct 11:53)
 
