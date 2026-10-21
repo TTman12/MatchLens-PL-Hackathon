@@ -68,9 +68,7 @@ class ContentSafety:
                 self.count.unscreened += 1
                 continue
             try:
-                from azure.ai.contentsafety.models import AnalyzeTextOptions
-
-                result = await self._client.analyze_text(AnalyzeTextOptions(text=text[:1000]))
+                result = await self._client.analyze_text({"text": text[:1000]})
             except Exception as exc:  # no right to call it, region, network: never stop the match
                 log.warning("Content Safety unavailable (%s); lines go out unscreened", exc)
                 self._broken = True

@@ -21,7 +21,7 @@ class FakeClient:
         self.word = word
 
     async def analyze_text(self, options: Any) -> Any:
-        severity = 4 if self.word in options.text else 0
+        severity = 4 if self.word in options["text"] else 0
         return SimpleNamespace(categories_analysis=[SimpleNamespace(category="Violence", severity=severity)])
 
     async def close(self) -> None:
