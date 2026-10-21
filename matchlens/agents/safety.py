@@ -1,6 +1,6 @@
 """Azure AI Content Safety on every line the agents write for the screen.
 
-The Interpreter and the Analyst write free text that goes on air. Before a draft is accepted, each
+The Interpreter, the Analyst and the Recapper write free text that goes on air. Before a draft is accepted, each
 line is sent to Content Safety's text analysis (hate, sexual, violence, self-harm). A line at or
 above ``SEVERITY`` in any category counts as a problem, like a wrong number: the draft goes back
 once with the problem listed, then falls back to the rule-written lines.

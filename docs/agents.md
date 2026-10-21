@@ -29,6 +29,8 @@ For each moment the Watcher raises (a shift, a recovery or an event):
 | **Verifier** | (code) | | Recomputes every number from the tables and enforces the screen rules. |
 | **Interpreter** | `matchlens-interpreter` | | Says what the card's numbers mean for the game, in one line for each viewer. |
 | **Analyst** | `matchlens-analyst` | | Says what each club could do about the momentum, picked from options a stat backs. |
+| **Recapper** | `matchlens-recapper` | | Once a match: the full-time headline for each viewer, from the result and how the match went. |
+| **Translator** | `matchlens-translator` (or Azure AI Translator) | | Once a match: every line on screen in Spanish, keeping each name and number. |
 
 1. **The four specialists run at the same time.** Each one calls its tool. The tool computes findings from the match tables and posts them to the shared findings board, each with an id (F1, F2, ...). The specialist then says which of its findings matter, or "not me".
 2. **The Explainer reads the board.** It also gets a story menu: pairs of findings that together say how a team's play changed (see [explainer.md](explainer.md)), and a cause menu: only the causes the evidence allows for this moment. For example, a goal can be followed by "the scorers kept pushing", "the other side chased the game" or "no reaction". It picks a cause and up to two finding ids, then calls `check_card` to test its draft before answering.
@@ -66,6 +68,15 @@ For each moment the Watcher raises (a shift, a recovery or an event):
    - talk of an equaliser, a lead or ten men only when the match allows it.
 
    A rejected draft goes back once; after that, the card keeps the rules' picks and lines.
+
+6. **The Recapper writes the full-time headline** (once a match). The recap's graphics are counted by code (`matchlens/explain/recap.py`): who had the game in each quarter-hour, the three cards whose momentum swung most, full-time and half-by-half stats, and a standout per club. The code also names the pattern of the result: a comeback, a late winner, the better side winning, winning against the run of play, a tight game, a late draw, a draw one side should have won, or an even draw. The Recapper gets those facts and writes one headline for a neutral and one for each club's fans. A check in code (`matchlens/agents/recapper.py`) holds them to the facts: no numbers, only the clubs, no win in a draw or draw in a win, a late goal, comeback or ten men only when there was one, nothing the data can't see. A rejected draft goes back once; after that, the recap keeps the rules' headlines.
+7. **The Translator puts the screen into Spanish** (once a match, after everything else). Every English line on the bundle (each card's line and analysis lines, the recap headlines) goes in one batch to a backend: Azure AI Translator (Text Translation v3, with names wrapped so the service leaves them alone), or the Translator agent on Foundry. A check in code (`matchlens/agents/translator.py`) compares each translation with its English line:
+   - the same numbers;
+   - every club and player name kept exactly, and no new ones;
+   - a sensible length;
+   - no English left in it.
+
+   A failed line goes back once to the agent with its problems listed. After that, or with Azure, it falls back to the rules' Spanish twin of the line (`matchlens/explain/spanish.py`): every template the rules write has one, so the Spanish screen always has a line that says what the stats show. Stat labels and card anchors are translated by a fixed glossary, never by a model.
 
 The models only ever refer to numbers by id. The card is built from the board, so the number on screen is the number the tool computed. A model cannot change a number by retyping it.
 
@@ -107,7 +118,7 @@ Run it with `matchlens-explain-eval --matches 30 --agents foundry`. CI runs the 
 
 ## Content Safety
 
-The Interpreter and the Analyst write the only free text that goes on air. Each line in a draft goes through Azure AI Content Safety's text analysis (hate, sexual, violence, self-harm) before the draft is accepted. Content Safety runs on the same Foundry account and signs in with Entra ID. A line at severity 2 or more counts as a problem, just like a wrong number: the draft goes back once with the problem listed, and a second miss falls back to the rule-written lines. The bundle counts how many lines were screened, flagged or left unscreened (`agents.content_safety`). If the service can't be reached, the run carries on and the count says so. The code is in `matchlens/agents/safety.py`.
+The Interpreter, the Analyst and the Recapper write the free text that goes on air. Each line in a draft goes through Azure AI Content Safety's text analysis (hate, sexual, violence, self-harm) before the draft is accepted. Content Safety runs on the same Foundry account and signs in with Entra ID. A line at severity 2 or more counts as a problem, just like a wrong number: the draft goes back once with the problem listed, and a second miss falls back to the rule-written lines. The bundle counts how many lines were screened, flagged or left unscreened (`agents.content_safety`). If the service can't be reached, the run carries on and the count says so. The code is in `matchlens/agents/safety.py`.
 
 ## Foundry Evaluations
 
@@ -130,6 +141,7 @@ The connection string comes from `APPLICATIONINSIGHTS_CONNECTION_STRING`, or fai
 - `matchlens/agents/verifier.py`: the cause menu and the Verifier.
 - `matchlens/agents/crew.py`: the crew, and `matchlens-agents`.
 - `matchlens/agents/runners.py`: the Foundry and offline runners.
+- `matchlens/agents/interpreter.py`, `analyst.py`, `recapper.py`, `translator.py`: the agents after the card, each with its check and fallback.
 - `matchlens/telemetry.py`: tracing to Application Insights.
 - `matchlens/agents/safety.py`: Content Safety on the on-screen lines.
 - `matchlens/foundry_eval.py`: Foundry Evaluations, and `matchlens-foundry-eval`.

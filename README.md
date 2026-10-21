@@ -12,6 +12,7 @@ It is a fresh start for the Microsoft × Premier League hackathon. All match dat
 - **Watcher, specialists and Explainer:** built as deterministic tools that work on any match in the public format. Scored against the hidden truth on unseen matches ([docs/explainer.md](docs/explainer.md)).
 - **Broadcast screen:** score and clock, an always-on momentum scale, a timeline with the momentum history, and pop-up cards chosen by a Director ([docs/broadcast.md](docs/broadcast.md)).
 - **Agents on Microsoft Foundry:** four specialist agents, an Explainer agent and a Verifier share a findings board. Tools compute every number; the models choose; the Verifier rechecks every number against the tables ([docs/agents.md](docs/agents.md)).
+- **Made for every viewer:** a casual view and a denser analyst view, English or Spanish (translated by Azure AI Translator or a Foundry agent and checked in code), follow-a-player mode with name tags at set thresholds, and a full-time recap with a headline from a Recapper agent ([docs/broadcast.md](docs/broadcast.md)).
 - **Live feed:** a match can arrive from another provider as per-minute club and player tables plus key events, with a small file mapping its column names onto ours. It is explained a minute at a time with no look-ahead, and an unseen-match test checks this on fresh matches in CI ([docs/live-feed.md](docs/live-feed.md)).
 - **Next:** a stadium still, then redeploy the live site and record the demo.
 
@@ -23,11 +24,12 @@ Every service below is used by code in this repo. Nothing is listed that the cod
 
 | Service | Where | What it does |
 | --- | --- | --- |
-| **Microsoft Foundry Agent Service** | `matchlens/agents/runners.py` | Seven prompt agents are published to the Foundry project and versioned: `matchlens-team-play`, `-players`, `-substitutions`, `-match-events`, `-explainer`, `-interpreter` and `-analyst`. A new version is published only when an agent's definition changes. |
+| **Microsoft Foundry Agent Service** | `matchlens/agents/runners.py` | Nine prompt agents are published to the Foundry project and versioned: `matchlens-team-play`, `-players`, `-substitutions`, `-match-events`, `-explainer`, `-interpreter`, `-analyst`, `-recapper` and `-translator`. A new version is published only when an agent's definition changes. |
 | **Microsoft Agent Framework** (Python) | `matchlens/agents/runners.py`, `crew.py` | Runs each agent and its tool calls. Four specialists run in parallel on a shared findings board, then the Explainer, then the Interpreter and Analyst. |
 | **Foundry Models: Azure OpenAI `gpt-4.1-mini`** | the project's model deployment | The model behind every agent, and the judge for the evaluations. |
 | **Foundry Evaluations** (Azure AI Evaluation SDK) | `matchlens/foundry_eval.py`, `.github/workflows/foundry-eval.yml` | Scores every on-screen line for groundedness, relevance and coherence, plus a code check on numbers. The run is logged to the project's Evaluations page. |
-| **Azure AI Content Safety** | `matchlens/agents/safety.py` | Screens every line the agents write before it can go on air. A flagged line is sent back to the agent, then replaced by the rule-written line. |
+| **Azure AI Translator** | `matchlens/agents/translator.py` | One of the backends for the Spanish screen (Text Translation v3, free F0 tier). A check in code catches any translation that changed a number or a name. |
+| **Azure AI Content Safety** | `matchlens/agents/safety.py` | Screens every line the Interpreter, Analyst and Recapper write before it can go on air. A flagged line is sent back to the agent, then replaced by the rule-written line. |
 | **Azure Monitor Application Insights**, via **OpenTelemetry** | `matchlens/telemetry.py` | One trace per match. It covers the Watcher, each moment, specialist, Explainer round and Verifier check, with Agent Framework's agent and model spans underneath. The traces show on the Foundry project's Tracing page. |
 | **Azure Container Apps** | `infra/main.bicep`, `Dockerfile` | Hosts the live site. It scales to zero between viewers and has health probes. |
 | **Azure Linux** container image | `Dockerfile` | The base image for the site (`mcr.microsoft.com/azurelinux/base/python`). |

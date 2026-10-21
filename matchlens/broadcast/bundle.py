@@ -7,6 +7,13 @@ Director put on screen, with their numbers already formatted.
     matchlens-broadcast out/matches/ash-brk-7 --out web/data      # one match folder
     matchlens-broadcast --demo 6 --out web/data                     # generate fresh demo matches
     matchlens-broadcast --demo 6 --out web/data --agents foundry    # explained by the agents on Foundry
+    matchlens-broadcast --demo 6 --out web/data --enrich            # add the recap, follow-a-player, the
+                                                                    # analyst detail and Spanish to the
+                                                                    # bundles already there, keeping their cards
+
+Each bundle also carries the full-time recap, follow-a-player, the analyst view's detail and the
+Spanish screen (extras.py). With --agents, the Recapper writes the recap headlines and the
+Translator the Spanish lines (--translator picks Azure AI Translator or the Foundry agent).
 """
 
 from __future__ import annotations
@@ -21,6 +28,7 @@ from ..explain.analysis import lenses
 from ..explain.director import direct
 from ..explain.explainer import explain_match
 from ..explain.match import MatchData, load
+from . import extras
 from .tables import stats_tables
 
 MODE_TAG = {
@@ -66,6 +74,7 @@ def format_stat(md: MatchData, s: dict[str, Any]) -> dict[str, Any]:
         "window": unit if unit.startswith("in ") else None,
         "unit": "" if unit in ("", "m") or unit.startswith("in ") else unit,
         "rise": after > before,
+        **({"sd": s["effect_sd"]} if s.get("effect_sd") is not None else {}),
     }
 
 
@@ -172,7 +181,7 @@ def build(md: MatchData, result: dict[str, Any] | None = None) -> dict[str, Any]
                 "hood": under_the_hood(c),
             }
         )
-    return {
+    b = {
         "match_id": md.meta["match_id"],
         "venue": md.meta.get("venue"),
         "competition": md.meta.get("competition"),
@@ -200,6 +209,7 @@ def build(md: MatchData, result: dict[str, Any] | None = None) -> dict[str, Any]
         "stats": stats_tables(md),
         "agents": result.get("agents"),
     }
+    return extras.add(md, b, shown)
 
 
 def explain_with_agents(mds: list[MatchData], runner_name: str) -> list[dict[str, Any]]:
@@ -230,14 +240,52 @@ def explain_with_agents(mds: list[MatchData], runner_name: str) -> list[dict[str
     return asyncio.run(go())
 
 
-def write_bundles(folders: list[Path], out: Path, agents: str | None = None) -> list[dict[str, Any]]:
+def finish(bundles: list[dict[str, Any]], agents: str | None, translator: str = "auto") -> None:
+    """The steps after the cards, in place: the Recapper's headlines (with --agents) and the Spanish
+    lines from the translator, each checked in code with the rules as the fallback."""
+    import asyncio
+
+    from ..agents.recapper import recap_bundle
+    from ..agents.runners import make_runner
+    from ..agents.translator import make_backend, translate_bundle
+
+    async def go() -> None:
+        runner = make_runner(agents) if agents else None
+        try:
+            backend = make_backend(translator, runner)
+            if runner is not None:
+                await asyncio.gather(*(recap_bundle(runner, b) for b in bundles))
+            await asyncio.gather(*(translate_bundle(backend, b) for b in bundles))
+            if runner is not None:
+                for b in bundles:
+                    b["recap"]["agents"]["usage"] = runner.usage.as_dict()
+        finally:
+            if runner is not None:
+                await runner.close()
+
+    asyncio.run(go())
+
+
+def enriched(md: MatchData, b: dict[str, Any]) -> dict[str, Any]:
+    """An existing bundle with the extras added, its cards (and their agents' lines) kept. The rules'
+    Spanish line for each card is read from the card's own cause and stats."""
+    return extras.add(md, b, [{"at": c["at"], "facts": extras.card_facts(md, c)} for c in b["cards"]])
+
+
+def write_bundles(
+    folders: list[Path], out: Path, agents: str | None = None, enrich: bool = False, translator: str = "auto"
+) -> list[dict[str, Any]]:
     out.mkdir(parents=True, exist_ok=True)
     index = []
     mds = [load(f) for f in folders]
-    results: list[dict[str, Any] | None] = list(explain_with_agents(mds, agents)) if agents else [None] * len(mds)
-    for md, result in zip(mds, results, strict=True):
-        b = build(md, result)
-        (out / f"{b['match_id']}.json").write_text(json.dumps(b, separators=(",", ":")))
+    if enrich:
+        bundles = [enriched(md, json.loads((out / f"{md.meta['match_id']}.json").read_text())) for md in mds]
+    else:
+        results: list[dict[str, Any] | None] = list(explain_with_agents(mds, agents)) if agents else [None] * len(mds)
+        bundles = [build(md, result) for md, result in zip(mds, results, strict=True)]
+    finish(bundles, agents, translator)
+    for b in bundles:
+        (out / f"{b['match_id']}.json").write_text(json.dumps(b, separators=(",", ":"), ensure_ascii=False))
         h, a = b["teams"]
         index.append(
             {
@@ -262,6 +310,14 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=31)
     ap.add_argument("--out", type=Path, default=Path("web/data"))
     ap.add_argument("--agents", choices=["offline", "foundry"], help="explain with the agent crew on this runner")
+    ap.add_argument("--enrich", action="store_true", help="keep the bundles in --out and add the extras to them")
+    ap.add_argument(
+        "--translator",
+        choices=["auto", "azure", "agent", "offline"],
+        default="auto",
+        help="Spanish lines: Azure AI Translator, the Translator agent on the --agents runner, or the rules "
+        "(auto: Azure when AZURE_TRANSLATOR_KEY is set, else the agent on Foundry, else the rules)",
+    )
     args = ap.parse_args()
     if args.demo:
         from ..gen import generate_match
@@ -285,9 +341,9 @@ def main() -> None:
                         m.manager.minutes,
                     )
                 )
-            index = write_bundles(folders, args.out, args.agents)
+            index = write_bundles(folders, args.out, args.agents, args.enrich, args.translator)
     else:
-        index = write_bundles(args.folders, args.out, args.agents)
+        index = write_bundles(args.folders, args.out, args.agents, args.enrich, args.translator)
     for r in index:
         print(f"{r['match_id']:>20}  {r['home']} {r['score'][0]}-{r['score'][1]} {r['away']}  {r['cards']} cards")
 

@@ -24,7 +24,7 @@ import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
 from .. import telemetry
 from .roles import Role
@@ -33,6 +33,10 @@ if TYPE_CHECKING:
     from .analyst import AnalystJob
     from .crew import Job
     from .interpreter import InterpretJob
+    from .recapper import RecapJob
+    from .translator import TranslateJob
+
+    AnyJob: TypeAlias = Job | InterpretJob | AnalystJob | RecapJob | TranslateJob
 
 log = logging.getLogger(__name__)
 
@@ -85,7 +89,7 @@ class Runner(Protocol):
     name: str
     usage: Usage
 
-    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: Job | InterpretJob | AnalystJob) -> str: ...
+    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: AnyJob) -> str: ...
 
     async def close(self) -> None: ...
 
@@ -97,12 +101,18 @@ class OfflineRunner:
     name: str = "offline"
     usage: Usage = field(default_factory=Usage)
 
-    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: Job | InterpretJob | AnalystJob) -> str:
+    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: AnyJob) -> str:
         from .analyst import AnalystJob, offline_analysis
         from .crew import offline_answer
         from .interpreter import InterpretJob, offline_lines
+        from .recapper import RecapJob, offline_recap
+        from .translator import TranslateJob, offline_translation
 
         self.usage.calls += 1
+        if isinstance(job, RecapJob):
+            return offline_recap(job)
+        if isinstance(job, TranslateJob):
+            return offline_translation(job)
         if isinstance(job, InterpretJob):
             return offline_lines(job)
         if isinstance(job, AnalystJob):
@@ -162,7 +172,7 @@ class FoundryRunner:
             project_client=self._project, agent_name=role.agent_name, agent_version=version, tools=self._tools(tools) or None
         )
 
-    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: Job | InterpretJob | AnalystJob) -> str:
+    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: AnyJob) -> str:
         if self.tracing is None:
             self.tracing = await telemetry.connect(self._project)
         agent = await self._agent(role, tools)
