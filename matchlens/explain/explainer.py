@@ -179,11 +179,20 @@ def choose_stats(m: Moment, cause: dict[str, Any], found: dict[str, list[Finding
     return stats
 
 
+LAST_MINUTES = (5, 10, 15)
+
+
+def last_minutes(window: int) -> int:
+    """The window a shift card covers, as the nearest of 5, 10 or 15 minutes."""
+    return min(LAST_MINUTES, key=lambda x: (abs(x - window), -x))
+
+
 def anchor_label(md: MatchData, m: Moment, cause: dict[str, Any] | None = None) -> str:
     if cause and cause["kind"] == "substitution_impact" and cause.get("player") and len(m.events) == 1:
         return f"Since {md.names.get(cause['player'], '')} came on"  # the sub the card is about
     if not m.events:
-        return f"Since {md.clock_of(m.anchor_m)}"
+        # no event to point at: say how long it has been going on, on a scale viewers know
+        return f"Last {last_minutes(m.now - m.start)} minutes"
     e = m.events[0]
     if e.kind == "half_time":
         return "Since half-time"

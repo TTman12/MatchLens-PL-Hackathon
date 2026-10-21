@@ -73,6 +73,7 @@ def test_every_stat_label_the_screen_shows_is_in_spanish() -> None:
 
 def test_anchors_read_in_spanish() -> None:
     assert spanish.anchor("Since 63'") == "Desde el 63'"
+    assert spanish.anchor("Last 10 minutes") == "Últimos 10 minutos"
     assert spanish.anchor("Since half-time") == "Desde el descanso"
     assert spanish.anchor("Since Dunmoor goal 25'") == "Desde el gol de Dunmoor (25')"
     assert spanish.anchor("Since Ben D. came on") == "Desde que entró Ben D."
@@ -92,7 +93,7 @@ def test_the_bundle_carries_the_recap_follow_detail_and_spanish(tmp_path: Path) 
     for c in b["cards"]:
         assert c["detail"]["rows"] and c["detail"]["cause"] == c["cause"]
         es = c["i18n"]["es"]
-        assert es["anchor"].startswith("Desde")
+        assert es["anchor"].startswith(("Desde", "Últimos"))
         assert set(es["text"]) == set(c["text"])
     assert set(b["follow"]) == {p["id"] for p in b["stats"]["players"]}
     assert set(b["stats"]["last15"]) == set(md.teams)

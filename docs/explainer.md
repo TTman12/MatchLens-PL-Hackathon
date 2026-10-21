@@ -1,6 +1,6 @@
 # The Watcher, the specialists and the Explainer
 
-`matchlens-explain` reads any match folder in the [public format](data-format.md) and produces the cards that would go on screen. Each card has an anchor ("Since 63'", "Since Ostrand red card"), one or two numbers measured against the match so far, a momentum bar showing before and now, and a cause. These parts only ever read the public tables. The generator's hidden truth is read by the scorer and nothing else.
+`matchlens-explain` reads any match folder in the [public format](data-format.md) and produces the cards that would go on screen. Each card has an anchor ("Last 10 minutes", "Since B. Ostrand red card"), one or two numbers measured against the match so far, a momentum bar showing before and now, and a cause. These parts only ever read the public tables. The generator's hidden truth is read by the scorer and nothing else.
 
 ```
 matchlens-gen match --home ash --away brk --seed 7

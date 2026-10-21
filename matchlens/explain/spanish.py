@@ -313,6 +313,7 @@ ANCHORS = [
     (re.compile(r"^Since (.+) goal (\S+)$"), r"Desde el gol de \1 (\2)"),
     (re.compile(r"^Since (.+) double change$"), r"Desde el doble cambio de \1"),
     (re.compile(r"^Since (.+) triple change$"), r"Desde el triple cambio de \1"),
+    (re.compile(r"^Last (\d+) minutes$"), r"Últimos \1 minutos"),
     (re.compile(r"^Since (\d.*)$"), r"Desde el \1"),
 ]
 
