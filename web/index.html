@@ -38,6 +38,13 @@
       <div class="recap" id="recap" aria-live="polite" hidden></div>
 
       <!-- user mode: the playback controls sit in the feed, where a video player keeps them -->
+      <!-- full screen: the momentum bar comes into the feed -->
+      <div class="mo-mini" aria-hidden="true">
+        <span id="miniHome"></span>
+        <div class="grad-bar" id="moMini"><div class="gb-mid"></div><div class="gb-now"></div></div>
+        <span id="miniAway"></span>
+      </div>
+
       <div class="vbar" id="vbar">
         <div class="vbar-left" id="vbarLeft"></div>
         <div class="vbar-right" id="vbarRight">
@@ -94,6 +101,7 @@
           <select id="matchSelect" aria-label="Match"></select>
           <button id="playBtn" type="button" aria-label="Play">Play</button>
           <button id="speedBtn" type="button" aria-label="Speed">1x</button>
+          <button id="fullBtn" type="button" aria-label="Full screen"></button>
         </nav>
       </div>
       <div class="timeline">

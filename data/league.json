@@ -23,7 +23,7 @@
         {
           "player_id": "ash-01",
           "name": "Bram Ostrand",
-          "short_name": "Ostrand",
+          "short_name": "B. Ostrand",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -44,7 +44,7 @@
         {
           "player_id": "ash-02",
           "name": "Ignas Ellham",
-          "short_name": "Ellham",
+          "short_name": "I. Ellham",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -65,7 +65,7 @@
         {
           "player_id": "ash-04",
           "name": "Marek Nettade",
-          "short_name": "Nettade",
+          "short_name": "M. Nettade",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -86,7 +86,7 @@
         {
           "player_id": "ash-05",
           "name": "Ulrik Brackley",
-          "short_name": "Brackley",
+          "short_name": "U. Brackley",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -107,7 +107,7 @@
         {
           "player_id": "ash-03",
           "name": "Rafe Halloway",
-          "short_name": "Halloway",
+          "short_name": "R. Halloway",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -128,7 +128,7 @@
         {
           "player_id": "ash-06",
           "name": "Osei Brennick",
-          "short_name": "Brennick",
+          "short_name": "O. Brennick",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -149,7 +149,7 @@
         {
           "player_id": "ash-08",
           "name": "Teo Kestley",
-          "short_name": "Kestley",
+          "short_name": "T. Kestley",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -170,7 +170,7 @@
         {
           "player_id": "ash-10",
           "name": "Soren Marrow",
-          "short_name": "Marrow",
+          "short_name": "S. Marrow",
           "shirt": 10,
           "position": "MF",
           "role": "CM",
@@ -191,7 +191,7 @@
         {
           "player_id": "ash-07",
           "name": "Bastien Brennez",
-          "short_name": "Brennez",
+          "short_name": "B. Brennez",
           "shirt": 7,
           "position": "FW",
           "role": "RW",
@@ -212,7 +212,7 @@
         {
           "player_id": "ash-09",
           "name": "Idris Varrow",
-          "short_name": "Varrow",
+          "short_name": "I. Varrow",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -233,7 +233,7 @@
         {
           "player_id": "ash-11",
           "name": "Teo Gorrelli",
-          "short_name": "Gorrelli",
+          "short_name": "T. Gorrelli",
           "shirt": 11,
           "position": "FW",
           "role": "LW",
@@ -254,7 +254,7 @@
         {
           "player_id": "ash-12",
           "name": "Yannick Belcstead",
-          "short_name": "Belcstead",
+          "short_name": "Y. Belcstead",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -275,7 +275,7 @@
         {
           "player_id": "ash-13",
           "name": "Vito Corving",
-          "short_name": "Corving",
+          "short_name": "V. Corving",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -296,7 +296,7 @@
         {
           "player_id": "ash-14",
           "name": "Rasmus Pennworth",
-          "short_name": "Pennworth",
+          "short_name": "R. Pennworth",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -317,7 +317,7 @@
         {
           "player_id": "ash-15",
           "name": "Nico Orrow",
-          "short_name": "Orrow",
+          "short_name": "N. Orrow",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -338,7 +338,7 @@
         {
           "player_id": "ash-16",
           "name": "Wilmer Caldett",
-          "short_name": "Caldett",
+          "short_name": "W. Caldett",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -359,7 +359,7 @@
         {
           "player_id": "ash-17",
           "name": "Idris Heskden",
-          "short_name": "Heskden",
+          "short_name": "I. Heskden",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -380,7 +380,7 @@
         {
           "player_id": "ash-18",
           "name": "Aurel Corvwell",
-          "short_name": "Corvwell",
+          "short_name": "A. Corvwell",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -420,7 +420,7 @@
         {
           "player_id": "brk-01",
           "name": "Soren Quillan",
-          "short_name": "Quillan",
+          "short_name": "S. Quillan",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -441,7 +441,7 @@
         {
           "player_id": "brk-02",
           "name": "Lior Brennholt",
-          "short_name": "Brennholt",
+          "short_name": "L. Brennholt",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -462,7 +462,7 @@
         {
           "player_id": "brk-04",
           "name": "Ulrik Dravford",
-          "short_name": "Dravford",
+          "short_name": "U. Dravford",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -483,7 +483,7 @@
         {
           "player_id": "brk-05",
           "name": "Caio Gorrworth",
-          "short_name": "Gorrworth",
+          "short_name": "C. Gorrworth",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -504,7 +504,7 @@
         {
           "player_id": "brk-03",
           "name": "Ulrik Brennmore",
-          "short_name": "Brennmore",
+          "short_name": "U. Brennmore",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -525,7 +525,7 @@
         {
           "player_id": "brk-06",
           "name": "Bastien Nettard",
-          "short_name": "Nettard",
+          "short_name": "B. Nettard",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -546,7 +546,7 @@
         {
           "player_id": "brk-08",
           "name": "Caio Penthorne",
-          "short_name": "Penthorne",
+          "short_name": "C. Penthorne",
           "shirt": 8,
           "position": "MF",
           "role": "DM",
@@ -567,7 +567,7 @@
         {
           "player_id": "brk-07",
           "name": "Bastien Gorrow",
-          "short_name": "Gorrow",
+          "short_name": "B. Gorrow",
           "shirt": 7,
           "position": "MF",
           "role": "RW",
@@ -588,7 +588,7 @@
         {
           "player_id": "brk-10",
           "name": "Luka Dravik",
-          "short_name": "Dravik",
+          "short_name": "L. Dravik",
           "shirt": 10,
           "position": "MF",
           "role": "AM",
@@ -609,7 +609,7 @@
         {
           "player_id": "brk-11",
           "name": "Yannick Dunanu",
-          "short_name": "Dunanu",
+          "short_name": "Y. Dunanu",
           "shirt": 11,
           "position": "MF",
           "role": "LW",
@@ -630,7 +630,7 @@
         {
           "player_id": "brk-09",
           "name": "Luka Kestade",
-          "short_name": "Kestade",
+          "short_name": "L. Kestade",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -651,7 +651,7 @@
         {
           "player_id": "brk-12",
           "name": "Joaquin Orrton",
-          "short_name": "Orrton",
+          "short_name": "J. Orrton",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -672,7 +672,7 @@
         {
           "player_id": "brk-13",
           "name": "Aurel Dunworth",
-          "short_name": "Dunworth",
+          "short_name": "A. Dunworth",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -693,7 +693,7 @@
         {
           "player_id": "brk-14",
           "name": "Ezra Dewworth",
-          "short_name": "Dewworth",
+          "short_name": "E. Dewworth",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -714,7 +714,7 @@
         {
           "player_id": "brk-15",
           "name": "Dmitri Kilham",
-          "short_name": "Kilham",
+          "short_name": "D. Kilham",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -735,7 +735,7 @@
         {
           "player_id": "brk-16",
           "name": "Rasmus Fallovic",
-          "short_name": "Fallovic",
+          "short_name": "R. Fallovic",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -756,7 +756,7 @@
         {
           "player_id": "brk-17",
           "name": "Pavel Cromton",
-          "short_name": "Cromton",
+          "short_name": "P. Cromton",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -777,7 +777,7 @@
         {
           "player_id": "brk-18",
           "name": "Yannick Fenden",
-          "short_name": "Fenden",
+          "short_name": "Y. Fenden",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -817,7 +817,7 @@
         {
           "player_id": "cal-01",
           "name": "Lior Merrelli",
-          "short_name": "Merrelli",
+          "short_name": "L. Merrelli",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -838,7 +838,7 @@
         {
           "player_id": "cal-02",
           "name": "Cyrus Cromford",
-          "short_name": "Cromford",
+          "short_name": "C. Cromford",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -859,7 +859,7 @@
         {
           "player_id": "cal-04",
           "name": "Ezra Brennow",
-          "short_name": "Brennow",
+          "short_name": "E. Brennow",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -880,7 +880,7 @@
         {
           "player_id": "cal-05",
           "name": "Hugo Brenning",
-          "short_name": "Brenning",
+          "short_name": "H. Brenning",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -901,7 +901,7 @@
         {
           "player_id": "cal-03",
           "name": "Ezra Garrley",
-          "short_name": "Garrley",
+          "short_name": "E. Garrley",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -922,7 +922,7 @@
         {
           "player_id": "cal-06",
           "name": "Rafe Thornmore",
-          "short_name": "Thornmore",
+          "short_name": "R. Thornmore",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -943,7 +943,7 @@
         {
           "player_id": "cal-08",
           "name": "Valen Wexez",
-          "short_name": "Wexez",
+          "short_name": "V. Wexez",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -964,7 +964,7 @@
         {
           "player_id": "cal-10",
           "name": "Ignas Pennholt",
-          "short_name": "Pennholt",
+          "short_name": "I. Pennholt",
           "shirt": 10,
           "position": "MF",
           "role": "CM",
@@ -985,7 +985,7 @@
         {
           "player_id": "cal-07",
           "name": "Silas Kilwell",
-          "short_name": "Kilwell",
+          "short_name": "S. Kilwell",
           "shirt": 7,
           "position": "FW",
           "role": "RW",
@@ -1006,7 +1006,7 @@
         {
           "player_id": "cal-09",
           "name": "Joaquin Sallez",
-          "short_name": "Sallez",
+          "short_name": "J. Sallez",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -1027,7 +1027,7 @@
         {
           "player_id": "cal-11",
           "name": "Gaspard Rossham",
-          "short_name": "Rossham",
+          "short_name": "G. Rossham",
           "shirt": 11,
           "position": "FW",
           "role": "LW",
@@ -1048,7 +1048,7 @@
         {
           "player_id": "cal-12",
           "name": "Callum Marrholt",
-          "short_name": "Marrholt",
+          "short_name": "C. Marrholt",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -1069,7 +1069,7 @@
         {
           "player_id": "cal-13",
           "name": "Davor Kestow",
-          "short_name": "Kestow",
+          "short_name": "D. Kestow",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -1090,7 +1090,7 @@
         {
           "player_id": "cal-14",
           "name": "Halvard Heskton",
-          "short_name": "Heskton",
+          "short_name": "H. Heskton",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -1111,7 +1111,7 @@
         {
           "player_id": "cal-15",
           "name": "Ulrik Fallmere",
-          "short_name": "Fallmere",
+          "short_name": "U. Fallmere",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -1132,7 +1132,7 @@
         {
           "player_id": "cal-16",
           "name": "Femi Heskick",
-          "short_name": "Heskick",
+          "short_name": "F. Heskick",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -1153,7 +1153,7 @@
         {
           "player_id": "cal-17",
           "name": "Wren Corvcombe",
-          "short_name": "Corvcombe",
+          "short_name": "W. Corvcombe",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -1174,7 +1174,7 @@
         {
           "player_id": "cal-18",
           "name": "Osei Keststead",
-          "short_name": "Keststead",
+          "short_name": "O. Keststead",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -1214,7 +1214,7 @@
         {
           "player_id": "els-01",
           "name": "Jonah Vallwell",
-          "short_name": "Vallwell",
+          "short_name": "J. Vallwell",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -1235,7 +1235,7 @@
         {
           "player_id": "els-04",
           "name": "Jonah Thornis",
-          "short_name": "Thornis",
+          "short_name": "J. Thornis",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -1256,7 +1256,7 @@
         {
           "player_id": "els-05",
           "name": "Caio Lunnanu",
-          "short_name": "Lunnanu",
+          "short_name": "C. Lunnanu",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -1277,7 +1277,7 @@
         {
           "player_id": "els-03",
           "name": "Kasimir Rossanu",
-          "short_name": "Rossanu",
+          "short_name": "K. Rossanu",
           "shirt": 3,
           "position": "DF",
           "role": "CB",
@@ -1298,7 +1298,7 @@
         {
           "player_id": "els-02",
           "name": "Leandro Jesston",
-          "short_name": "Jesston",
+          "short_name": "L. Jesston",
           "shirt": 2,
           "position": "MF",
           "role": "RWB",
@@ -1319,7 +1319,7 @@
         {
           "player_id": "els-06",
           "name": "Nico Calding",
-          "short_name": "Calding",
+          "short_name": "N. Calding",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -1340,7 +1340,7 @@
         {
           "player_id": "els-08",
           "name": "Gideon Wexstead",
-          "short_name": "Wexstead",
+          "short_name": "G. Wexstead",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -1361,7 +1361,7 @@
         {
           "player_id": "els-10",
           "name": "Nico Tullwell",
-          "short_name": "Tullwell",
+          "short_name": "N. Tullwell",
           "shirt": 10,
           "position": "MF",
           "role": "CM",
@@ -1382,7 +1382,7 @@
         {
           "player_id": "els-11",
           "name": "Osei Yarrham",
-          "short_name": "Yarrham",
+          "short_name": "O. Yarrham",
           "shirt": 11,
           "position": "MF",
           "role": "LWB",
@@ -1403,7 +1403,7 @@
         {
           "player_id": "els-09",
           "name": "Yannick Estick",
-          "short_name": "Estick",
+          "short_name": "Y. Estick",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -1424,7 +1424,7 @@
         {
           "player_id": "els-07",
           "name": "Mateo Lunnade",
-          "short_name": "Lunnade",
+          "short_name": "M. Lunnade",
           "shirt": 7,
           "position": "FW",
           "role": "ST",
@@ -1445,7 +1445,7 @@
         {
           "player_id": "els-12",
           "name": "Hugo Elling",
-          "short_name": "Elling",
+          "short_name": "H. Elling",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -1466,7 +1466,7 @@
         {
           "player_id": "els-13",
           "name": "Leandro Thornard",
-          "short_name": "Thornard",
+          "short_name": "L. Thornard",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -1487,7 +1487,7 @@
         {
           "player_id": "els-14",
           "name": "Cyrus Pennander",
-          "short_name": "Pennander",
+          "short_name": "C. Pennander",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -1508,7 +1508,7 @@
         {
           "player_id": "els-15",
           "name": "Ilya Belcworth",
-          "short_name": "Belcworth",
+          "short_name": "I. Belcworth",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -1529,7 +1529,7 @@
         {
           "player_id": "els-16",
           "name": "Otto Caldwell",
-          "short_name": "Caldwell",
+          "short_name": "O. Caldwell",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -1550,7 +1550,7 @@
         {
           "player_id": "els-17",
           "name": "Marek Kilton",
-          "short_name": "Kilton",
+          "short_name": "M. Kilton",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -1571,7 +1571,7 @@
         {
           "player_id": "els-18",
           "name": "Florin Lathton",
-          "short_name": "Lathton",
+          "short_name": "F. Lathton",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -1611,7 +1611,7 @@
         {
           "player_id": "dun-01",
           "name": "Ezra Lunnley",
-          "short_name": "Lunnley",
+          "short_name": "E. Lunnley",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -1632,7 +1632,7 @@
         {
           "player_id": "dun-02",
           "name": "Bastien Thornovic",
-          "short_name": "Thornovic",
+          "short_name": "B. Thornovic",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -1653,7 +1653,7 @@
         {
           "player_id": "dun-04",
           "name": "Hugo Rossmere",
-          "short_name": "Rossmere",
+          "short_name": "H. Rossmere",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -1674,7 +1674,7 @@
         {
           "player_id": "dun-05",
           "name": "Bastien Caldcombe",
-          "short_name": "Caldcombe",
+          "short_name": "B. Caldcombe",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -1695,7 +1695,7 @@
         {
           "player_id": "dun-03",
           "name": "Wilmer Cromanu",
-          "short_name": "Cromanu",
+          "short_name": "W. Cromanu",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -1716,7 +1716,7 @@
         {
           "player_id": "dun-06",
           "name": "Hamza Iversholt",
-          "short_name": "Iversholt",
+          "short_name": "H. Iversholt",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -1737,7 +1737,7 @@
         {
           "player_id": "dun-08",
           "name": "Dmitri Strandade",
-          "short_name": "Strandade",
+          "short_name": "D. Strandade",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -1758,7 +1758,7 @@
         {
           "player_id": "dun-10",
           "name": "Wilmer Brennworth",
-          "short_name": "Brennworth",
+          "short_name": "W. Brennworth",
           "shirt": 10,
           "position": "MF",
           "role": "CM",
@@ -1779,7 +1779,7 @@
         {
           "player_id": "dun-07",
           "name": "Piet Brennley",
-          "short_name": "Brennley",
+          "short_name": "P. Brennley",
           "shirt": 7,
           "position": "FW",
           "role": "RW",
@@ -1800,7 +1800,7 @@
         {
           "player_id": "dun-09",
           "name": "Piet Kiling",
-          "short_name": "Kiling",
+          "short_name": "P. Kiling",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -1821,7 +1821,7 @@
         {
           "player_id": "dun-11",
           "name": "Wren Quillton",
-          "short_name": "Quillton",
+          "short_name": "W. Quillton",
           "shirt": 11,
           "position": "FW",
           "role": "LW",
@@ -1842,7 +1842,7 @@
         {
           "player_id": "dun-12",
           "name": "Ezra Jessis",
-          "short_name": "Jessis",
+          "short_name": "E. Jessis",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -1863,7 +1863,7 @@
         {
           "player_id": "dun-13",
           "name": "Felix Morrett",
-          "short_name": "Morrett",
+          "short_name": "F. Morrett",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -1884,7 +1884,7 @@
         {
           "player_id": "dun-14",
           "name": "Soren Lunnez",
-          "short_name": "Lunnez",
+          "short_name": "S. Lunnez",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -1905,7 +1905,7 @@
         {
           "player_id": "dun-15",
           "name": "Hamza Ashmore",
-          "short_name": "Ashmore",
+          "short_name": "H. Ashmore",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -1926,7 +1926,7 @@
         {
           "player_id": "dun-16",
           "name": "Silas Sallane",
-          "short_name": "Sallane",
+          "short_name": "S. Sallane",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -1947,7 +1947,7 @@
         {
           "player_id": "dun-17",
           "name": "Rafe Marrade",
-          "short_name": "Marrade",
+          "short_name": "R. Marrade",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -1968,7 +1968,7 @@
         {
           "player_id": "dun-18",
           "name": "Hugo Estow",
-          "short_name": "Estow",
+          "short_name": "H. Estow",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -2008,7 +2008,7 @@
         {
           "player_id": "fen-01",
           "name": "Pavel Dewwell",
-          "short_name": "Dewwell",
+          "short_name": "P. Dewwell",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -2029,7 +2029,7 @@
         {
           "player_id": "fen-02",
           "name": "Ilya Thornick",
-          "short_name": "Thornick",
+          "short_name": "I. Thornick",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -2050,7 +2050,7 @@
         {
           "player_id": "fen-04",
           "name": "Dario Brennham",
-          "short_name": "Brennham",
+          "short_name": "D. Brennham",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -2071,7 +2071,7 @@
         {
           "player_id": "fen-05",
           "name": "Hamza Gorring",
-          "short_name": "Gorring",
+          "short_name": "H. Gorring",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -2092,7 +2092,7 @@
         {
           "player_id": "fen-03",
           "name": "Ignas Jessstead",
-          "short_name": "Jessstead",
+          "short_name": "I. Jessstead",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -2113,7 +2113,7 @@
         {
           "player_id": "fen-06",
           "name": "Mateo Dravstead",
-          "short_name": "Dravstead",
+          "short_name": "M. Dravstead",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -2134,7 +2134,7 @@
         {
           "player_id": "fen-08",
           "name": "Lior Heskstead",
-          "short_name": "Heskstead",
+          "short_name": "L. Heskstead",
           "shirt": 8,
           "position": "MF",
           "role": "DM",
@@ -2155,7 +2155,7 @@
         {
           "player_id": "fen-07",
           "name": "Femi Nettcombe",
-          "short_name": "Nettcombe",
+          "short_name": "F. Nettcombe",
           "shirt": 7,
           "position": "MF",
           "role": "RW",
@@ -2176,7 +2176,7 @@
         {
           "player_id": "fen-10",
           "name": "Halvard Morrmore",
-          "short_name": "Morrmore",
+          "short_name": "H. Morrmore",
           "shirt": 10,
           "position": "MF",
           "role": "AM",
@@ -2197,7 +2197,7 @@
         {
           "player_id": "fen-11",
           "name": "Ignas Wexham",
-          "short_name": "Wexham",
+          "short_name": "I. Wexham",
           "shirt": 11,
           "position": "MF",
           "role": "LW",
@@ -2218,7 +2218,7 @@
         {
           "player_id": "fen-09",
           "name": "Valen Corvard",
-          "short_name": "Corvard",
+          "short_name": "V. Corvard",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -2239,7 +2239,7 @@
         {
           "player_id": "fen-12",
           "name": "Teo Estley",
-          "short_name": "Estley",
+          "short_name": "T. Estley",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -2260,7 +2260,7 @@
         {
           "player_id": "fen-13",
           "name": "Lior Vallton",
-          "short_name": "Vallton",
+          "short_name": "L. Vallton",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -2281,7 +2281,7 @@
         {
           "player_id": "fen-14",
           "name": "Dmitri Nettick",
-          "short_name": "Nettick",
+          "short_name": "D. Nettick",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -2302,7 +2302,7 @@
         {
           "player_id": "fen-15",
           "name": "Rafe Jessanu",
-          "short_name": "Jessanu",
+          "short_name": "R. Jessanu",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -2323,7 +2323,7 @@
         {
           "player_id": "fen-16",
           "name": "Yusuf Dunford",
-          "short_name": "Dunford",
+          "short_name": "Y. Dunford",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -2344,7 +2344,7 @@
         {
           "player_id": "fen-17",
           "name": "Luka Pennmore",
-          "short_name": "Pennmore",
+          "short_name": "L. Pennmore",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -2365,7 +2365,7 @@
         {
           "player_id": "fen-18",
           "name": "Tiago Jessard",
-          "short_name": "Jessard",
+          "short_name": "T. Jessard",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -2405,7 +2405,7 @@
         {
           "player_id": "gry-01",
           "name": "Femi Orring",
-          "short_name": "Orring",
+          "short_name": "F. Orring",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -2426,7 +2426,7 @@
         {
           "player_id": "gry-02",
           "name": "Caio Thornholt",
-          "short_name": "Thornholt",
+          "short_name": "C. Thornholt",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -2447,7 +2447,7 @@
         {
           "player_id": "gry-04",
           "name": "Soren Fallley",
-          "short_name": "Fallley",
+          "short_name": "S. Fallley",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -2468,7 +2468,7 @@
         {
           "player_id": "gry-05",
           "name": "Ignas Lathworth",
-          "short_name": "Lathworth",
+          "short_name": "I. Lathworth",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -2489,7 +2489,7 @@
         {
           "player_id": "gry-03",
           "name": "Bram Quillis",
-          "short_name": "Quillis",
+          "short_name": "B. Quillis",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -2510,7 +2510,7 @@
         {
           "player_id": "gry-07",
           "name": "Rasmus Fenham",
-          "short_name": "Fenham",
+          "short_name": "R. Fenham",
           "shirt": 7,
           "position": "MF",
           "role": "RM",
@@ -2531,7 +2531,7 @@
         {
           "player_id": "gry-08",
           "name": "Yusuf Strandez",
-          "short_name": "Strandez",
+          "short_name": "Y. Strandez",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -2552,7 +2552,7 @@
         {
           "player_id": "gry-06",
           "name": "Silas Dewow",
-          "short_name": "Dewow",
+          "short_name": "S. Dewow",
           "shirt": 6,
           "position": "MF",
           "role": "CM",
@@ -2573,7 +2573,7 @@
         {
           "player_id": "gry-11",
           "name": "Marek Caldovic",
-          "short_name": "Caldovic",
+          "short_name": "M. Caldovic",
           "shirt": 11,
           "position": "MF",
           "role": "LM",
@@ -2594,7 +2594,7 @@
         {
           "player_id": "gry-09",
           "name": "Hugo Brackanu",
-          "short_name": "Brackanu",
+          "short_name": "H. Brackanu",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -2615,7 +2615,7 @@
         {
           "player_id": "gry-10",
           "name": "Luka Corvmore",
-          "short_name": "Corvmore",
+          "short_name": "L. Corvmore",
           "shirt": 10,
           "position": "FW",
           "role": "ST",
@@ -2636,7 +2636,7 @@
         {
           "player_id": "gry-12",
           "name": "Ignas Thornmere",
-          "short_name": "Thornmere",
+          "short_name": "I. Thornmere",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -2657,7 +2657,7 @@
         {
           "player_id": "gry-13",
           "name": "Hugo Dewstead",
-          "short_name": "Dewstead",
+          "short_name": "H. Dewstead",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -2678,7 +2678,7 @@
         {
           "player_id": "gry-14",
           "name": "Rafe Lathander",
-          "short_name": "Lathander",
+          "short_name": "R. Lathander",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -2699,7 +2699,7 @@
         {
           "player_id": "gry-15",
           "name": "Davor Dewton",
-          "short_name": "Dewton",
+          "short_name": "D. Dewton",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -2720,7 +2720,7 @@
         {
           "player_id": "gry-16",
           "name": "Halvard Abernham",
-          "short_name": "Abernham",
+          "short_name": "H. Abernham",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -2741,7 +2741,7 @@
         {
           "player_id": "gry-17",
           "name": "Rasmus Heskford",
-          "short_name": "Heskford",
+          "short_name": "R. Heskford",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -2762,7 +2762,7 @@
         {
           "player_id": "gry-18",
           "name": "Idris Orris",
-          "short_name": "Orris",
+          "short_name": "I. Orris",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -2802,7 +2802,7 @@
         {
           "player_id": "hrt-01",
           "name": "Florin Kestez",
-          "short_name": "Kestez",
+          "short_name": "F. Kestez",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -2823,7 +2823,7 @@
         {
           "player_id": "hrt-02",
           "name": "Ulrik Corvwick",
-          "short_name": "Corvwick",
+          "short_name": "U. Corvwick",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -2844,7 +2844,7 @@
         {
           "player_id": "hrt-04",
           "name": "Jonah Dunade",
-          "short_name": "Dunade",
+          "short_name": "J. Dunade",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -2865,7 +2865,7 @@
         {
           "player_id": "hrt-05",
           "name": "Caio Dunmore",
-          "short_name": "Dunmore",
+          "short_name": "C. Dunmore",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -2886,7 +2886,7 @@
         {
           "player_id": "hrt-03",
           "name": "Kofi Abernard",
-          "short_name": "Abernard",
+          "short_name": "K. Abernard",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -2907,7 +2907,7 @@
         {
           "player_id": "hrt-06",
           "name": "Kwame Vallow",
-          "short_name": "Vallow",
+          "short_name": "K. Vallow",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -2928,7 +2928,7 @@
         {
           "player_id": "hrt-08",
           "name": "Ilya Garrwick",
-          "short_name": "Garrwick",
+          "short_name": "I. Garrwick",
           "shirt": 8,
           "position": "MF",
           "role": "DM",
@@ -2949,7 +2949,7 @@
         {
           "player_id": "hrt-07",
           "name": "Rasmus Iverselli",
-          "short_name": "Iverselli",
+          "short_name": "R. Iverselli",
           "shirt": 7,
           "position": "MF",
           "role": "RW",
@@ -2970,7 +2970,7 @@
         {
           "player_id": "hrt-10",
           "name": "Teo Fenander",
-          "short_name": "Fenander",
+          "short_name": "T. Fenander",
           "shirt": 10,
           "position": "MF",
           "role": "AM",
@@ -2991,7 +2991,7 @@
         {
           "player_id": "hrt-11",
           "name": "Kian Kilby",
-          "short_name": "Kilby",
+          "short_name": "K. Kilby",
           "shirt": 11,
           "position": "MF",
           "role": "LW",
@@ -3012,7 +3012,7 @@
         {
           "player_id": "hrt-09",
           "name": "Hugo Jessholt",
-          "short_name": "Jessholt",
+          "short_name": "H. Jessholt",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -3033,7 +3033,7 @@
         {
           "player_id": "hrt-12",
           "name": "Lior Estanu",
-          "short_name": "Estanu",
+          "short_name": "L. Estanu",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -3054,7 +3054,7 @@
         {
           "player_id": "hrt-13",
           "name": "Halvard Strandby",
-          "short_name": "Strandby",
+          "short_name": "H. Strandby",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -3075,7 +3075,7 @@
         {
           "player_id": "hrt-14",
           "name": "Kwame Wexing",
-          "short_name": "Wexing",
+          "short_name": "K. Wexing",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -3096,7 +3096,7 @@
         {
           "player_id": "hrt-15",
           "name": "Cyrus Lunnden",
-          "short_name": "Lunnden",
+          "short_name": "C. Lunnden",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -3117,7 +3117,7 @@
         {
           "player_id": "hrt-16",
           "name": "Silas Pennley",
-          "short_name": "Pennley",
+          "short_name": "S. Pennley",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -3138,7 +3138,7 @@
         {
           "player_id": "hrt-17",
           "name": "Tomas Holling",
-          "short_name": "Holling",
+          "short_name": "T. Holling",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -3159,7 +3159,7 @@
         {
           "player_id": "hrt-18",
           "name": "Kian Strandanu",
-          "short_name": "Strandanu",
+          "short_name": "K. Strandanu",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -3199,7 +3199,7 @@
         {
           "player_id": "ivy-01",
           "name": "Ignas Kilholt",
-          "short_name": "Kilholt",
+          "short_name": "I. Kilholt",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -3220,7 +3220,7 @@
         {
           "player_id": "ivy-02",
           "name": "Ulrik Korvwell",
-          "short_name": "Korvwell",
+          "short_name": "U. Korvwell",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -3241,7 +3241,7 @@
         {
           "player_id": "ivy-04",
           "name": "Otto Lathmore",
-          "short_name": "Lathmore",
+          "short_name": "O. Lathmore",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -3262,7 +3262,7 @@
         {
           "player_id": "ivy-05",
           "name": "Kian Merranu",
-          "short_name": "Merranu",
+          "short_name": "K. Merranu",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -3283,7 +3283,7 @@
         {
           "player_id": "ivy-03",
           "name": "Tomas Belcander",
-          "short_name": "Belcander",
+          "short_name": "T. Belcander",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -3304,7 +3304,7 @@
         {
           "player_id": "ivy-07",
           "name": "Leandro Halett",
-          "short_name": "Halett",
+          "short_name": "L. Halett",
           "shirt": 7,
           "position": "MF",
           "role": "RM",
@@ -3325,7 +3325,7 @@
         {
           "player_id": "ivy-08",
           "name": "Callum Rossby",
-          "short_name": "Rossby",
+          "short_name": "C. Rossby",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -3346,7 +3346,7 @@
         {
           "player_id": "ivy-06",
           "name": "Pavel Quillane",
-          "short_name": "Quillane",
+          "short_name": "P. Quillane",
           "shirt": 6,
           "position": "MF",
           "role": "CM",
@@ -3367,7 +3367,7 @@
         {
           "player_id": "ivy-11",
           "name": "Davor Morrley",
-          "short_name": "Morrley",
+          "short_name": "D. Morrley",
           "shirt": 11,
           "position": "MF",
           "role": "LM",
@@ -3388,7 +3388,7 @@
         {
           "player_id": "ivy-09",
           "name": "Nico Strandard",
-          "short_name": "Strandard",
+          "short_name": "N. Strandard",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -3409,7 +3409,7 @@
         {
           "player_id": "ivy-10",
           "name": "Dario Quillcombe",
-          "short_name": "Quillcombe",
+          "short_name": "D. Quillcombe",
           "shirt": 10,
           "position": "FW",
           "role": "ST",
@@ -3430,7 +3430,7 @@
         {
           "player_id": "ivy-12",
           "name": "Eamon Vallett",
-          "short_name": "Vallett",
+          "short_name": "E. Vallett",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -3451,7 +3451,7 @@
         {
           "player_id": "ivy-13",
           "name": "Kofi Nettett",
-          "short_name": "Nettett",
+          "short_name": "K. Nettett",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -3472,7 +3472,7 @@
         {
           "player_id": "ivy-14",
           "name": "Leandro Jesscombe",
-          "short_name": "Jesscombe",
+          "short_name": "L. Jesscombe",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -3493,7 +3493,7 @@
         {
           "player_id": "ivy-15",
           "name": "Rafe Fenwell",
-          "short_name": "Fenwell",
+          "short_name": "R. Fenwell",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -3514,7 +3514,7 @@
         {
           "player_id": "ivy-16",
           "name": "Kian Garranu",
-          "short_name": "Garranu",
+          "short_name": "K. Garranu",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -3535,7 +3535,7 @@
         {
           "player_id": "ivy-17",
           "name": "Elio Garrard",
-          "short_name": "Garrard",
+          "short_name": "E. Garrard",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -3556,7 +3556,7 @@
         {
           "player_id": "ivy-18",
           "name": "Rafe Fenworth",
-          "short_name": "Fenworth",
+          "short_name": "R. Fenworth",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -3596,7 +3596,7 @@
         {
           "player_id": "kes-01",
           "name": "Kwame Brackwick",
-          "short_name": "Brackwick",
+          "short_name": "K. Brackwick",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -3617,7 +3617,7 @@
         {
           "player_id": "kes-04",
           "name": "Wilmer Heskelli",
-          "short_name": "Heskelli",
+          "short_name": "W. Heskelli",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -3638,7 +3638,7 @@
         {
           "player_id": "kes-05",
           "name": "Ezra Korvanu",
-          "short_name": "Korvanu",
+          "short_name": "E. Korvanu",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -3659,7 +3659,7 @@
         {
           "player_id": "kes-03",
           "name": "Femi Garrcombe",
-          "short_name": "Garrcombe",
+          "short_name": "F. Garrcombe",
           "shirt": 3,
           "position": "DF",
           "role": "CB",
@@ -3680,7 +3680,7 @@
         {
           "player_id": "kes-02",
           "name": "Piet Belcett",
-          "short_name": "Belcett",
+          "short_name": "P. Belcett",
           "shirt": 2,
           "position": "MF",
           "role": "RWB",
@@ -3701,7 +3701,7 @@
         {
           "player_id": "kes-06",
           "name": "Silas Cromden",
-          "short_name": "Cromden",
+          "short_name": "S. Cromden",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -3722,7 +3722,7 @@
         {
           "player_id": "kes-08",
           "name": "Benedikt Belcick",
-          "short_name": "Belcick",
+          "short_name": "B. Belcick",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -3743,7 +3743,7 @@
         {
           "player_id": "kes-10",
           "name": "Piet Cromwick",
-          "short_name": "Cromwick",
+          "short_name": "P. Cromwick",
           "shirt": 10,
           "position": "MF",
           "role": "CM",
@@ -3764,7 +3764,7 @@
         {
           "player_id": "kes-11",
           "name": "Femi Gorrovic",
-          "short_name": "Gorrovic",
+          "short_name": "F. Gorrovic",
           "shirt": 11,
           "position": "MF",
           "role": "LWB",
@@ -3785,7 +3785,7 @@
         {
           "player_id": "kes-09",
           "name": "Wilmer Corvby",
-          "short_name": "Corvby",
+          "short_name": "W. Corvby",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -3806,7 +3806,7 @@
         {
           "player_id": "kes-07",
           "name": "Aurel Brennard",
-          "short_name": "Brennard",
+          "short_name": "A. Brennard",
           "shirt": 7,
           "position": "FW",
           "role": "ST",
@@ -3827,7 +3827,7 @@
         {
           "player_id": "kes-12",
           "name": "Tiago Estwick",
-          "short_name": "Estwick",
+          "short_name": "T. Estwick",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -3848,7 +3848,7 @@
         {
           "player_id": "kes-13",
           "name": "Ilya Kestton",
-          "short_name": "Kestton",
+          "short_name": "I. Kestton",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -3869,7 +3869,7 @@
         {
           "player_id": "kes-14",
           "name": "Bastien Ashworth",
-          "short_name": "Ashworth",
+          "short_name": "B. Ashworth",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -3890,7 +3890,7 @@
         {
           "player_id": "kes-15",
           "name": "Ilya Brackton",
-          "short_name": "Brackton",
+          "short_name": "I. Brackton",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -3911,7 +3911,7 @@
         {
           "player_id": "kes-16",
           "name": "Tiago Abernade",
-          "short_name": "Abernade",
+          "short_name": "T. Abernade",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -3932,7 +3932,7 @@
         {
           "player_id": "kes-17",
           "name": "Nico Jessick",
-          "short_name": "Jessick",
+          "short_name": "N. Jessick",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -3953,7 +3953,7 @@
         {
           "player_id": "kes-18",
           "name": "Hamza Thorning",
-          "short_name": "Thorning",
+          "short_name": "H. Thorning",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -3993,7 +3993,7 @@
         {
           "player_id": "lum-01",
           "name": "Caio Iversez",
-          "short_name": "Iversez",
+          "short_name": "C. Iversez",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -4014,7 +4014,7 @@
         {
           "player_id": "lum-02",
           "name": "Noam Brackstead",
-          "short_name": "Brackstead",
+          "short_name": "N. Brackstead",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -4035,7 +4035,7 @@
         {
           "player_id": "lum-04",
           "name": "Wilmer Fallstead",
-          "short_name": "Fallstead",
+          "short_name": "W. Fallstead",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -4056,7 +4056,7 @@
         {
           "player_id": "lum-05",
           "name": "Wilmer Kilett",
-          "short_name": "Kilett",
+          "short_name": "W. Kilett",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -4077,7 +4077,7 @@
         {
           "player_id": "lum-03",
           "name": "Nico Abernworth",
-          "short_name": "Abernworth",
+          "short_name": "N. Abernworth",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -4098,7 +4098,7 @@
         {
           "player_id": "lum-06",
           "name": "Kwame Belcmere",
-          "short_name": "Belcmere",
+          "short_name": "K. Belcmere",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -4119,7 +4119,7 @@
         {
           "player_id": "lum-08",
           "name": "Mateo Strandden",
-          "short_name": "Strandden",
+          "short_name": "M. Strandden",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -4140,7 +4140,7 @@
         {
           "player_id": "lum-10",
           "name": "Rafe Cromwell",
-          "short_name": "Cromwell",
+          "short_name": "R. Cromwell",
           "shirt": 10,
           "position": "MF",
           "role": "CM",
@@ -4161,7 +4161,7 @@
         {
           "player_id": "lum-07",
           "name": "Nico Sallby",
-          "short_name": "Sallby",
+          "short_name": "N. Sallby",
           "shirt": 7,
           "position": "FW",
           "role": "RW",
@@ -4182,7 +4182,7 @@
         {
           "player_id": "lum-09",
           "name": "Luka Fenelli",
-          "short_name": "Fenelli",
+          "short_name": "L. Fenelli",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -4203,7 +4203,7 @@
         {
           "player_id": "lum-11",
           "name": "Kasimir Caldmere",
-          "short_name": "Caldmere",
+          "short_name": "K. Caldmere",
           "shirt": 11,
           "position": "FW",
           "role": "LW",
@@ -4224,7 +4224,7 @@
         {
           "player_id": "lum-12",
           "name": "Bastien Sallwell",
-          "short_name": "Sallwell",
+          "short_name": "B. Sallwell",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -4245,7 +4245,7 @@
         {
           "player_id": "lum-13",
           "name": "Hamza Dravis",
-          "short_name": "Dravis",
+          "short_name": "H. Dravis",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -4266,7 +4266,7 @@
         {
           "player_id": "lum-14",
           "name": "Uriel Fallby",
-          "short_name": "Fallby",
+          "short_name": "U. Fallby",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -4287,7 +4287,7 @@
         {
           "player_id": "lum-15",
           "name": "Zoran Kestwell",
-          "short_name": "Kestwell",
+          "short_name": "Z. Kestwell",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -4308,7 +4308,7 @@
         {
           "player_id": "lum-16",
           "name": "Mateo Sallcombe",
-          "short_name": "Sallcombe",
+          "short_name": "M. Sallcombe",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -4329,7 +4329,7 @@
         {
           "player_id": "lum-17",
           "name": "Felix Heskade",
-          "short_name": "Heskade",
+          "short_name": "F. Heskade",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -4350,7 +4350,7 @@
         {
           "player_id": "lum-18",
           "name": "Valen Brennmere",
-          "short_name": "Brennmere",
+          "short_name": "V. Brennmere",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -4390,7 +4390,7 @@
         {
           "player_id": "mrw-01",
           "name": "Felix Yarrmere",
-          "short_name": "Yarrmere",
+          "short_name": "F. Yarrmere",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -4411,7 +4411,7 @@
         {
           "player_id": "mrw-02",
           "name": "Wren Yarrelli",
-          "short_name": "Yarrelli",
+          "short_name": "W. Yarrelli",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -4432,7 +4432,7 @@
         {
           "player_id": "mrw-04",
           "name": "Tiago Wexane",
-          "short_name": "Wexane",
+          "short_name": "T. Wexane",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -4453,7 +4453,7 @@
         {
           "player_id": "mrw-05",
           "name": "Hugo Halmore",
-          "short_name": "Halmore",
+          "short_name": "H. Halmore",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -4474,7 +4474,7 @@
         {
           "player_id": "mrw-03",
           "name": "Ilya Heskcombe",
-          "short_name": "Heskcombe",
+          "short_name": "I. Heskcombe",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -4495,7 +4495,7 @@
         {
           "player_id": "mrw-06",
           "name": "Piet Heskez",
-          "short_name": "Heskez",
+          "short_name": "P. Heskez",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -4516,7 +4516,7 @@
         {
           "player_id": "mrw-08",
           "name": "Ruben Ellton",
-          "short_name": "Ellton",
+          "short_name": "R. Ellton",
           "shirt": 8,
           "position": "MF",
           "role": "DM",
@@ -4537,7 +4537,7 @@
         {
           "player_id": "mrw-07",
           "name": "Eamon Brackcombe",
-          "short_name": "Brackcombe",
+          "short_name": "E. Brackcombe",
           "shirt": 7,
           "position": "MF",
           "role": "RW",
@@ -4558,7 +4558,7 @@
         {
           "player_id": "mrw-10",
           "name": "Ezra Caldholt",
-          "short_name": "Caldholt",
+          "short_name": "E. Caldholt",
           "shirt": 10,
           "position": "MF",
           "role": "AM",
@@ -4579,7 +4579,7 @@
         {
           "player_id": "mrw-11",
           "name": "Sami Sallham",
-          "short_name": "Sallham",
+          "short_name": "S. Sallham",
           "shirt": 11,
           "position": "MF",
           "role": "LW",
@@ -4600,7 +4600,7 @@
         {
           "player_id": "mrw-09",
           "name": "Cyrus Merrholt",
-          "short_name": "Merrholt",
+          "short_name": "C. Merrholt",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -4621,7 +4621,7 @@
         {
           "player_id": "mrw-12",
           "name": "Gideon Fallade",
-          "short_name": "Fallade",
+          "short_name": "G. Fallade",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -4642,7 +4642,7 @@
         {
           "player_id": "mrw-13",
           "name": "Kasimir Merrard",
-          "short_name": "Merrard",
+          "short_name": "K. Merrard",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -4663,7 +4663,7 @@
         {
           "player_id": "mrw-14",
           "name": "Ezra Dunane",
-          "short_name": "Dunane",
+          "short_name": "E. Dunane",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -4684,7 +4684,7 @@
         {
           "player_id": "mrw-15",
           "name": "Callum Heskby",
-          "short_name": "Heskby",
+          "short_name": "C. Heskby",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -4705,7 +4705,7 @@
         {
           "player_id": "mrw-16",
           "name": "Hamza Orrholt",
-          "short_name": "Orrholt",
+          "short_name": "H. Orrholt",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -4726,7 +4726,7 @@
         {
           "player_id": "mrw-17",
           "name": "Anselm Lunnelli",
-          "short_name": "Lunnelli",
+          "short_name": "A. Lunnelli",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -4747,7 +4747,7 @@
         {
           "player_id": "mrw-18",
           "name": "Kian Tullden",
-          "short_name": "Tullden",
+          "short_name": "K. Tullden",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -4787,7 +4787,7 @@
         {
           "player_id": "nor-01",
           "name": "Benedikt Hollis",
-          "short_name": "Hollis",
+          "short_name": "B. Hollis",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -4808,7 +4808,7 @@
         {
           "player_id": "nor-02",
           "name": "Anselm Abernton",
-          "short_name": "Abernton",
+          "short_name": "A. Abernton",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -4829,7 +4829,7 @@
         {
           "player_id": "nor-04",
           "name": "Eamon Cromstead",
-          "short_name": "Cromstead",
+          "short_name": "E. Cromstead",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -4850,7 +4850,7 @@
         {
           "player_id": "nor-05",
           "name": "Florin Iversander",
-          "short_name": "Iversander",
+          "short_name": "F. Iversander",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -4871,7 +4871,7 @@
         {
           "player_id": "nor-03",
           "name": "Quentin Wexovic",
-          "short_name": "Wexovic",
+          "short_name": "Q. Wexovic",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -4892,7 +4892,7 @@
         {
           "player_id": "nor-07",
           "name": "Milan Caldis",
-          "short_name": "Caldis",
+          "short_name": "M. Caldis",
           "shirt": 7,
           "position": "MF",
           "role": "RM",
@@ -4913,7 +4913,7 @@
         {
           "player_id": "nor-08",
           "name": "Rafe Lunncombe",
-          "short_name": "Lunncombe",
+          "short_name": "R. Lunncombe",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -4934,7 +4934,7 @@
         {
           "player_id": "nor-06",
           "name": "Bastien Iversley",
-          "short_name": "Iversley",
+          "short_name": "B. Iversley",
           "shirt": 6,
           "position": "MF",
           "role": "CM",
@@ -4955,7 +4955,7 @@
         {
           "player_id": "nor-11",
           "name": "Pavel Ashade",
-          "short_name": "Ashade",
+          "short_name": "P. Ashade",
           "shirt": 11,
           "position": "MF",
           "role": "LM",
@@ -4976,7 +4976,7 @@
         {
           "player_id": "nor-09",
           "name": "Piet Merrstead",
-          "short_name": "Merrstead",
+          "short_name": "P. Merrstead",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -4997,7 +4997,7 @@
         {
           "player_id": "nor-10",
           "name": "Luka Tullwick",
-          "short_name": "Tullwick",
+          "short_name": "L. Tullwick",
           "shirt": 10,
           "position": "FW",
           "role": "ST",
@@ -5018,7 +5018,7 @@
         {
           "player_id": "nor-12",
           "name": "Zoran Ellett",
-          "short_name": "Ellett",
+          "short_name": "Z. Ellett",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -5039,7 +5039,7 @@
         {
           "player_id": "nor-13",
           "name": "Osei Korvham",
-          "short_name": "Korvham",
+          "short_name": "O. Korvham",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -5060,7 +5060,7 @@
         {
           "player_id": "nor-14",
           "name": "Rasmus Pennstead",
-          "short_name": "Pennstead",
+          "short_name": "R. Pennstead",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -5081,7 +5081,7 @@
         {
           "player_id": "nor-15",
           "name": "Silas Brackham",
-          "short_name": "Brackham",
+          "short_name": "S. Brackham",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -5102,7 +5102,7 @@
         {
           "player_id": "nor-16",
           "name": "Pavel Lunnham",
-          "short_name": "Lunnham",
+          "short_name": "P. Lunnham",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -5123,7 +5123,7 @@
         {
           "player_id": "nor-17",
           "name": "Leandro Pennanu",
-          "short_name": "Pennanu",
+          "short_name": "L. Pennanu",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -5144,7 +5144,7 @@
         {
           "player_id": "nor-18",
           "name": "Silas Dravwick",
-          "short_name": "Dravwick",
+          "short_name": "S. Dravwick",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -5184,7 +5184,7 @@
         {
           "player_id": "ott-01",
           "name": "Kian Hollmere",
-          "short_name": "Hollmere",
+          "short_name": "K. Hollmere",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -5205,7 +5205,7 @@
         {
           "player_id": "ott-02",
           "name": "Callum Fallwick",
-          "short_name": "Fallwick",
+          "short_name": "C. Fallwick",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -5226,7 +5226,7 @@
         {
           "player_id": "ott-04",
           "name": "Benedikt Corvez",
-          "short_name": "Corvez",
+          "short_name": "B. Corvez",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -5247,7 +5247,7 @@
         {
           "player_id": "ott-05",
           "name": "Cyrus Fallick",
-          "short_name": "Fallick",
+          "short_name": "C. Fallick",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -5268,7 +5268,7 @@
         {
           "player_id": "ott-03",
           "name": "Aurel Tullton",
-          "short_name": "Tullton",
+          "short_name": "A. Tullton",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -5289,7 +5289,7 @@
         {
           "player_id": "ott-07",
           "name": "Kian Dewholt",
-          "short_name": "Dewholt",
+          "short_name": "K. Dewholt",
           "shirt": 7,
           "position": "MF",
           "role": "RM",
@@ -5310,7 +5310,7 @@
         {
           "player_id": "ott-08",
           "name": "Uriel Iverscombe",
-          "short_name": "Iverscombe",
+          "short_name": "U. Iverscombe",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -5331,7 +5331,7 @@
         {
           "player_id": "ott-06",
           "name": "Valen Iversing",
-          "short_name": "Iversing",
+          "short_name": "V. Iversing",
           "shirt": 6,
           "position": "MF",
           "role": "CM",
@@ -5352,7 +5352,7 @@
         {
           "player_id": "ott-11",
           "name": "Kian Morris",
-          "short_name": "Morris",
+          "short_name": "K. Morris",
           "shirt": 11,
           "position": "MF",
           "role": "LM",
@@ -5373,7 +5373,7 @@
         {
           "player_id": "ott-09",
           "name": "Pavel Hollane",
-          "short_name": "Hollane",
+          "short_name": "P. Hollane",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -5394,7 +5394,7 @@
         {
           "player_id": "ott-10",
           "name": "Anselm Vallley",
-          "short_name": "Vallley",
+          "short_name": "A. Vallley",
           "shirt": 10,
           "position": "FW",
           "role": "ST",
@@ -5415,7 +5415,7 @@
         {
           "player_id": "ott-12",
           "name": "Piet Korvby",
-          "short_name": "Korvby",
+          "short_name": "P. Korvby",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -5436,7 +5436,7 @@
         {
           "player_id": "ott-13",
           "name": "Piet Quillanu",
-          "short_name": "Quillanu",
+          "short_name": "P. Quillanu",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -5457,7 +5457,7 @@
         {
           "player_id": "ott-14",
           "name": "Emil Kilelli",
-          "short_name": "Kilelli",
+          "short_name": "E. Kilelli",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -5478,7 +5478,7 @@
         {
           "player_id": "ott-15",
           "name": "Cyrus Nettstead",
-          "short_name": "Nettstead",
+          "short_name": "C. Nettstead",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -5499,7 +5499,7 @@
         {
           "player_id": "ott-16",
           "name": "Gaspard Morrworth",
-          "short_name": "Morrworth",
+          "short_name": "G. Morrworth",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -5520,7 +5520,7 @@
         {
           "player_id": "ott-17",
           "name": "Femi Quillley",
-          "short_name": "Quillley",
+          "short_name": "F. Quillley",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -5541,7 +5541,7 @@
         {
           "player_id": "ott-18",
           "name": "Wren Pennford",
-          "short_name": "Pennford",
+          "short_name": "W. Pennford",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -5581,7 +5581,7 @@
         {
           "player_id": "pen-01",
           "name": "Eamon Wexis",
-          "short_name": "Wexis",
+          "short_name": "E. Wexis",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -5602,7 +5602,7 @@
         {
           "player_id": "pen-02",
           "name": "Hugo Nettley",
-          "short_name": "Nettley",
+          "short_name": "H. Nettley",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -5623,7 +5623,7 @@
         {
           "player_id": "pen-04",
           "name": "Tiago Dravanu",
-          "short_name": "Dravanu",
+          "short_name": "T. Dravanu",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -5644,7 +5644,7 @@
         {
           "player_id": "pen-05",
           "name": "Nico Orrane",
-          "short_name": "Orrane",
+          "short_name": "N. Orrane",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -5665,7 +5665,7 @@
         {
           "player_id": "pen-03",
           "name": "Anselm Sallton",
-          "short_name": "Sallton",
+          "short_name": "A. Sallton",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -5686,7 +5686,7 @@
         {
           "player_id": "pen-06",
           "name": "Otto Strandick",
-          "short_name": "Strandick",
+          "short_name": "O. Strandick",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -5707,7 +5707,7 @@
         {
           "player_id": "pen-08",
           "name": "Joaquin Tullard",
-          "short_name": "Tullard",
+          "short_name": "J. Tullard",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -5728,7 +5728,7 @@
         {
           "player_id": "pen-10",
           "name": "Dmitri Dewley",
-          "short_name": "Dewley",
+          "short_name": "D. Dewley",
           "shirt": 10,
           "position": "MF",
           "role": "CM",
@@ -5749,7 +5749,7 @@
         {
           "player_id": "pen-07",
           "name": "Jory Cromis",
-          "short_name": "Cromis",
+          "short_name": "J. Cromis",
           "shirt": 7,
           "position": "FW",
           "role": "RW",
@@ -5770,7 +5770,7 @@
         {
           "player_id": "pen-09",
           "name": "Ruben Quillelli",
-          "short_name": "Quillelli",
+          "short_name": "R. Quillelli",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -5791,7 +5791,7 @@
         {
           "player_id": "pen-11",
           "name": "Hamza Heskmore",
-          "short_name": "Heskmore",
+          "short_name": "H. Heskmore",
           "shirt": 11,
           "position": "FW",
           "role": "LW",
@@ -5812,7 +5812,7 @@
         {
           "player_id": "pen-12",
           "name": "Anselm Quillby",
-          "short_name": "Quillby",
+          "short_name": "A. Quillby",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -5833,7 +5833,7 @@
         {
           "player_id": "pen-13",
           "name": "Nico Yarrmore",
-          "short_name": "Yarrmore",
+          "short_name": "N. Yarrmore",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -5854,7 +5854,7 @@
         {
           "player_id": "pen-14",
           "name": "Noam Ashane",
-          "short_name": "Ashane",
+          "short_name": "N. Ashane",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -5875,7 +5875,7 @@
         {
           "player_id": "pen-15",
           "name": "Wren Ashander",
-          "short_name": "Ashander",
+          "short_name": "W. Ashander",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -5896,7 +5896,7 @@
         {
           "player_id": "pen-16",
           "name": "Ruben Nettander",
-          "short_name": "Nettander",
+          "short_name": "R. Nettander",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -5917,7 +5917,7 @@
         {
           "player_id": "pen-17",
           "name": "Valen Dunley",
-          "short_name": "Dunley",
+          "short_name": "V. Dunley",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -5938,7 +5938,7 @@
         {
           "player_id": "pen-18",
           "name": "Milan Halwick",
-          "short_name": "Halwick",
+          "short_name": "M. Halwick",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -5978,7 +5978,7 @@
         {
           "player_id": "qns-01",
           "name": "Quentin Dravton",
-          "short_name": "Dravton",
+          "short_name": "Q. Dravton",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -5999,7 +5999,7 @@
         {
           "player_id": "qns-02",
           "name": "Hugo Cromez",
-          "short_name": "Cromez",
+          "short_name": "H. Cromez",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -6020,7 +6020,7 @@
         {
           "player_id": "qns-04",
           "name": "Dmitri Lunnett",
-          "short_name": "Lunnett",
+          "short_name": "D. Lunnett",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -6041,7 +6041,7 @@
         {
           "player_id": "qns-05",
           "name": "Quentin Kilade",
-          "short_name": "Kilade",
+          "short_name": "Q. Kilade",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -6062,7 +6062,7 @@
         {
           "player_id": "qns-03",
           "name": "Joaquin Fallane",
-          "short_name": "Fallane",
+          "short_name": "J. Fallane",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -6083,7 +6083,7 @@
         {
           "player_id": "qns-06",
           "name": "Osei Yarrby",
-          "short_name": "Yarrby",
+          "short_name": "O. Yarrby",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -6104,7 +6104,7 @@
         {
           "player_id": "qns-08",
           "name": "Tiago Nettmore",
-          "short_name": "Nettmore",
+          "short_name": "T. Nettmore",
           "shirt": 8,
           "position": "MF",
           "role": "DM",
@@ -6125,7 +6125,7 @@
         {
           "player_id": "qns-07",
           "name": "Valen Wexcombe",
-          "short_name": "Wexcombe",
+          "short_name": "V. Wexcombe",
           "shirt": 7,
           "position": "MF",
           "role": "RW",
@@ -6146,7 +6146,7 @@
         {
           "player_id": "qns-10",
           "name": "Ezra Fallden",
-          "short_name": "Fallden",
+          "short_name": "E. Fallden",
           "shirt": 10,
           "position": "MF",
           "role": "AM",
@@ -6167,7 +6167,7 @@
         {
           "player_id": "qns-11",
           "name": "Zoran Fallton",
-          "short_name": "Fallton",
+          "short_name": "Z. Fallton",
           "shirt": 11,
           "position": "MF",
           "role": "LW",
@@ -6188,7 +6188,7 @@
         {
           "player_id": "qns-09",
           "name": "Elio Brackander",
-          "short_name": "Brackander",
+          "short_name": "E. Brackander",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -6209,7 +6209,7 @@
         {
           "player_id": "qns-12",
           "name": "Kasimir Dewez",
-          "short_name": "Dewez",
+          "short_name": "K. Dewez",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -6230,7 +6230,7 @@
         {
           "player_id": "qns-13",
           "name": "Quentin Rosselli",
-          "short_name": "Rosselli",
+          "short_name": "Q. Rosselli",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -6251,7 +6251,7 @@
         {
           "player_id": "qns-14",
           "name": "Mateo Pennez",
-          "short_name": "Pennez",
+          "short_name": "M. Pennez",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -6272,7 +6272,7 @@
         {
           "player_id": "qns-15",
           "name": "Pavel Halton",
-          "short_name": "Halton",
+          "short_name": "P. Halton",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -6293,7 +6293,7 @@
         {
           "player_id": "qns-16",
           "name": "Kofi Cromholt",
-          "short_name": "Cromholt",
+          "short_name": "K. Cromholt",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -6314,7 +6314,7 @@
         {
           "player_id": "qns-17",
           "name": "Amadou Eststead",
-          "short_name": "Eststead",
+          "short_name": "A. Eststead",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -6335,7 +6335,7 @@
         {
           "player_id": "qns-18",
           "name": "Kian Cromow",
-          "short_name": "Cromow",
+          "short_name": "K. Cromow",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -6375,7 +6375,7 @@
         {
           "player_id": "rav-01",
           "name": "Joaquin Heskett",
-          "short_name": "Heskett",
+          "short_name": "J. Heskett",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -6396,7 +6396,7 @@
         {
           "player_id": "rav-04",
           "name": "Emil Kilovic",
-          "short_name": "Kilovic",
+          "short_name": "E. Kilovic",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -6417,7 +6417,7 @@
         {
           "player_id": "rav-05",
           "name": "Quentin Strandworth",
-          "short_name": "Strandworth",
+          "short_name": "Q. Strandworth",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -6438,7 +6438,7 @@
         {
           "player_id": "rav-03",
           "name": "Wilmer Abernander",
-          "short_name": "Abernander",
+          "short_name": "W. Abernander",
           "shirt": 3,
           "position": "DF",
           "role": "CB",
@@ -6459,7 +6459,7 @@
         {
           "player_id": "rav-02",
           "name": "Tiago Tullby",
-          "short_name": "Tullby",
+          "short_name": "T. Tullby",
           "shirt": 2,
           "position": "MF",
           "role": "RWB",
@@ -6480,7 +6480,7 @@
         {
           "player_id": "rav-06",
           "name": "Sami Korvstead",
-          "short_name": "Korvstead",
+          "short_name": "S. Korvstead",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -6501,7 +6501,7 @@
         {
           "player_id": "rav-08",
           "name": "Oren Orrstead",
-          "short_name": "Orrstead",
+          "short_name": "O. Orrstead",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -6522,7 +6522,7 @@
         {
           "player_id": "rav-10",
           "name": "Tomas Nettez",
-          "short_name": "Nettez",
+          "short_name": "T. Nettez",
           "shirt": 10,
           "position": "MF",
           "role": "CM",
@@ -6543,7 +6543,7 @@
         {
           "player_id": "rav-11",
           "name": "Sami Quillick",
-          "short_name": "Quillick",
+          "short_name": "S. Quillick",
           "shirt": 11,
           "position": "MF",
           "role": "LWB",
@@ -6564,7 +6564,7 @@
         {
           "player_id": "rav-09",
           "name": "Ezra Brackby",
-          "short_name": "Brackby",
+          "short_name": "E. Brackby",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -6585,7 +6585,7 @@
         {
           "player_id": "rav-07",
           "name": "Gaspard Lathanu",
-          "short_name": "Lathanu",
+          "short_name": "G. Lathanu",
           "shirt": 7,
           "position": "FW",
           "role": "ST",
@@ -6606,7 +6606,7 @@
         {
           "player_id": "rav-12",
           "name": "Quentin Wexick",
-          "short_name": "Wexick",
+          "short_name": "Q. Wexick",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -6627,7 +6627,7 @@
         {
           "player_id": "rav-13",
           "name": "Luka Fenovic",
-          "short_name": "Fenovic",
+          "short_name": "L. Fenovic",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -6648,7 +6648,7 @@
         {
           "player_id": "rav-14",
           "name": "Sami Morrovic",
-          "short_name": "Morrovic",
+          "short_name": "S. Morrovic",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -6669,7 +6669,7 @@
         {
           "player_id": "rav-15",
           "name": "Uriel Marrander",
-          "short_name": "Marrander",
+          "short_name": "U. Marrander",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -6690,7 +6690,7 @@
         {
           "player_id": "rav-16",
           "name": "Marek Merrick",
-          "short_name": "Merrick",
+          "short_name": "M. Merrick",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -6711,7 +6711,7 @@
         {
           "player_id": "rav-17",
           "name": "Sami Pennett",
-          "short_name": "Pennett",
+          "short_name": "S. Pennett",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -6732,7 +6732,7 @@
         {
           "player_id": "rav-18",
           "name": "Florin Heskard",
-          "short_name": "Heskard",
+          "short_name": "F. Heskard",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -6772,7 +6772,7 @@
         {
           "player_id": "stn-01",
           "name": "Caio Corvow",
-          "short_name": "Corvow",
+          "short_name": "C. Corvow",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -6793,7 +6793,7 @@
         {
           "player_id": "stn-02",
           "name": "Sami Gorrholt",
-          "short_name": "Gorrholt",
+          "short_name": "S. Gorrholt",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -6814,7 +6814,7 @@
         {
           "player_id": "stn-04",
           "name": "Anselm Yarrwell",
-          "short_name": "Yarrwell",
+          "short_name": "A. Yarrwell",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -6835,7 +6835,7 @@
         {
           "player_id": "stn-05",
           "name": "Vito Pennwell",
-          "short_name": "Pennwell",
+          "short_name": "V. Pennwell",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -6856,7 +6856,7 @@
         {
           "player_id": "stn-03",
           "name": "Mateo Tullcombe",
-          "short_name": "Tullcombe",
+          "short_name": "M. Tullcombe",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -6877,7 +6877,7 @@
         {
           "player_id": "stn-07",
           "name": "Jonah Brackden",
-          "short_name": "Brackden",
+          "short_name": "J. Brackden",
           "shirt": 7,
           "position": "MF",
           "role": "RM",
@@ -6898,7 +6898,7 @@
         {
           "player_id": "stn-08",
           "name": "Valen Marrham",
-          "short_name": "Marrham",
+          "short_name": "V. Marrham",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -6919,7 +6919,7 @@
         {
           "player_id": "stn-06",
           "name": "Caio Garrander",
-          "short_name": "Garrander",
+          "short_name": "C. Garrander",
           "shirt": 6,
           "position": "MF",
           "role": "CM",
@@ -6940,7 +6940,7 @@
         {
           "player_id": "stn-11",
           "name": "Dmitri Halis",
-          "short_name": "Halis",
+          "short_name": "D. Halis",
           "shirt": 11,
           "position": "MF",
           "role": "LM",
@@ -6961,7 +6961,7 @@
         {
           "player_id": "stn-09",
           "name": "Yusuf Garrden",
-          "short_name": "Garrden",
+          "short_name": "Y. Garrden",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -6982,7 +6982,7 @@
         {
           "player_id": "stn-10",
           "name": "Tomas Merrden",
-          "short_name": "Merrden",
+          "short_name": "T. Merrden",
           "shirt": 10,
           "position": "FW",
           "role": "ST",
@@ -7003,7 +7003,7 @@
         {
           "player_id": "stn-12",
           "name": "Uriel Nettworth",
-          "short_name": "Nettworth",
+          "short_name": "U. Nettworth",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -7024,7 +7024,7 @@
         {
           "player_id": "stn-13",
           "name": "Amadou Marring",
-          "short_name": "Marring",
+          "short_name": "A. Marring",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -7045,7 +7045,7 @@
         {
           "player_id": "stn-14",
           "name": "Hamza Corvander",
-          "short_name": "Corvander",
+          "short_name": "H. Corvander",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -7066,7 +7066,7 @@
         {
           "player_id": "stn-15",
           "name": "Oren Corvholt",
-          "short_name": "Corvholt",
+          "short_name": "O. Corvholt",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -7087,7 +7087,7 @@
         {
           "player_id": "stn-16",
           "name": "Benedikt Brennton",
-          "short_name": "Brennton",
+          "short_name": "B. Brennton",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -7108,7 +7108,7 @@
         {
           "player_id": "stn-17",
           "name": "Vito Quillez",
-          "short_name": "Quillez",
+          "short_name": "V. Quillez",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -7129,7 +7129,7 @@
         {
           "player_id": "stn-18",
           "name": "Ignas Sallett",
-          "short_name": "Sallett",
+          "short_name": "I. Sallett",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -7169,7 +7169,7 @@
         {
           "player_id": "thr-01",
           "name": "Halvard Kestford",
-          "short_name": "Kestford",
+          "short_name": "H. Kestford",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -7190,7 +7190,7 @@
         {
           "player_id": "thr-02",
           "name": "Nico Halmere",
-          "short_name": "Halmere",
+          "short_name": "N. Halmere",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -7211,7 +7211,7 @@
         {
           "player_id": "thr-04",
           "name": "Zoran Korvwick",
-          "short_name": "Korvwick",
+          "short_name": "Z. Korvwick",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -7232,7 +7232,7 @@
         {
           "player_id": "thr-05",
           "name": "Hugo Thornanu",
-          "short_name": "Thornanu",
+          "short_name": "H. Thornanu",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -7253,7 +7253,7 @@
         {
           "player_id": "thr-03",
           "name": "Wren Kilden",
-          "short_name": "Kilden",
+          "short_name": "W. Kilden",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -7274,7 +7274,7 @@
         {
           "player_id": "thr-06",
           "name": "Caio Kestmere",
-          "short_name": "Kestmere",
+          "short_name": "C. Kestmere",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -7295,7 +7295,7 @@
         {
           "player_id": "thr-08",
           "name": "Piet Rossmore",
-          "short_name": "Rossmore",
+          "short_name": "P. Rossmore",
           "shirt": 8,
           "position": "MF",
           "role": "CM",
@@ -7316,7 +7316,7 @@
         {
           "player_id": "thr-10",
           "name": "Ignas Lathade",
-          "short_name": "Lathade",
+          "short_name": "I. Lathade",
           "shirt": 10,
           "position": "MF",
           "role": "CM",
@@ -7337,7 +7337,7 @@
         {
           "player_id": "thr-07",
           "name": "Kian Fallelli",
-          "short_name": "Fallelli",
+          "short_name": "K. Fallelli",
           "shirt": 7,
           "position": "FW",
           "role": "RW",
@@ -7358,7 +7358,7 @@
         {
           "player_id": "thr-09",
           "name": "Nico Caldwick",
-          "short_name": "Caldwick",
+          "short_name": "N. Caldwick",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -7379,7 +7379,7 @@
         {
           "player_id": "thr-11",
           "name": "Bastien Iversstead",
-          "short_name": "Iversstead",
+          "short_name": "B. Iversstead",
           "shirt": 11,
           "position": "FW",
           "role": "LW",
@@ -7400,7 +7400,7 @@
         {
           "player_id": "thr-12",
           "name": "Dmitri Quillade",
-          "short_name": "Quillade",
+          "short_name": "D. Quillade",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -7421,7 +7421,7 @@
         {
           "player_id": "thr-13",
           "name": "Luka Caldade",
-          "short_name": "Caldade",
+          "short_name": "L. Caldade",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -7442,7 +7442,7 @@
         {
           "player_id": "thr-14",
           "name": "Rasmus Abernow",
-          "short_name": "Abernow",
+          "short_name": "R. Abernow",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -7463,7 +7463,7 @@
         {
           "player_id": "thr-15",
           "name": "Gaspard Abernick",
-          "short_name": "Abernick",
+          "short_name": "G. Abernick",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -7484,7 +7484,7 @@
         {
           "player_id": "thr-16",
           "name": "Dario Marris",
-          "short_name": "Marris",
+          "short_name": "D. Marris",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -7505,7 +7505,7 @@
         {
           "player_id": "thr-17",
           "name": "Valen Korvmore",
-          "short_name": "Korvmore",
+          "short_name": "V. Korvmore",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -7526,7 +7526,7 @@
         {
           "player_id": "thr-18",
           "name": "Rafe Brackwell",
-          "short_name": "Brackwell",
+          "short_name": "R. Brackwell",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
@@ -7566,7 +7566,7 @@
         {
           "player_id": "wyc-01",
           "name": "Caio Iversade",
-          "short_name": "Iversade",
+          "short_name": "C. Iversade",
           "shirt": 1,
           "position": "GK",
           "role": "GK",
@@ -7587,7 +7587,7 @@
         {
           "player_id": "wyc-02",
           "name": "Dario Rossden",
-          "short_name": "Rossden",
+          "short_name": "D. Rossden",
           "shirt": 2,
           "position": "DF",
           "role": "RB",
@@ -7608,7 +7608,7 @@
         {
           "player_id": "wyc-04",
           "name": "Silas Caldelli",
-          "short_name": "Caldelli",
+          "short_name": "S. Caldelli",
           "shirt": 4,
           "position": "DF",
           "role": "CB",
@@ -7629,7 +7629,7 @@
         {
           "player_id": "wyc-05",
           "name": "Ilya Nettis",
-          "short_name": "Nettis",
+          "short_name": "I. Nettis",
           "shirt": 5,
           "position": "DF",
           "role": "CB",
@@ -7650,7 +7650,7 @@
         {
           "player_id": "wyc-03",
           "name": "Wilmer Strandovic",
-          "short_name": "Strandovic",
+          "short_name": "W. Strandovic",
           "shirt": 3,
           "position": "DF",
           "role": "LB",
@@ -7671,7 +7671,7 @@
         {
           "player_id": "wyc-06",
           "name": "Kian Dewander",
-          "short_name": "Dewander",
+          "short_name": "K. Dewander",
           "shirt": 6,
           "position": "MF",
           "role": "DM",
@@ -7692,7 +7692,7 @@
         {
           "player_id": "wyc-08",
           "name": "Kofi Pennane",
-          "short_name": "Pennane",
+          "short_name": "K. Pennane",
           "shirt": 8,
           "position": "MF",
           "role": "DM",
@@ -7713,7 +7713,7 @@
         {
           "player_id": "wyc-07",
           "name": "Oren Draving",
-          "short_name": "Draving",
+          "short_name": "O. Draving",
           "shirt": 7,
           "position": "MF",
           "role": "RW",
@@ -7734,7 +7734,7 @@
         {
           "player_id": "wyc-10",
           "name": "Ignas Dewane",
-          "short_name": "Dewane",
+          "short_name": "I. Dewane",
           "shirt": 10,
           "position": "MF",
           "role": "AM",
@@ -7755,7 +7755,7 @@
         {
           "player_id": "wyc-11",
           "name": "Pavel Ellanu",
-          "short_name": "Ellanu",
+          "short_name": "P. Ellanu",
           "shirt": 11,
           "position": "MF",
           "role": "LW",
@@ -7776,7 +7776,7 @@
         {
           "player_id": "wyc-09",
           "name": "Aurel Hollander",
-          "short_name": "Hollander",
+          "short_name": "A. Hollander",
           "shirt": 9,
           "position": "FW",
           "role": "ST",
@@ -7797,7 +7797,7 @@
         {
           "player_id": "wyc-12",
           "name": "Dmitri Dravard",
-          "short_name": "Dravard",
+          "short_name": "D. Dravard",
           "shirt": 12,
           "position": "DF",
           "role": "CB",
@@ -7818,7 +7818,7 @@
         {
           "player_id": "wyc-13",
           "name": "Uriel Kestden",
-          "short_name": "Kestden",
+          "short_name": "U. Kestden",
           "shirt": 13,
           "position": "GK",
           "role": "GK",
@@ -7839,7 +7839,7 @@
         {
           "player_id": "wyc-14",
           "name": "Hugo Estez",
-          "short_name": "Estez",
+          "short_name": "H. Estez",
           "shirt": 14,
           "position": "MF",
           "role": "CM",
@@ -7860,7 +7860,7 @@
         {
           "player_id": "wyc-15",
           "name": "Tomas Orrworth",
-          "short_name": "Orrworth",
+          "short_name": "T. Orrworth",
           "shirt": 15,
           "position": "DF",
           "role": "FB",
@@ -7881,7 +7881,7 @@
         {
           "player_id": "wyc-16",
           "name": "Dmitri Iversmere",
-          "short_name": "Iversmere",
+          "short_name": "D. Iversmere",
           "shirt": 16,
           "position": "MF",
           "role": "AM",
@@ -7902,7 +7902,7 @@
         {
           "player_id": "wyc-17",
           "name": "Milan Thornane",
-          "short_name": "Thornane",
+          "short_name": "M. Thornane",
           "shirt": 17,
           "position": "FW",
           "role": "W",
@@ -7923,7 +7923,7 @@
         {
           "player_id": "wyc-18",
           "name": "Wren Morrick",
-          "short_name": "Morrick",
+          "short_name": "W. Morrick",
           "shirt": 18,
           "position": "FW",
           "role": "ST",
