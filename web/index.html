@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="stage" id="stage">
+  <main class="stage mode-user" id="stage">
     <div class="backdrop" aria-hidden="true"></div>
 
     <!-- the "video": a still of the stadium stands in for the match feed -->
@@ -35,6 +35,14 @@
 
       <!-- the full-time recap -->
       <div class="recap" id="recap" aria-live="polite" hidden></div>
+
+      <!-- user mode: the playback controls sit in the feed, where a video player keeps them -->
+      <div class="vbar" id="vbar">
+        <div class="vbar-left" id="vbarLeft"></div>
+        <div class="vbar-right" id="vbarRight">
+          <button id="langBtn" type="button" aria-label="Language">EN</button>
+        </div>
+      </div>
     </section>
 
     <!-- club and player stats, and what the agents did -->
@@ -44,8 +52,8 @@
         <div class="fan-opts" id="fanOpts"></div>
       </div>
       <div class="prefs">
-        <div class="fan-opts" id="viewOpts" role="group" aria-label="View"></div>
         <div class="fan-opts" id="langOpts" role="group" aria-label="Language"></div>
+        <button type="button" class="mode-btn" data-mode="user" id="toUser">User view</button>
       </div>
       <div class="tabs" role="tablist">
         <button type="button" role="tab" data-tab="clubs">Clubs</button>
@@ -55,9 +63,28 @@
       <div class="panel-body" id="panelBody"></div>
     </aside>
 
+    <!-- user mode: pick a club and a player instead of the stats tabs -->
+    <aside class="picker" id="picker" aria-label="Your club and player">
+      <div class="pk-sec">
+        <div class="pk-row pk-top">
+          <h2 class="pk-title" id="pkClubTitle">Your club</h2>
+          <button type="button" class="mode-btn pk-admin" data-mode="admin" id="toAdmin">Admin view</button>
+        </div>
+        <div class="crests" id="crests" role="radiogroup" aria-labelledby="pkClubTitle"></div>
+        <p class="pk-note" id="pkClubNote"></p>
+      </div>
+      <div class="pk-sec pk-players">
+        <div class="pk-row">
+          <h2 class="pk-title" id="pkPlayerTitle">Your player</h2>
+          <div class="pk-teams" id="pkTeams" role="tablist"></div>
+        </div>
+        <div class="squad" id="squad"></div>
+      </div>
+    </aside>
+
     <!-- momentum now, and the match so far -->
     <section class="bottom" aria-label="Momentum and timeline">
-      <div class="mo-row">
+      <div class="mo-row" id="moRow">
         <span class="mo-label" id="moLabel">Momentum</span>
         <span class="mo-code" id="moHome">HOM</span>
         <div class="grad-bar mo-track" id="moTrack"><div class="gb-mid"></div><div class="gb-now"></div></div>
