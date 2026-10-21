@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from . import analysis
 from .insight import facts, lines
 from .match import MatchData
 from .specialists import Finding, investigate
@@ -276,6 +277,9 @@ def assemble(
         "story": match_story(stats),
         "facts": (fx := facts(md, m.now, cause, stats, m.gainer, (m.momentum_before, m.momentum_now))),
         "text": lines(fx),
+        "analysis": analysis.analyse(
+            fx, analysis.options(found, m.gainer, list(md.teams), m.momentum_now, stats, lambda f: _stat_out(md, f))
+        ),
         "findings": {k: v[:8] for k, v in found.items()},
     }
 

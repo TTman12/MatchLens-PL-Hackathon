@@ -28,6 +28,7 @@ For each moment the Watcher raises (a shift, a recovery or an event):
 | **Explainer** | `matchlens-explainer` | `check_card` | Chooses the cause and the one or two numbers that show it. |
 | **Verifier** | (code) | | Recomputes every number from the tables and enforces the screen rules. |
 | **Interpreter** | `matchlens-interpreter` | | Says what the card's numbers mean for the game, in one line for each viewer. |
+| **Analyst** | `matchlens-analyst` | | Says what each club could do about the momentum, picked from options a stat backs. |
 
 1. **The four specialists run at the same time.** Each one calls its tool. The tool computes findings from the match tables and posts them to the shared findings board, each with an id (F1, F2, ...). The specialist then says which of its findings matter, or "not me".
 2. **The Explainer reads the board.** It also gets a story menu: pairs of findings that together say how a team's play changed (see [explainer.md](explainer.md)), and a cause menu: only the causes the evidence allows for this moment. For example, a goal can be followed by "the scorers kept pushing", "the other side chased the game" or "no reaction". It picks a cause and up to two finding ids, then calls `check_card` to test its draft before answering.
@@ -47,7 +48,24 @@ For each moment the Watcher raises (a shift, a recovery or an event):
    - tiredness only on a fatigue or substitution card, and ten men only on a red-card card;
    - talk of an equaliser or a lead only when the score allows it.
 
+   When the card is about a player, the line says how his stat moves the game, not just that he is doing more of it: what it gives his club and what it does to the other side. "Off the bench, Cromton's aggressive running is giving Brackenford more attacking options and putting Calderwick under pressure", not "Cromton is sprinting more". Each player stat in the facts carries a plain meaning to build on.
+
    A rejected draft goes back once with the problems listed. After that, the card keeps the rules' lines.
+
+5. **The Analyst gives the debate** (at the same time as the Interpreter, for the cards on screen). When the card leaves, a MatchLens analysis card follows: what the side that lost momentum could do to win it back, or what the side that has it should keep doing. The Analyst can only pick from a menu of levers, built in `matchlens/explain/analysis.py`, and each lever is there only because a stat backs it:
+   - "push the line back up" needs that side's defending height to have dropped;
+   - "stop going long" needs its long balls or pass length up;
+   - "play through their press" needs the other side's high turnovers up;
+   - "keep going down the flanks" needs the side's crosses up; and so on, 18 levers in all.
+
+   It picks one lever per club and writes one line for each viewer: a fan hears about their own club, and a neutral about the side that lost momentum. The lever's stat goes on the card under the line. A check in code holds the lines to the picks:
+   - each pick is a real option for that club;
+   - each line names its club and argues its pick's idea;
+   - no other change that its stat doesn't back (a higher line, pressing, going long, going wide);
+   - no numbers, no players, nothing the data can't see (the manager, a formation, a substitution to make, the referee);
+   - talk of an equaliser, a lead or ten men only when the match allows it.
+
+   A rejected draft goes back once; after that, the card keeps the rules' picks and lines.
 
 The models only ever refer to numbers by id. The card is built from the board, so the number on screen is the number the tool computed. A model cannot change a number by retyping it.
 

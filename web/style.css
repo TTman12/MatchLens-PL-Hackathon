@@ -226,36 +226,21 @@ body { display: grid; place-items: center; overflow: hidden; }
 .card-body { background: #f3eef4; color: var(--primary); }
 .stat {
   display: grid;
-  grid-template-columns: 0.45cqw 3.6cqw 1fr auto;
+  grid-template-columns: 0.45cqw 1fr auto;
   align-items: center;
-  column-gap: 0.9cqw;
+  column-gap: 1cqw;
   min-height: 3.6cqw;
   padding-right: 1.1cqw;
   border-top: 1px solid rgba(40, 0, 43, 0.1);
 }
 .stat-strip { align-self: stretch; box-shadow: inset 0 0 0 1px rgba(40, 0, 43, 0.18); }
-.stat-code { font-family: var(--display); font-weight: 700; font-size: 1.15cqw; letter-spacing: 0.05em; }
-.stat-text { line-height: 1.15; min-width: 0; }
-.stat-label { font-family: var(--display); font-weight: 700; font-size: 1.25cqw; text-transform: uppercase; letter-spacing: 0.02em; }
-.stat-sub { font-size: 0.85cqw; color: var(--primary-ink); opacity: 0.85; font-weight: 500; }
-.stat-nums { display: flex; align-items: baseline; gap: 0.8cqw; }
-.stat-value { font-family: var(--display); font-weight: 800; font-size: 2.3cqw; font-variant-numeric: tabular-nums; line-height: 1; }
-.stat-arrow { font-size: 1.1cqw; color: var(--accent); margin-right: 0.2cqw; }
-.stat-unit { font-size: 0.85cqw; font-weight: 600; margin-left: 0.2cqw; }
-.stat-usual { display: flex; flex-direction: column; align-items: flex-end; font-size: 0.8cqw; line-height: 1.1; color: var(--primary-ink); opacity: 0.8; }
-.stat-usual b { font-family: var(--display); font-size: 1.2cqw; font-weight: 700; color: var(--primary); }
-
-.card-foot {
-  display: grid;
-  grid-template-columns: auto auto 1fr auto;
-  align-items: center;
-  gap: 0.7cqw;
-  padding: 0.7cqw 1.1cqw;
-  background: var(--primary);
-}
-.cf-label { font-family: var(--display); font-weight: 700; font-size: 0.8cqw; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mist); }
-.cf-code { font-family: var(--display); font-weight: 700; font-size: 1cqw; letter-spacing: 0.05em; }
-.cf-bar { height: 0.65cqw; transition: --m 1.4s var(--ease) 0.5s; }
+/* one line, read in one go: "Brackenford's progressive passes" */
+.stat-label { min-width: 0; font-family: var(--display); font-weight: 700; font-size: 1.4cqw; line-height: 1.15; letter-spacing: 0.01em; }
+/* before (small, faded) -> now (big, solid): the numbers show which way it went */
+.stat-nums { display: flex; align-items: center; gap: 0.55cqw; font-family: var(--display); font-variant-numeric: tabular-nums; line-height: 1; }
+.stat-old { font-weight: 700; font-size: 1.45cqw; color: var(--primary); opacity: 0.42; }
+.stat-to { width: 1.7cqw; height: 0.8cqw; color: var(--primary); opacity: 0.42; }
+.stat-value { font-weight: 800; font-size: 2.4cqw; color: var(--primary); }
 
 /* entry and exit */
 .card.on .card-head { animation: wipe 0.55s var(--ease) both; }
@@ -263,8 +248,13 @@ body { display: grid; place-items: center; overflow: hidden; }
 .card.on .stat { animation: rise 0.5s var(--ease) both; }
 .card.on .stat:nth-child(1) { animation-delay: 0.32s; }
 .card.on .stat:nth-child(2) { animation-delay: 0.44s; }
-.card.on .card-foot { animation: rise 0.5s var(--ease) 0.55s both; }
 .card.off { animation: out 0.45s var(--ease) both; }
+
+/* MatchLens analysis: the card that follows, on what a club could do about it */
+.card.analysis .card-anchor { gap: 0.7cqw; background: linear-gradient(90deg, var(--accent), var(--primary) 75%); }
+.an-chip { width: 1cqw; height: 1cqw; flex: none; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5); }
+.an-mark { margin-left: auto; font-size: 0.75cqw; letter-spacing: 0.14em; color: var(--mist); }
+.card.analysis .card-text { font-size: 1.3cqw; }
 @keyframes wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes rise { from { opacity: 0; transform: translateY(0.8cqw); } to { opacity: 1; transform: none; } }
 @keyframes out { to { opacity: 0; transform: translateX(-2cqw); } }

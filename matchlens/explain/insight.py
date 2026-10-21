@@ -185,6 +185,57 @@ LINES: dict[str, dict[str, Any]] = {
     },
 }
 
+# A player's stat says what he is doing more of; these say how that moves the game: what it gives
+# his club ({T}) and what it does to the other side ({O}). Used for player_drive and fresh_legs, in
+# place of the generic lines above, when the card's player stat has an entry here.
+PLAYER_LINES: dict[str, dict[str, str]] = {
+    "sprints": {
+        "neutral": "{P}'s running is stretching {O} and giving {T} more options going forward.",
+        "own": "{P}'s aggressive running is giving {T} more attacking options and putting {O} under pressure.",
+        "other": "{O} can't track {P}'s runs, and it's letting {T} pile on the pressure.",
+    },
+    "distance_m": {
+        "neutral": "{P}'s work rate is giving {T} an extra body all over the pitch and closing down {O}'s space.",
+        "own": "{P} is covering every blade of grass, so {T} are winning the race to every loose ball.",
+        "other": "{P} is everywhere, and {O} are running out of space to play in.",
+    },
+    "progressive_passes": {
+        "neutral": "{P}'s forward passing is breaking {O}'s lines and moving {T} up the pitch.",
+        "own": "{P} is pulling the strings, breaking {O}'s lines and taking {T} up the pitch.",
+        "other": "{P} keeps finding a way through {O}, and {T} are getting up the pitch because of it.",
+    },
+    "defensive_actions": {
+        "neutral": "{P} keeps winning the ball back, so {T} get it again quickly and {O} can't build any rhythm.",
+        "own": "{P} keeps breaking up {O}'s play, handing {T} the ball back again and again.",
+        "other": "{P} keeps breaking up {O}'s moves before they get going, and {T} are taking over.",
+    },
+    "duels_won": {
+        "neutral": "{P} is winning the battles, so {T} are keeping the ball and {O} are being pushed back.",
+        "own": "{P} is winning every battle, and that's letting {T} take over from {O}.",
+        "other": "{O} can't get the better of {P}, and every lost duel hands {T} the ball.",
+    },
+    "duels": {
+        "neutral": "{P} is getting stuck in, adding bite to {T} and stopping {O} from playing.",
+        "own": "{P} is getting stuck in and giving {T} an edge over {O}.",
+        "other": "{P} is getting stuck in, and {O} aren't being given a moment on the ball.",
+    },
+    "touches": {
+        "neutral": "{P} is on the ball far more, giving {T} an outlet and a way past {O}.",
+        "own": "{P} is always available, giving {T} an outlet every time they win it.",
+        "other": "{O} can't keep {P} quiet, and {T} are using the outlet.",
+    },
+}
+# what a player stat going up does on the pitch, for the Interpreter agent
+PLAYER_MEANING = {
+    "sprints": "more runs: team mates get more options, and the other side has more ground to cover",
+    "distance_m": "more ground covered: an extra body in attack and defence, less space for the other side",
+    "progressive_passes": "more passes that move the ball well up the pitch, past the other side's lines",
+    "defensive_actions": "more tackles, interceptions and blocks: the ball comes back sooner, the other side can't settle",
+    "duels_won": "winning more one-on-one battles: his side keeps the ball, the other side loses it",
+    "duels": "more one-on-one battles: a more physical, contested game around him",
+    "touches": "on the ball more: his side has a reliable outlet",
+}
+
 READINGS = tuple(LINES)
 NO_CHANGE = {
     "goal_no_reaction": "{T}'s goal hasn't changed the pattern of the game.",
@@ -254,6 +305,8 @@ def facts(
                 **({"player": f["name"]} if f.get("player") else {}),
                 **({"replaced": f["replaced_name"]} if f.get("replaced") else {}),
                 "stat": f["label"],
+                "metric": f["metric"],
+                **({"meaning": PLAYER_MEANING[f["metric"]]} if f.get("player") and f["metric"] in PLAYER_MEANING else {}),
                 "before": f["before"],
                 "after": f["after"],
                 "change": "up" if f["after"] >= f["before"] else "down",
@@ -281,6 +334,13 @@ def lines(fx: dict[str, Any]) -> dict[str, str]:
     names = " and ".join(players) or teams[t]["name"]
     verb = "are" if len(players) > 1 else "is"
     spec = dict(LINES[key])
+    star = next((s for s in fx["stats"] if s.get("player")), None)
+    if key in ("player_drive", "fresh_legs") and star and star.get("metric") in PLAYER_LINES:
+        # say how the player's contribution moves the game, not just what he is doing more of
+        names, verb = star["player"], "is"
+        spec = dict(PLAYER_LINES[star["metric"]])
+        if key == "fresh_legs":
+            spec = {k: "Off the bench, " + v for k, v in spec.items()}
     if key == "no_change":
         spec["neutral"] = NO_CHANGE.get(fx["cause"], spec["neutral"])
     state = teams[t]["state"]

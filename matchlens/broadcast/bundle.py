@@ -17,6 +17,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from ..explain.analysis import lenses
 from ..explain.director import direct
 from ..explain.explainer import explain_match
 from ..explain.match import MatchData, load
@@ -68,6 +69,23 @@ def format_stat(md: MatchData, s: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def screen_analysis(md: MatchData, a: dict[str, Any] | None) -> dict[str, Any] | None:
+    """The MatchLens analysis card for each viewer: whose club it is about, fix or keep, the line, and
+    the stat behind it, formatted like the card's own stats."""
+    if not a or not a["text"]:
+        return None
+    by_id = {o["id"]: o for o in a["facts"]["options"]}
+    out = {}
+    for lens, team in lenses(a["facts"], a["picks"]).items():
+        o = by_id[a["picks"][team]]
+        ev = o["evidence"]
+        stat = format_stat(
+            md, {"label": ev["stat"], "unit": ev["unit"], "team": ev["team"], "before": ev["before"], "after": ev["after"]}
+        )
+        out[lens] = {"team": team, "mode": o["mode"], "lever": o["lever"], "line": a["text"][lens], "stat": stat}
+    return out
+
+
 def card_kind(card: dict[str, Any]) -> str:
     events = card["anchor"]["event_ids"]
     if card["mode"] != "event":
@@ -103,6 +121,7 @@ def under_the_hood(card: dict[str, Any]) -> dict[str, Any] | None:
         "verifier": [{"round": t["round"], "status": t["status"], "problems": t["problems"]} for t in rounds],
         "fallback": a["fallback"],
         "interpreter": a.get("interpreter"),
+        "analyst": a.get("analyst"),
         "missing": a["missing"],
         "confidence": card["cause"]["confidence"],
     }
@@ -148,6 +167,7 @@ def build(md: MatchData, result: dict[str, Any] | None = None) -> dict[str, Any]
                 "cause": c["cause"]["kind"],
                 "story": c.get("story"),
                 "text": c.get("text", {}),
+                "analysis": screen_analysis(md, c.get("analysis")),
                 "shifted": c["shifted"],
                 "hood": under_the_hood(c),
             }
@@ -186,13 +206,15 @@ def explain_with_agents(mds: list[MatchData], runner_name: str) -> list[dict[str
     """Explain every match with the agent crew, sharing one runner (and one set of Foundry agents)."""
     import asyncio
 
+    from ..agents.analyst import analyse_cards
     from ..agents.crew import explain_match_async
     from ..agents.interpreter import interpret_cards
     from ..agents.runners import make_runner
 
     async def one(runner: Any, md: MatchData) -> dict[str, Any]:
         result = await explain_match_async(md, runner)
-        await interpret_cards(runner, md, direct(result["cards"]))  # only the cards that go on screen
+        shown = direct(result["cards"])  # only the cards that go on screen
+        await asyncio.gather(interpret_cards(runner, md, shown), analyse_cards(runner, md, shown))
         result["agents"]["usage"] = runner.usage.as_dict()
         return result
 
