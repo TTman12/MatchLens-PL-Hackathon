@@ -16,6 +16,26 @@ It is a fresh start for the Microsoft × Premier League hackathon. All match dat
 
 ![The broadcast screen](docs/img/broadcast.png)
 
+## Built on Microsoft
+
+Every service below is used by code in this repo. Nothing is listed that the code doesn't use.
+
+| Service | Where | What it does |
+| --- | --- | --- |
+| **Microsoft Foundry Agent Service** | `matchlens/agents/runners.py` | Seven prompt agents are published to the Foundry project and versioned: `matchlens-team-play`, `-players`, `-substitutions`, `-match-events`, `-explainer`, `-interpreter` and `-analyst`. A new version is published only when an agent's definition changes. |
+| **Microsoft Agent Framework** (Python) | `matchlens/agents/runners.py`, `crew.py` | Runs each agent and its tool calls. Four specialists run in parallel on a shared findings board, then the Explainer, then the Interpreter and Analyst. |
+| **Foundry Models: Azure OpenAI `gpt-4.1-mini`** | the project's model deployment | The model behind every agent, and the judge for the evaluations. |
+| **Foundry Evaluations** (Azure AI Evaluation SDK) | `matchlens/foundry_eval.py`, `.github/workflows/foundry-eval.yml` | Scores every on-screen line for groundedness, relevance and coherence, plus a code check on numbers. The run is logged to the project's Evaluations page. |
+| **Azure AI Content Safety** | `matchlens/agents/safety.py` | Screens every line the agents write before it can go on air. A flagged line is sent back to the agent, then replaced by the rule-written line. |
+| **Azure Monitor Application Insights**, via **OpenTelemetry** | `matchlens/telemetry.py` | One trace per match. It covers the Watcher, each moment, specialist, Explainer round and Verifier check, with Agent Framework's agent and model spans underneath. The traces show on the Foundry project's Tracing page. |
+| **Azure Container Apps** | `infra/main.bicep`, `Dockerfile` | Hosts the live site. It scales to zero between viewers and has health probes. |
+| **Azure Linux** container image | `Dockerfile` | The base image for the site (`mcr.microsoft.com/azurelinux/base/python`). |
+| **Azure Monitor Log Analytics** | `infra/main.bicep` | Collects the container app's logs. |
+| **Microsoft Entra ID** | everywhere | There are no keys anywhere. Locally and in Cloud Shell, `DefaultAzureCredential` signs in. The app uses a managed identity. GitHub Actions signs in with **workload identity federation (OIDC)**. |
+| **GitHub Actions** and **GitHub Container Registry** | `.github/workflows/` | Tests, a realism gate and the Explainer score on every PR. Builds the image, deploys it to Container Apps over OIDC, runs Foundry evaluations and lints the Bicep. |
+| **Bicep** and the **Azure Developer CLI** | `infra/`, `azure.yaml` | The whole Azure setup as code. `azd provision` can stand it up from nothing, Foundry included. |
+| **Azure Cost Management** budget | `infra/main.bicep` | A $20 monthly budget on the resource group, with email alerts. |
+
 ```
 pip install -e ".[dev]"
 matchlens-gen match --home ash --away brk --seed 7   # one match: events, minute tables, physical, hidden truth
