@@ -9,10 +9,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from .insight import facts, lines
 from .match import MatchData
 from .specialists import Finding, investigate
 from .stories import SHARES as LONE_SHARES
-from .stories import compose, find_stories, match_story
+from .stories import find_stories, match_story
 from .watcher import Moment, watch
 
 EASY = {"possession", "duels_won", "defending_height", "shots", "long_balls", "distance", "sprints", "high_turnovers", "xg"}
@@ -273,7 +274,8 @@ def assemble(
         },
         "cause": {**cause, "confidence": confidence},
         "story": match_story(stats),
-        "text": compose(md, cause, stats, m.gainer),
+        "facts": (fx := facts(md, m.now, cause, stats, m.gainer, (m.momentum_before, m.momentum_now))),
+        "text": lines(fx),
         "findings": {k: v[:8] for k, v in found.items()},
     }
 

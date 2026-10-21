@@ -133,13 +133,18 @@ def _agents(jobs: list[tuple[Path, Path]], runner_name: str) -> tuple[list[dict[
     import asyncio
 
     from ..agents.crew import explain_match_async
+    from ..agents.interpreter import interpret_cards
     from ..agents.runners import make_runner
+    from .director import direct
 
     async def one(runner: Any, folder: Path, truth_file: Path) -> list[dict[str, Any]]:
         truth = json.loads(truth_file.read_text())
         md = load(folder)
         cards = (await explain_match_async(md, runner))["cards"]
+        shown = direct(cards)
+        await interpret_cards(runner, md, shown)
         rows = [score_card(c, truth) | {"fallback": c["agents"]["fallback"]} for c in cards]
+        rows += [interpretation(c) for c in shown]
         return rows + control(md, truth, random.Random(folder.name))
 
     async def go() -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -159,13 +164,40 @@ def evaluate(out_dir: Path, runner: str | None = None) -> dict[str, Any]:
     jobs = [(f, out_dir / "truth" / f"{f.name}.json") for f in folders]
     if runner:
         rows, usage = _agents(jobs, runner)
+        lines = [r for r in rows if r.get("interpreted")]
+        rows = [r for r in rows if not r.get("interpreted")]
         report = summarise(rows, len(folders))
         cards = [r for r in rows if not r.get("control")]
-        report["agents"] = {"runner": runner, "fallback_rate": _rate(cards, "fallback"), "usage": usage}
+        report["agents"] = {
+            "runner": runner,
+            "fallback_rate": _rate(cards, "fallback"),
+            "interpreter": {
+                "cards": len(lines),
+                "passed_first_time": _rate(lines, "first_time"),
+                "fell_back_to_rules": _rate(lines, "fallback"),
+                "lines_repeating_a_stat_name": _rate([x for r in lines for x in r["repeats"]], "x"),
+                "words_per_line": round(sum(r["words"] for r in lines) / max(1, len(lines)), 1),
+            },
+            "usage": usage,
+        }
         return report
     with ProcessPoolExecutor() as pool:
         rows = [r for rs in pool.map(_one, jobs, chunksize=4) for r in rs]
     return summarise(rows, len(folders))
+
+
+def interpretation(card: dict[str, Any]) -> dict[str, Any]:
+    """How the Interpreter did on one card: did it pass, and do its lines read stats out?"""
+    log = card["agents"]["interpreter"]
+    labels = {s["label"].lower() for s in card["stats"]}
+    text = list(card["text"].values())
+    return {
+        "interpreted": True,
+        "first_time": bool(log["rounds"]) and log["rounds"][0]["status"] == "passed",
+        "fallback": log["fallback"],
+        "repeats": [{"x": any(lb in t.lower() for lb in labels)} for t in text],
+        "words": sum(len(t.split()) for t in text) / max(1, len(text)),
+    }
 
 
 def _rate(rows: list[dict[str, Any]], key: str) -> float | None:

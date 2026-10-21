@@ -64,14 +64,13 @@ body { display: grid; place-items: center; overflow: hidden; }
   background: var(--primary);
 }
 
-/* ---------- the stream background: the stadium, blurred and tinted ---------- */
+/* ---------- the stream background: the stadium, sharp, tinted so the panels read over it ---------- */
 .backdrop {
   position: absolute;
   inset: -2cqw;
   background:
-    linear-gradient(180deg, rgba(40, 0, 43, 0.72), rgba(26, 0, 28, 0.9)),
+    linear-gradient(180deg, rgba(40, 0, 43, 0.55), rgba(26, 0, 28, 0.82)),
     center / cover no-repeat url("assets/stadium.jpg");
-  filter: blur(0.6cqw);
 }
 
 /* ---------- the feed ---------- */

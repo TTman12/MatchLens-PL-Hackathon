@@ -102,6 +102,7 @@ def under_the_hood(card: dict[str, Any]) -> dict[str, Any] | None:
         "why": a["why"],
         "verifier": [{"round": t["round"], "status": t["status"], "problems": t["problems"]} for t in rounds],
         "fallback": a["fallback"],
+        "interpreter": a.get("interpreter"),
         "missing": a["missing"],
         "confidence": card["cause"]["confidence"],
     }
@@ -186,12 +187,19 @@ def explain_with_agents(mds: list[MatchData], runner_name: str) -> list[dict[str
     import asyncio
 
     from ..agents.crew import explain_match_async
+    from ..agents.interpreter import interpret_cards
     from ..agents.runners import make_runner
+
+    async def one(runner: Any, md: MatchData) -> dict[str, Any]:
+        result = await explain_match_async(md, runner)
+        await interpret_cards(runner, md, direct(result["cards"]))  # only the cards that go on screen
+        result["agents"]["usage"] = runner.usage.as_dict()
+        return result
 
     async def go() -> list[dict[str, Any]]:
         runner = make_runner(runner_name)
         try:
-            return list(await asyncio.gather(*(explain_match_async(md, runner) for md in mds)))
+            return list(await asyncio.gather(*(one(runner, md) for md in mds)))
         finally:
             await runner.close()
 
