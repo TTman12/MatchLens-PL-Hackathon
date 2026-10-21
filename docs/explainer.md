@@ -71,8 +71,9 @@ Scored on 380 unseen generated matches (season seed 9000; tuning used seed 2026)
 
 CI runs the same scoring on 100 unseen matches and fails if shifts stop beating random windows by at least 5 points, if event backing falls below 75%, or if checked claims fall below 65%.
 
-## Next
+## What came next
 
-- Run the specialists as agents (Foundry, with the shared findings record in `design.md`). The Explainer becomes an LLM agent that reasons over findings, and a Verifier rechecks every number from the events.
-- A Director that limits cards per spell. The pipeline raises about 12 candidates per match, and each carries `salience` and `show`.
-- The broadcast graphics.
+All built since this part was written:
+- The specialists and the Explainer run as agents on Microsoft Foundry, with a shared findings board and a Verifier that rechecks every number ([agents.md](agents.md)).
+- A Director keeps about 6 of the 12 candidate cards a match ([broadcast.md](broadcast.md)).
+- The broadcast screen, with fan and admin screens ([broadcast.md](broadcast.md)).
