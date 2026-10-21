@@ -41,6 +41,15 @@ SERVICE = "matchlens-agents"
 _state: dict[str, Any] = {"exporting": False}
 
 
+class _AgentFrameworkTracesTheModel(logging.Filter):
+    """Drops azure-ai-projects' note that its own experimental GenAI tracing is off. It is left off
+    on purpose: Agent Framework already traces every agent and model call, and turning both on would
+    record each call twice."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "AZURE_EXPERIMENTAL_ENABLE_GENAI_TRACING" not in record.getMessage()
+
+
 def _attrs(attrs: dict[str, Any]) -> dict[str, Any]:
     """OpenTelemetry takes str, bool, int, float and lists of those; drop the rest."""
     out: dict[str, Any] = {}
@@ -85,8 +94,13 @@ async def connect(project_client: Any | None = None) -> bool:
         log.info("tracing needs the 'foundry' extra: pip install -e '.[foundry]'")
         return False
     os.environ.setdefault("OTEL_SERVICE_NAME", SERVICE)
-    configure_azure_monitor(connection_string=conn, logger_name="matchlens")
-    enable_instrumentation(enable_sensitive_data=os.environ.get("MATCHLENS_TRACE_CONTENT", "1") != "0")
+    logging.getLogger("azure.ai.projects.telemetry._ai_project_instrumentor").addFilter(_AgentFrameworkTracesTheModel())
+    try:
+        configure_azure_monitor(connection_string=conn, logger_name="matchlens")
+        enable_instrumentation(enable_sensitive_data=os.environ.get("MATCHLENS_TRACE_CONTENT", "1") != "0")
+    except Exception as exc:  # tracing is a nice-to-have: never let it stop a run
+        log.warning("could not start tracing (%s); running untraced", exc)
+        return False
     _state["exporting"] = True
     log.info("tracing agent runs to Application Insights")
     return True
@@ -99,5 +113,8 @@ def flush() -> None:
     except ImportError:
         return
     provider = trace.get_tracer_provider()
-    if hasattr(provider, "force_flush"):
-        provider.force_flush()
+    try:
+        if hasattr(provider, "force_flush"):
+            provider.force_flush()
+    except Exception as exc:  # a failed export must not fail the run that produced it
+        log.warning("could not send the last traces (%s)", exc)
