@@ -19,6 +19,7 @@ foundry = [
     "agent-framework-foundry>=1.15,<2",
     "azure-identity>=1.26",
     "azure-monitor-opentelemetry>=1.6",
+    "azure-ai-contentsafety>=1.0",
 ]
 
 [project.scripts]

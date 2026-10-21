@@ -23,6 +23,7 @@ from ..telemetry import span
 from .crew import parse
 from .roles import INTERPRETER
 from .runners import Runner, RunnerError
+from .safety import screen
 
 MAX_WORDS = 24
 UNSEEN = re.compile(
@@ -115,7 +116,7 @@ async def interpret(runner: Runner, job: InterpretJob) -> tuple[dict[str, str], 
         except (RunnerError, ValueError, TypeError) as exc:
             job.trace.append({"round": round_, "status": "failed", "error": str(exc)[:200], "ms": _ms(t0)})
             break
-        problems = check_lines(job, draft)
+        problems = check_lines(job, draft) or await screen(runner, {k: str(draft[k]) for k in keys})
         job.trace.append({"round": round_, "status": "rejected" if problems else "passed", "problems": problems, "ms": _ms(t0)})
         if not problems:
             return {k: str(draft[k]).strip() for k in keys}, False

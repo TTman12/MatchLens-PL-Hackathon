@@ -138,6 +138,9 @@ class FoundryRunner:
         self.versions: dict[str, str | None] = {}
         self.usage = Usage()
         self.tracing: bool | None = None  # decided on the first task
+        from .safety import ContentSafety
+
+        self.safety = ContentSafety(self._credential)
 
     def _tools(self, tools: list[ToolSpec]) -> list[Any]:
         from agent_framework import tool
@@ -224,6 +227,7 @@ class FoundryRunner:
 
     async def close(self) -> None:
         telemetry.flush()
+        await self.safety.close()
         await self._project.close()
         await self._credential.close()
 

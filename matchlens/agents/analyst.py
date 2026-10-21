@@ -25,6 +25,7 @@ from .crew import parse
 from .interpreter import EQUALISER, LEAD, TEN_MEN, TIRED
 from .roles import ANALYST
 from .runners import Runner, RunnerError
+from .safety import screen
 
 MAX_WORDS = 26
 UNSEEN = re.compile(
@@ -130,6 +131,9 @@ async def analyse(runner: Runner, job: AnalystJob) -> tuple[dict[str, str], dict
             job.trace.append({"round": round_, "status": "failed", "error": str(exc)[:200], "ms": _ms(t0)})
             break
         problems = check_analysis(job, draft)
+        if not problems:
+            picks = {str(k): str(v) for k, v in draft["picks"].items()}
+            problems = await screen(runner, {k: str(draft[k]) for k in lenses(job.facts, picks)})
         job.trace.append({"round": round_, "status": "rejected" if problems else "passed", "problems": problems, "ms": _ms(t0)})
         if not problems:
             picks = {str(k): str(v) for k, v in draft["picks"].items()}

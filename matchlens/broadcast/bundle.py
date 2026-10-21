@@ -216,6 +216,8 @@ def explain_with_agents(mds: list[MatchData], runner_name: str) -> list[dict[str
         shown = direct(result["cards"])  # only the cards that go on screen
         await asyncio.gather(interpret_cards(runner, md, shown), analyse_cards(runner, md, shown))
         result["agents"]["usage"] = runner.usage.as_dict()
+        if getattr(runner, "safety", None) is not None:
+            result["agents"]["content_safety"] = runner.safety.count.as_dict()
         return result
 
     async def go() -> list[dict[str, Any]]:
