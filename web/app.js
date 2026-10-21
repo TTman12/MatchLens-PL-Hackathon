@@ -10,6 +10,7 @@
 
   const SECONDS_PER_MINUTE = 1.6; // at 1x a 95-minute match plays in about 2.5 minutes
   const CARD_SECONDS = 9; // how long a card stays up
+  const ANALYSIS_SECONDS = 8; // how long the MatchLens analysis that follows it stays up
   const CARD_SLOWDOWN = 0.12; // the clock creeps while a card is up
   const SPEEDS = [1, 2, 4];
 
@@ -22,6 +23,7 @@
   let speedIx = Math.max(0, SPEEDS.indexOf(Number(params.get("speed")) || 1));
   let nextCard = 0;
   let cardUntil = 0; // performance.now() ms when the current card leaves
+  let phase = null; // "stats" while a card is up, "analysis" while its MatchLens analysis is
   let last = 0;
   let hoodCard = null; // the card the agents tab describes
   let tab = ["clubs", "players", "agents"].includes(params.get("tab")) ? params.get("tab") : params.get("hood") === "1" ? "agents" : "clubs";
@@ -234,24 +236,32 @@
     return bundle.teams.find((x) => x.team_id === id);
   }
 
+  // "Progressive passes" -> "progressive passes", but "xG" stays as it is
+  const lower = (label) => (/^[A-Z][a-z]/.test(label) ? label[0].toLowerCase() + label.slice(1) : label);
+
+  // One line to read, then one number to the next: "Brackenford's progressive passes  2 -> 5 ▲".
+  // The colour chip says whose stat it is; the faded number is before, the solid one is now.
   function statRow(s) {
     const team = teamById(s.team);
     const side = team === bundle.teams[0] ? "var(--home)" : "var(--away)";
-    const when = s.window ? ` · last ${s.window.replace("in ", "")}` : "";
-    // a player's row leads with his name; a team's with the stat
-    const [title, sub] = s.player ? [s.player, `${s.label}${when}`] : [s.label, `${team.short_name}${when}`];
+    const title = `${s.player || team.short_name}'s ${lower(s.label)}`;
+    const sub = [s.window ? `last ${s.window.replace("in ", "")}` : "", s.usual_label !== "before" ? `vs ${s.usual_label}` : ""]
+      .filter(Boolean)
+      .join(" · ");
     const unit = s.unit ? `<span class="stat-unit">${s.unit}</span>` : "";
+    const dir = s.rise ? "up" : "down";
     return `
       <div class="stat">
         <span class="stat-strip" style="background:${side}"></span>
-        <span class="stat-code">${s.code}</span>
         <span class="stat-text">
           <div class="stat-label">${esc(title)}</div>
-          <div class="stat-sub">${esc(sub)}</div>
+          ${sub ? `<div class="stat-sub">${esc(sub)}</div>` : ""}
         </span>
-        <span class="stat-nums">
-          <span class="stat-value"><span class="stat-arrow">${s.rise ? "▲" : "▼"}</span>${s.value}${unit}</span>
-          <span class="stat-usual">${s.usual_label}<b>${s.usual}</b></span>
+        <span class="stat-nums" aria-label="${esc(`${s.usual} to ${s.value}`)}">
+          <span class="stat-old">${s.usual}</span>
+          <svg class="stat-to" viewBox="0 0 26 12" aria-hidden="true"><path d="M1 6h21M17 1.5 23 6l-6 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="stat-value">${s.value}${unit}</span>
+          <span class="stat-dir ${dir}">${s.rise ? "▲" : "▼"}</span>
         </span>
       </div>`;
   }
@@ -282,6 +292,7 @@
     el.hidden = false;
     void el.offsetWidth;
     el.classList.add("on");
+    phase = "stats";
     // after the entry, move the bar from where momentum was to where it is; a faded line stays at "was"
     requestAnimationFrame(() =>
       requestAnimationFrame(() => el.querySelector(".cf-bar").style.setProperty("--m", `${c.momentum.now}%`)),
@@ -289,6 +300,44 @@
     cardUntil = performance.now() + CARD_SECONDS * 1000;
     hoodCard = c;
     if (tab === "agents") renderPanel();
+  }
+
+  // ---------- MatchLens analysis: what a club could do about it, after the card ----------
+  function analysisFor(c) {
+    const a = c && c.analysis;
+    return a ? (a[fan] ?? a.neutral ?? null) : null;
+  }
+
+  function showAnalysis(c) {
+    const el = $("card");
+    phase = "analysis";
+    cardUntil = performance.now() + 450 + ANALYSIS_SECONDS * 1000;
+    el.classList.remove("on");
+    el.classList.add("off");
+    setTimeout(() => {
+      if (phase === "analysis" && cardUntil) drawAnalysis(c);
+    }, 450);
+  }
+
+  function drawAnalysis(c) {
+    const a = analysisFor(c);
+    if (!a) return;
+    const el = $("card");
+    const team = teamById(a.team);
+    const side = team === bundle.teams[0] ? "var(--home)" : "var(--away)";
+    const ask = a.mode === "fix" ? "How to win it back" : "How to keep it going";
+    el.className = "card analysis";
+    el.innerHTML = `
+      <div class="card-head">
+        <div class="card-anchor"><span class="an-mark">MatchLens analysis</span></div>
+      </div>
+      <div class="an-club"><span class="an-chip" style="background:${side}"></span>${esc(team.short_name)}<span class="an-ask">${ask}</span></div>
+      <div class="card-text" id="cardText">${esc(a.line)}</div>
+      <div class="an-why">The number behind it</div>
+      <div class="card-body">${statRow(a.stat)}</div>`;
+    el.hidden = false;
+    void el.offsetWidth;
+    el.classList.add("on");
   }
 
   // ---------- under the hood ----------
@@ -331,7 +380,7 @@
         <span class="hood-why">${esc(h.fallback ? "No verified draft; the deterministic rules chose." : h.why)}</span></div>
       <div class="hood-step"><span class="hood-agent">Verifier</span>
         <span class="hood-chip ${h.fallback ? "st-failed" : "st-relevant"}">${verdict}</span>
-        <span class="hood-note">${h.board} findings on the board · confidence ${Math.round(100 * h.confidence)}%</span></div>${interpreterHtml(h.interpreter)}`;
+        <span class="hood-note">${h.board} findings on the board · confidence ${Math.round(100 * h.confidence)}%</span></div>${interpreterHtml(h.interpreter)}${analystHtml(h.analyst)}`;
   }
 
   function interpreterHtml(it) {
@@ -341,6 +390,15 @@
     return `<div class="hood-step"><span class="hood-agent">Interpreter</span>
         <span class="hood-chip ${it.fallback ? "st-failed" : "st-relevant"}">${verdict}</span>
         <span class="hood-note">Wrote the line on the card for each lens, checked against the facts</span></div>`;
+  }
+
+  function analystHtml(it) {
+    if (!it) return "";
+    const rejected = it.rounds.filter((r) => r.status === "rejected").length;
+    const verdict = it.fallback ? "Fell back to the rules" : rejected ? "Passed after a rewrite" : "Passed first time";
+    return `<div class="hood-step"><span class="hood-agent">Analyst</span>
+        <span class="hood-chip ${it.fallback ? "st-failed" : "st-relevant"}">${verdict}</span>
+        <span class="hood-note">Picked what each club could do from the options the stats back, checked against them</span></div>`;
   }
 
   // ---------- the stats panel ----------
@@ -441,13 +499,14 @@
     fan = id;
     store("matchlens.fan", id);
     drawFan();
-    const txt = $("cardText");
-    if (txt && hoodCard) txt.textContent = cardText(hoodCard);
+    if (phase === "analysis" && hoodCard) drawAnalysis(hoodCard);
+    else if (phase === "stats" && hoodCard) $("cardText").textContent = cardText(hoodCard);
   }
 
   function hideCard(now) {
     const el = $("card");
     cardUntil = 0;
+    phase = null;
     if (now) {
       el.hidden = true;
       el.className = "card";
@@ -471,7 +530,10 @@
       const showing = cardUntil > 0;
       const rate = (SPEEDS[speedIx] / SECONDS_PER_MINUTE) * (showing ? CARD_SLOWDOWN : 1);
       t = Math.min(bundle.minutes, t + dt * rate);
-      if (showing && now >= cardUntil) hideCard(false);
+      if (showing && now >= cardUntil) {
+        if (phase === "stats" && analysisFor(hoodCard)) showAnalysis(hoodCard);
+        else hideCard(false);
+      }
       if (!showing && nextCard < bundle.cards.length && t >= bundle.cards[nextCard].at) {
         showCard(bundle.cards[nextCard]);
         nextCard++;

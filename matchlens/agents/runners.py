@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 from .roles import Role
 
 if TYPE_CHECKING:
+    from .analyst import AnalystJob
     from .crew import Job
     from .interpreter import InterpretJob
 
@@ -82,7 +83,7 @@ class Runner(Protocol):
     name: str
     usage: Usage
 
-    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: Job | InterpretJob) -> str: ...
+    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: Job | InterpretJob | AnalystJob) -> str: ...
 
     async def close(self) -> None: ...
 
@@ -94,13 +95,16 @@ class OfflineRunner:
     name: str = "offline"
     usage: Usage = field(default_factory=Usage)
 
-    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: Job | InterpretJob) -> str:
+    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: Job | InterpretJob | AnalystJob) -> str:
+        from .analyst import AnalystJob, offline_analysis
         from .crew import offline_answer
         from .interpreter import InterpretJob, offline_lines
 
         self.usage.calls += 1
         if isinstance(job, InterpretJob):
             return offline_lines(job)
+        if isinstance(job, AnalystJob):
+            return offline_analysis(job)
         return offline_answer(role, tools, job)
 
     async def close(self) -> None:
@@ -152,7 +156,7 @@ class FoundryRunner:
             project_client=self._project, agent_name=role.agent_name, agent_version=version, tools=self._tools(tools) or None
         )
 
-    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: Job | InterpretJob) -> str:
+    async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: Job | InterpretJob | AnalystJob) -> str:
         agent = await self._agent(role, tools)
         last: Exception | None = None
         for attempt in range(3):

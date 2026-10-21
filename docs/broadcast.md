@@ -1,6 +1,8 @@
 # The broadcast screen
 
-![A card naming a player who is making more tackles, with the club stats panel](img/broadcast.png)
+![A card on a substitute's running, with the club stats panel](img/broadcast.png)
+
+![The MatchLens analysis card that follows: what the side that lost momentum could do](img/analysis.png)
 
 The screen in `web/` plays a match on a condensed clock. By default 1 match minute takes 1.6 seconds, so a full match runs about 2.5 minutes. It is laid out like a stream, over a photo of a stadium:
 
@@ -9,13 +11,14 @@ The screen in `web/` plays a match on a condensed clock. By default 1 match minu
   - **the cards**, as a lower third, which pop up when the Director puts one on screen. A card shows:
     - its anchor, such as "Since Dunmoor goal 25'" or "Since 63'";
     - one line saying what the numbers mean for the game, written for the viewer's club ([explainer.md](explainer.md));
-    - one or two numbers, each against the same team before the anchor. For a substitute, the comparison is with the player they replaced. Where it can, the card pairs two stats that explain each other, rather than showing a lone possession figure;
+    - one or two numbers, each against the same team before the anchor. For a substitute, the comparison is with the player they replaced. Where it can, the card pairs two stats that explain each other, rather than showing a lone possession figure. Each number reads as one line and one path: a colour chip for the club, then "Brackenford's progressive passes", then the number before (small and faded), an arrow, the number now (big and solid) and ▲ or ▼;
     - a momentum bar with both clubs' codes, a gradient from one club's colour to the other's, and a faded line where momentum was before the bar moves to now.
+  - **the MatchLens analysis**, which follows a card when it leaves: what a club could do about the momentum, the take fans argue about. The side that lost it gets "how to win it back" ("Dunmoor need to push the line back up and stop inviting Calderwick on"); the side that has it gets "how to keep it going". A fan of either club sees their own club's; a neutral sees the side that lost momentum. Under the line is the number behind it. Every idea is backed by a stat in the match ([agents.md](agents.md), step 5).
 - **Stats panel** (right):
   - **Your club**: neutral or either side. The card sentence is written for that club's fans. The choice is remembered on this device.
   - **Clubs**: 24 stats for both sides at the current minute, the leader in bold. Tap a club to see its players.
   - **Players**: every player who has played, and for each one 14 stats at the current minute.
-  - **Agents**: what the agents did for the card on screen: each specialist's verdict, the Explainer's reason, whether the Verifier passed the card, and how the Interpreter did.
+  - **Agents**: what the agents did for the card on screen: each specialist's verdict, the Explainer's reason, whether the Verifier passed the card, and how the Interpreter and the Analyst did.
 
   Distance and sprints are modelled from tracking-style data, and are marked so.
 - **Momentum and timeline** (bottom):
