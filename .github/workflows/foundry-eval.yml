@@ -1,6 +1,7 @@
 name: Foundry evaluation
 
-# Scores every line on the live screen (the Interpreter's reads and the Analyst's "what next" lines)
+# Scores every line on the live screen (the Interpreter's reads, the Analyst's "what next" lines and the
+# Recapper's full-time headlines, in English and Spanish)
 # with Foundry Evaluations: groundedness, relevance and coherence judged by the project's model,
 # plus a code check that every number is on the card. The run is logged to the Foundry project's
 # Evaluations page; the report is the job summary and an artifact.
@@ -11,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       limit:
-        description: Score only the first N lines (empty means all, about 200 lines and a few cents)
+        description: Score only the first N lines (empty means all, about 450 lines and a few cents)
         required: false
 
 permissions:
