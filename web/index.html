@@ -31,6 +31,9 @@
       <div class="follow" id="follow" aria-live="polite" hidden></div>
       <div class="tag" id="tag" aria-live="polite" hidden></div>
 
+      <!-- what just happened: goals, substitutions, red cards and momentum shifts -->
+      <div class="note-pop" id="note" role="status" aria-live="polite" hidden></div>
+
       <!-- the pop-up card, as a lower third over the feed -->
       <div class="card" id="card" aria-live="polite" hidden></div>
 
@@ -38,11 +41,10 @@
       <div class="recap" id="recap" aria-live="polite" hidden></div>
 
       <!-- user mode: the playback controls sit in the feed, where a video player keeps them -->
-      <!-- full screen: the momentum bar comes into the feed -->
+      <!-- full screen: the momentum history comes into the feed, above and below its line -->
       <div class="mo-mini" aria-hidden="true">
-        <span id="miniHome"></span>
-        <div class="grad-bar" id="moMini"><div class="gb-mid"></div><div class="gb-now"></div></div>
-        <span id="miniAway"></span>
+        <span class="mini-keys"><span id="miniHome"></span><span id="miniAway"></span></span>
+        <div class="mini-chart"><svg id="miniChart" preserveAspectRatio="none"></svg><div class="mini-head" id="miniHead"></div></div>
       </div>
 
       <div class="vbar" id="vbar">

@@ -75,6 +75,8 @@
       neutral_note: "Cards speak to both sides.", fan_note: (c) => `Cards speak to ${c} fans.`, pick_player: "Tap a player to follow them.",
       gk: "Goalkeeper", def: "Defenders", mid: "Midfield", att: "Attack", bench: "Bench", came_on: "on",
       user_view: "User view", admin_view: "Admin view",
+      n_goal: "Goal", n_sub: "Substitution", n_red: "Red card", n_shift: "Momentum shift", n_big: "Big momentum shift",
+      n_on_off: (on, off) => `${on} on · ${off} off`, n_towards: (c) => `towards ${c}`,
       win_back: (c) => `How ${c} win it back`, keep_going: (c) => `How ${c} keep it going`, analysis: "MatchLens analysis",
       at: "At", last15: "Last 15'", modelled: "* modelled from tracking-style data.", tap_club: "Tap a club for its players.",
       back: "Back", not_on: "Not on the pitch yet.", on: "on", sub: "sub", passes: "passes",
@@ -91,6 +93,8 @@
       neutral_note: "Las tarjetas hablan a los dos equipos.", fan_note: (c) => `Las tarjetas hablan a la afición de ${c}.`, pick_player: "Toca un jugador para seguirlo.",
       gk: "Portero", def: "Defensas", mid: "Centrocampistas", att: "Delanteros", bench: "Banquillo", came_on: "entra",
       user_view: "Vista usuario", admin_view: "Vista admin",
+      n_goal: "Gol", n_sub: "Cambio", n_red: "Tarjeta roja", n_shift: "Cambio de inercia", n_big: "Gran cambio de inercia",
+      n_on_off: (on, off) => `entra ${on} · sale ${off}`, n_towards: (c) => `a favor de ${c}`,
       win_back: (c) => `Cómo recupera ${c} el control`, keep_going: (c) => `Cómo sigue ${c} mandando`, analysis: "Análisis MatchLens",
       at: "Min.", last15: "Últ. 15'", modelled: "* estimado con datos de seguimiento.", tap_club: "Toca un club para ver sus jugadores.",
       back: "Volver", not_on: "Todavía no ha salido al campo.", on: "entra", sub: "suplente", passes: "pases",
@@ -231,6 +235,7 @@
     hideCard(true);
     hideRecap();
     hideTag();
+    seekNotes();
     drawFollow();
     render();
     renderPanel();
@@ -264,13 +269,17 @@
     const pts = bundle.momentum.map((v, m) => [m + 0.5, 50 - (v - 50)]);
     const above = pts.map(([x, y]) => `${x},${Math.min(y, 50)}`).join(" ");
     const below = pts.map(([x, y]) => `${x},${Math.max(y, 50)}`).join(" ");
-    svg.innerHTML = `
-      <defs><clipPath id="played"><rect id="playedRect" x="0" y="0" width="0" height="100"/></clipPath></defs>
-      <g clip-path="url(#played)">
+    const chart = (id) => `
+      <defs><clipPath id="${id}"><rect class="played-rect" x="0" y="0" width="0" height="100"/></clipPath></defs>
+      <g clip-path="url(#${id})">
         <polygon class="tl-area-home" points="0.5,50 ${above} ${pts.length - 0.5},50"/>
         <polygon class="tl-area-away" points="0.5,50 ${below} ${pts.length - 0.5},50"/>
       </g>
       <line class="tl-zero" x1="0" x2="${n}" y1="50" y2="50" vector-effect="non-scaling-stroke"/>`;
+    svg.innerHTML = chart("played");
+    // the same history, slim, along the bottom of the feed in full screen
+    $("miniChart").setAttribute("viewBox", `0 0 ${n} 100`);
+    $("miniChart").innerHTML = chart("playedMini");
     $("tlHt").style.left = xOf(bundle.half_time_m);
     // ticks sit on the broadcast clock, so the second half starts at the real restart
     const tickM = (c) => (c < 45 ? c : bundle.half_time_m + (c - 45));
@@ -298,6 +307,7 @@
     nextCard = bundle.cards.findIndex((c) => c.at > t);
     if (nextCard < 0) nextCard = bundle.cards.length;
     seekMoments();
+    seekNotes();
     hideCard(true);
     hideTag();
     if (t < bundle.minutes) hideRecap();
@@ -350,13 +360,12 @@
     if (setText(aEl, a) && t > 0) bump(aEl);
 
     $("moTrack").style.setProperty("--m", `${momentumAt(t)}%`);
-    $("moMini").style.setProperty("--m", `${momentumAt(t)}%`);
+    $("miniHead").style.left = `${(100 * t) / bundle.minutes}%`;
 
     const p = (100 * t) / bundle.minutes;
     $("tlProgress").style.width = `${p}%`;
     $("tlHead").style.left = `${p}%`;
-    const rect = document.getElementById("playedRect");
-    if (rect) rect.setAttribute("width", String(t));
+    for (const rect of document.querySelectorAll(".played-rect")) rect.setAttribute("width", String(t));
     for (const el of document.querySelectorAll(".tl-ev")) {
       const done = Number(el.dataset.m) + 0.5 <= t;
       el.classList.toggle("done", done);
@@ -1256,10 +1265,12 @@
       }
       if (!showing && nextCard < bundle.cards.length && t >= bundle.cards[nextCard].at) {
         cardOpen = params.get("open") === "1"; // each card comes up simple
+        momentumNote(bundle.cards[nextCard]);
         showCard(bundle.cards[nextCard]);
         nextCard++;
       }
       moments(now);
+      notes(now);
       if (t >= bundle.minutes && !cardUntil) {
         setPlaying(false);
         showRecap();
@@ -1267,6 +1278,76 @@
       render();
     }
     requestAnimationFrame(frame);
+  }
+
+  // ---------- notifications: what just happened, in the middle of the feed ----------
+  // With no pictures to watch, goals, substitutions and red cards pop up as they happen, and a
+  // momentum shift pops up with the card that explains it, so the card never arrives cold.
+  // Only what the clock has passed is shown, so a generated match can't give anything away early.
+  const NOTE_SECONDS = 3.6;
+  const BIG_SHIFT = 40; // points of the home side's momentum share between before and now
+  let noteQueue = []; // notes due, waiting for the one on screen to go
+  let noteUntil = 0;
+  let noteDone = new Set(); // timeline events already shown (or skipped by a seek)
+  const noteKey = (e) => `${e.kind}:${e.m}:${e.team}:${e.player}`;
+  const NOTE_KINDS = ["goal", "substitution", "red_card"];
+
+  function seekNotes() {
+    noteQueue = [];
+    noteDone = new Set(bundle.timeline.filter((e) => e.m + 0.5 <= t).map(noteKey));
+    hideNote();
+  }
+
+  function eventNote(e) {
+    const team = teamById(e.team);
+    if (e.kind === "goal") return { kind: "goal", team, big: `${w("n_goal")} · ${team.short_name}`, small: e.player };
+    if (e.kind === "red_card") return { kind: "red", team, big: `${w("n_red")} · ${team.short_name}`, small: e.player };
+    return { kind: "sub", team, big: `${w("n_sub")} · ${team.short_name}`, small: w("n_on_off", e.player, e.player_off) };
+  }
+
+  // the card's own momentum, before its anchor and now: which way, and how far
+  function momentumNote(c) {
+    if (!c || !["shift", "recovery"].includes(c.kind) || !c.momentum) return;
+    const swing = c.momentum.now - c.momentum.before;
+    const [home, away] = bundle.teams;
+    const team = swing >= 0 ? home : away;
+    const big = Math.abs(swing) >= BIG_SHIFT;
+    noteQueue.unshift({ kind: big ? "shift big" : "shift", team, big: w(big ? "n_big" : "n_shift"), small: w("n_towards", team.short_name) });
+    if (noteUntil) noteUntil = 0; // the card is here now: its context goes up straight away
+  }
+
+  function notes(now) {
+    for (const e of bundle.timeline) {
+      if (!NOTE_KINDS.includes(e.kind) || e.m + 0.5 > t || noteDone.has(noteKey(e))) continue;
+      noteDone.add(noteKey(e));
+      noteQueue.push(eventNote(e));
+    }
+    if (noteUntil && now < noteUntil) return;
+    if (noteQueue.length) showNote(noteQueue.shift(), now);
+    else if (noteUntil) hideNote();
+  }
+
+  const SUB_ICON =
+    '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 15V5M6 5l-3 3M6 5l3 3" stroke="#00ff85" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M14 5v10M14 15l-3-3M14 15l3-3" stroke="#e90052" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>';
+  const NOTE_ICONS = { goal: ICONS.goal, red: ICONS.red_card, sub: SUB_ICON, shift: ICONS.shift, "shift big": ICONS.shift };
+
+  function showNote(n, now) {
+    const el = $("note");
+    const side = n.team === bundle.teams[0] ? "var(--home)" : "var(--away)";
+    el.className = `note-pop kind-${n.kind.replace(" ", " kind-")}`;
+    el.style.setProperty("--club", side);
+    el.innerHTML = `<span class="np-icon">${NOTE_ICONS[n.kind]}</span><span class="np-text"><b>${esc(n.big)}</b>${n.small ? `<span>${esc(n.small)}</span>` : ""}</span>`;
+    el.hidden = false;
+    void el.offsetWidth;
+    el.classList.add("on");
+    noteUntil = now + NOTE_SECONDS * 1000;
+  }
+
+  function hideNote() {
+    noteUntil = 0;
+    const el = $("note");
+    el.classList.remove("on");
+    el.hidden = true;
   }
 
   // follow mode: pop the next tag when the clock reaches it; one at a time
