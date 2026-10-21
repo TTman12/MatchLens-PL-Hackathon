@@ -239,29 +239,30 @@
   // "Progressive passes" -> "progressive passes", but "xG" stays as it is
   const lower = (label) => (/^[A-Z][a-z]/.test(label) ? label[0].toLowerCase() + label.slice(1) : label);
 
-  // One line to read, then one number to the next: "Brackenford's progressive passes  2 -> 5 ▲".
-  // The colour chip says whose stat it is; the faded number is before, the solid one is now.
+  // A count before the anchor is a rate scaled to the window (6.9 in 6 minutes): shown against a
+  // whole number now, it reads as a whole number too, unless it is under 1
+  function before(s) {
+    const n = Number(s.usual);
+    if (!/^\d+$/.test(s.value) || !Number.isFinite(n) || n < 1) return s.usual;
+    return String(Math.round(n));
+  }
+
+  // One line to read, then one number to the next: "Brackenford's progressive passes  2 -> 5".
+  // The colour chip says whose stat it is; the faded number is before, the solid one is now, so
+  // the numbers show the direction on their own. A substitute is against the player he replaced.
   function statRow(s) {
     const team = teamById(s.team);
     const side = team === bundle.teams[0] ? "var(--home)" : "var(--away)";
-    const title = `${s.player || team.short_name}'s ${lower(s.label)}`;
-    const sub = [s.window ? `last ${s.window.replace("in ", "")}` : "", s.usual_label !== "before" ? `vs ${s.usual_label}` : ""]
-      .filter(Boolean)
-      .join(" · ");
-    const unit = s.unit ? `<span class="stat-unit">${s.unit}</span>` : "";
-    const dir = s.rise ? "up" : "down";
+    const vs = s.usual_label && s.usual_label !== "before" ? ` vs ${s.usual_label.replace(/ \(off\)$/, "")}` : "";
+    const title = `${s.player || team.short_name}'s ${lower(s.label)}${vs}`;
     return `
       <div class="stat">
         <span class="stat-strip" style="background:${side}"></span>
-        <span class="stat-text">
-          <div class="stat-label">${esc(title)}</div>
-          ${sub ? `<div class="stat-sub">${esc(sub)}</div>` : ""}
-        </span>
+        <span class="stat-label">${esc(title)}</span>
         <span class="stat-nums" aria-label="${esc(`${s.usual} to ${s.value}`)}">
-          <span class="stat-old">${s.usual}</span>
+          <span class="stat-old">${before(s)}</span>
           <svg class="stat-to" viewBox="0 0 26 12" aria-hidden="true"><path d="M1 6h21M17 1.5 23 6l-6 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span class="stat-value">${s.value}${unit}</span>
-          <span class="stat-dir ${dir}">${s.rise ? "▲" : "▼"}</span>
+          <span class="stat-value">${s.value}</span>
         </span>
       </div>`;
   }
@@ -273,30 +274,17 @@
 
   function showCard(c) {
     const el = $("card");
-    const [home, away] = bundle.teams;
     el.className = `card kind-${c.kind}`;
     el.innerHTML = `
       <div class="card-head">
         <div class="card-anchor">${c.anchor}</div>
       </div>
       <div class="card-text" id="cardText">${esc(cardText(c))}</div>
-      <div class="card-body">${c.stats.map(statRow).join("")}</div>
-      <div class="card-foot">
-        <span class="cf-label">Momentum</span>
-        <span class="cf-code">${home.code}</span>
-        <div class="grad-bar cf-bar" style="--m:${c.momentum.before}%;--was:${c.momentum.before}%">
-          <div class="gb-was"></div><div class="gb-now"></div>
-        </div>
-        <span class="cf-code">${away.code}</span>
-      </div>`;
+      <div class="card-body">${c.stats.map(statRow).join("")}</div>`;
     el.hidden = false;
     void el.offsetWidth;
     el.classList.add("on");
     phase = "stats";
-    // after the entry, move the bar from where momentum was to where it is; a faded line stays at "was"
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => el.querySelector(".cf-bar").style.setProperty("--m", `${c.momentum.now}%`)),
-    );
     cardUntil = performance.now() + CARD_SECONDS * 1000;
     hoodCard = c;
     if (tab === "agents") renderPanel();
@@ -325,15 +313,13 @@
     const el = $("card");
     const team = teamById(a.team);
     const side = team === bundle.teams[0] ? "var(--home)" : "var(--away)";
-    const ask = a.mode === "fix" ? "How to win it back" : "How to keep it going";
+    const ask = a.mode === "fix" ? `How ${team.short_name} win it back` : `How ${team.short_name} keep it going`;
     el.className = "card analysis";
     el.innerHTML = `
       <div class="card-head">
-        <div class="card-anchor"><span class="an-mark">MatchLens analysis</span></div>
+        <div class="card-anchor"><span class="an-chip" style="background:${side}"></span>${esc(ask)}<span class="an-mark">MatchLens analysis</span></div>
       </div>
-      <div class="an-club"><span class="an-chip" style="background:${side}"></span>${esc(team.short_name)}<span class="an-ask">${ask}</span></div>
       <div class="card-text" id="cardText">${esc(a.line)}</div>
-      <div class="an-why">The number behind it</div>
       <div class="card-body">${statRow(a.stat)}</div>`;
     el.hidden = false;
     void el.offsetWidth;
