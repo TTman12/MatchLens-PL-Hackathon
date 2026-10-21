@@ -32,6 +32,7 @@ from ..explain.specialists import SPECIALISTS, Finding
 from ..explain.stories import BY_KEY as STORIES
 from ..explain.stories import find_stories
 from ..explain.watcher import Moment, momentum_series, watch
+from ..telemetry import span
 from .board import Board, is_stat
 from .roles import EXPLAINER, SPECIALIST_ROLES, Role
 from .runners import Runner, RunnerError, ToolSpec, make_runner
@@ -124,6 +125,13 @@ def parse(text: str, keys: tuple[str, ...]) -> dict[str, Any]:
 
 
 async def run_specialist(runner: Runner, role: Role, job: Job) -> bool:
+    with span(f"specialist {role.key}", specialist=role.key) as note:
+        ok = await _run_specialist(runner, role, job)
+        note(status=job.trace[-1]["status"] if job.trace else "failed", findings=len(job.board.by_agent().get(role.key, [])))
+        return ok
+
+
+async def _run_specialist(runner: Runner, role: Role, job: Job) -> bool:
     t0 = time.monotonic()
     tool = specialist_tool(job, role.key)
     try:
@@ -195,14 +203,19 @@ async def run_explainer(runner: Runner, job: Job) -> tuple[Option, list[Finding]
     rejected: tuple[dict[str, Any], list[str]] | None = None
     for round_ in (1, 2):
         t0 = time.monotonic()
-        try:
-            draft = parse(await runner.run(EXPLAINER, explainer_prompt(job, rejected), [check_tool(job)], job), ("cause",))
-            cause_id = str(draft.get("cause"))
-            stat_ids = [str(s) for s in draft.get("stats") or []]
-        except (RunnerError, ValueError, TypeError) as exc:
-            job.log("explainer", "failed", t0, error=str(exc)[:200], round=round_)
-            return None
-        problems = job.verifier.check(cause_id, stat_ids)
+        with span("explainer", round=round_) as note:
+            try:
+                draft = parse(await runner.run(EXPLAINER, explainer_prompt(job, rejected), [check_tool(job)], job), ("cause",))
+                cause_id = str(draft.get("cause"))
+                stat_ids = [str(s) for s in draft.get("stats") or []]
+            except (RunnerError, ValueError, TypeError) as exc:
+                job.log("explainer", "failed", t0, error=str(exc)[:200], round=round_)
+                note(status="failed")
+                return None
+            with span("verifier", round=round_) as checked:
+                problems = job.verifier.check(cause_id, stat_ids)
+                checked(passed=not problems, problems=problems)
+            note(status="rejected" if problems else "passed", cause=cause_id, stats=stat_ids)
         job.log("explainer", "ok", t0, round=round_, cause=cause_id, stats=stat_ids, why=str(draft.get("why") or "")[:160])
         job.trace.append(
             {"agent": "verifier", "status": "rejected" if problems else "passed", "problems": problems, "round": round_}
@@ -219,6 +232,18 @@ def _cause(o: Option) -> dict[str, Any]:
 
 
 async def explain_moment(runner: Runner, md_full: MatchData, m: Moment) -> dict[str, Any]:
+    clock = md_full.clock_of(m.now - 1)
+    with span(f"moment {clock}", clock=clock, mode=m.mode, gainer=m.gainer or "", swing=round(m.swing, 1)) as note:
+        card = await _explain_moment(runner, md_full, m)
+        a = card["agents"]
+        note(cause=card["cause"]["kind"], fallback=a["fallback"], board=a["board"], checks=a["checks"], missing=a["missing"])
+        if a["fallback"]:
+            with span("fallback", reason="explainer gave no verified card"):
+                pass
+        return card
+
+
+async def _explain_moment(runner: Runner, md_full: MatchData, m: Moment) -> dict[str, Any]:
     job = Job(md_full.until(m.now), m, md_full.clock_of(m.now - 1))
     reported = await asyncio.gather(*(run_specialist(runner, r, job) for r in SPECIALIST_ROLES))
     found = job.board.by_agent()
@@ -270,7 +295,11 @@ def offline_answer(role: Role, tools: list[ToolSpec], job: Job) -> str:
 
 
 async def explain_match_async(md: MatchData, runner: Runner) -> dict[str, Any]:
-    cards = await asyncio.gather(*(explain_moment(runner, md, m) for m in watch(md)))
+    with span(f"match {md.meta['match_id']}", match_id=md.meta["match_id"], runner=runner.name):
+        with span("watcher") as note:
+            moments = watch(md)
+            note(moments=len(moments))
+        cards = await asyncio.gather(*(explain_moment(runner, md, m) for m in moments))
     return {
         "match_id": md.meta["match_id"],
         "teams": [{"team_id": t["team_id"], "name": t["name"], "short_name": t.get("short_name")} for t in md.meta["teams"]],

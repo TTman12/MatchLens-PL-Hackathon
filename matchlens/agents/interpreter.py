@@ -19,9 +19,11 @@ from typing import Any
 
 from ..explain.insight import lines
 from ..explain.match import MatchData
+from ..telemetry import span
 from .crew import parse
 from .roles import INTERPRETER
 from .runners import Runner, RunnerError
+from .safety import screen
 
 MAX_WORDS = 24
 UNSEEN = re.compile(
@@ -114,7 +116,7 @@ async def interpret(runner: Runner, job: InterpretJob) -> tuple[dict[str, str], 
         except (RunnerError, ValueError, TypeError) as exc:
             job.trace.append({"round": round_, "status": "failed", "error": str(exc)[:200], "ms": _ms(t0)})
             break
-        problems = check_lines(job, draft)
+        problems = check_lines(job, draft) or await screen(runner, {k: str(draft[k]) for k in keys})
         job.trace.append({"round": round_, "status": "rejected" if problems else "passed", "problems": problems, "ms": _ms(t0)})
         if not problems:
             return {k: str(draft[k]).strip() for k in keys}, False
@@ -136,4 +138,5 @@ async def interpret_cards(runner: Runner, md: MatchData, cards: list[dict[str, A
         card["text"], fallback = await interpret(runner, job)
         card.setdefault("agents", {})["interpreter"] = {"fallback": fallback, "rounds": job.trace}
 
-    await asyncio.gather(*(one(c) for c in cards))
+    with span("interpreter", cards=len(cards)):
+        await asyncio.gather(*(one(c) for c in cards))

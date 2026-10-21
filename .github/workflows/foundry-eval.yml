@@ -1,0 +1,49 @@
+name: Foundry evaluation
+
+# Scores every line on the live screen (the Interpreter's reads and the Analyst's "what next" lines)
+# with Foundry Evaluations: groundedness, relevance and coherence judged by the project's model,
+# plus a code check that every number is on the card. The run is logged to the Foundry project's
+# Evaluations page; the report is the job summary and an artifact.
+#
+# Signs in with OpenID Connect as matchlens-ci (Azure AI Developer on the Foundry account), so it
+# needs no secret. Run it by hand from main: Actions > Foundry evaluation > Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: Score only the first N lines (empty means all, about 200 lines and a few cents)
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_CLIENT_ID: 519837f7-fa8b-46b8-b6d0-1d6932fecf14
+  AZURE_TENANT_ID: 8b829b13-deec-40a6-982d-77a85344399f
+  AZURE_AI_PROJECT_ENDPOINT: https://matchlens-foundry-812.services.ai.azure.com/api/projects/matchlens
+  AZURE_AI_MODEL: gpt-4.1-mini
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[eval]"
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      - name: Score the on-screen lines
+        run: matchlens-foundry-eval web/data --out out/foundry-eval ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
+      - if: always()
+        run: cat out/foundry-eval/report.md >> "$GITHUB_STEP_SUMMARY" || true
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: foundry-eval
+          path: out/foundry-eval

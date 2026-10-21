@@ -21,6 +21,7 @@ from .crew import parse
 from .interpreter import TEN_MEN, UNSEEN
 from .roles import RECAPPER
 from .runners import Runner, RunnerError
+from .safety import screen
 
 MAX_WORDS = 20
 WIN = re.compile(r"\b(beat|beats|beaten|won|wins|victory|defeat\w*|winners?|lost|loses|losing)\b", re.I)
@@ -106,7 +107,7 @@ async def write_recap(runner: Runner, job: RecapJob) -> tuple[dict[str, str], bo
         except (RunnerError, ValueError, TypeError) as exc:
             job.trace.append({"round": round_, "status": "failed", "error": str(exc)[:200], "ms": _ms(t0)})
             break
-        problems = check_recap(job, draft)
+        problems = check_recap(job, draft) or await screen(runner, {k: str(draft[k]) for k in keys})
         job.trace.append({"round": round_, "status": "rejected" if problems else "passed", "problems": problems, "ms": _ms(t0)})
         if not problems:
             return {k: str(draft[k]).strip() for k in keys}, False

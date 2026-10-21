@@ -116,6 +116,24 @@ The truth can't score substitution claims yet, so it can't say whether the agent
 
 Run it with `matchlens-explain-eval --matches 30 --agents foundry`. CI runs the offline crew only, which gives the same cards as the deterministic Explainer.
 
+## Content Safety
+
+The Interpreter, the Analyst and the Recapper write the free text that goes on air. Each line in a draft goes through Azure AI Content Safety's text analysis (hate, sexual, violence, self-harm) before the draft is accepted. Content Safety runs on the same Foundry account and signs in with Entra ID. A line at severity 2 or more counts as a problem, just like a wrong number: the draft goes back once with the problem listed, and a second miss falls back to the rule-written lines. The bundle counts how many lines were screened, flagged or left unscreened (`agents.content_safety`). If the service can't be reached, the run carries on and the count says so. The code is in `matchlens/agents/safety.py`.
+
+## Foundry Evaluations
+
+The Verifier proves the numbers. `matchlens-foundry-eval` scores the words, as a Foundry evaluation run that appears on the project's Evaluations page. Every line on the live screen becomes a row: each card's read and each "what next" line, for the neutral viewer and for each club's fans. The row's context is what the card shows and knows. The scores are:
+- **groundedness**, **relevance** and **coherence**, from the Azure AI Evaluation SDK with the project's own model as judge (1 to 5; a line passes at 3);
+- **numbers on card**, a code check that every number in the line is on the card.
+
+The report lists the weakest lines with the judge's reasons, so the weak spots are on the record. Run it from GitHub (Actions > Foundry evaluation; it signs in with OIDC), or locally with `pip install -e ".[eval]"` and `matchlens-foundry-eval web/data`. `--offline` runs the code check only, and that is what CI tests.
+
+## Tracing
+
+Every Foundry run is traced with OpenTelemetry into the Application Insights resource linked to the Foundry project, so each run shows up on the Foundry portal's **Tracing** page with no setup. One match is one trace. The code steps are spans of their own: the Watcher, each moment, each specialist, each Explainer round, the Verifier's check and any fallback. The agents' own calls (`invoke_agent`, `chat`, `execute_tool`) come from Microsoft Agent Framework and sit underneath them. That makes it easy to see which agent was slow, which draft the Verifier rejected and why, and what each call cost in tokens.
+
+The connection string comes from `APPLICATIONINSIGHTS_CONNECTION_STRING`, or failing that from the project. `MATCHLENS_TRACING=off` turns tracing off, and `MATCHLENS_TRACE_CONTENT=0` leaves prompts and replies out of the traces. The code is in `matchlens/telemetry.py`. The offline runner and CI use the same spans as no-ops.
+
 ## Code
 
 - `matchlens/agents/board.py`: the findings board.
@@ -124,6 +142,9 @@ Run it with `matchlens-explain-eval --matches 30 --agents foundry`. CI runs the 
 - `matchlens/agents/crew.py`: the crew, and `matchlens-agents`.
 - `matchlens/agents/runners.py`: the Foundry and offline runners.
 - `matchlens/agents/interpreter.py`, `analyst.py`, `recapper.py`, `translator.py`: the agents after the card, each with its check and fallback.
+- `matchlens/telemetry.py`: tracing to Application Insights.
+- `matchlens/agents/safety.py`: Content Safety on the on-screen lines.
+- `matchlens/foundry_eval.py`: Foundry Evaluations, and `matchlens-foundry-eval`.
 
 Tests in `tests/test_agents.py` cover the following:
 - the offline crew gives the same cards as the deterministic Explainer;
@@ -131,3 +152,5 @@ Tests in `tests/test_agents.py` cover the following:
 - a fixed draft passes on its second round;
 - a failed specialist lowers confidence;
 - the Verifier catches a number that no longer matches the tables.
+
+`tests/test_telemetry.py` checks that a match is a single trace, with every moment, specialist and Verifier check in its place.

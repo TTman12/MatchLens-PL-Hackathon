@@ -14,7 +14,15 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
 # Running the agents on Microsoft Foundry (matchlens-agents --runner foundry).
-foundry = ["agent-framework-core>=1.22,<2", "agent-framework-foundry>=1.15,<2", "azure-identity>=1.26"]
+foundry = [
+    "agent-framework-core>=1.22,<2",
+    "agent-framework-foundry>=1.15,<2",
+    "azure-identity>=1.26",
+    "azure-monitor-opentelemetry>=1.6",
+    "azure-ai-contentsafety>=1.0",
+]
+# Scoring the on-screen lines with Foundry Evaluations (matchlens-foundry-eval).
+eval = ["azure-ai-evaluation>=1.10", "azure-identity>=1.26"]
 
 [project.scripts]
 matchlens-gen = "matchlens.gen.cli:main"
@@ -23,6 +31,7 @@ matchlens-explain = "matchlens.explain.cli:main"
 matchlens-explain-eval = "matchlens.explain.evaluate:main"
 matchlens-broadcast = "matchlens.broadcast.bundle:main"
 matchlens-agents = "matchlens.agents.crew:main"
+matchlens-foundry-eval = "matchlens.foundry_eval:main"
 matchlens-feed = "matchlens.ingest.cli:main"
 
 [tool.setuptools.packages.find]
@@ -50,7 +59,7 @@ files = ["matchlens"]
 
 [[tool.mypy.overrides]]
 # the Foundry SDKs are an optional extra, imported lazily
-module = ["agent_framework", "agent_framework.*", "agent_framework_foundry", "azure.*"]
+module = ["agent_framework", "agent_framework.*", "agent_framework_foundry", "azure.*", "opentelemetry", "opentelemetry.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
