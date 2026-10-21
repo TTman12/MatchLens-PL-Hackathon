@@ -810,9 +810,47 @@ body { display: grid; place-items: center; overflow: hidden; }
   letter-spacing: 0.05em;
   text-shadow: 0 0 0.4cqw rgba(0, 0, 0, 0.6);
 }
-.is-full .mo-mini .grad-bar { flex: 1; height: 0.55cqw; transition: --m 0.9s var(--ease); }
-.is-full .card, .is-full .recap { bottom: 6.4cqw; }
+.mini-keys { display: flex; flex-direction: column; justify-content: space-between; height: 2.6cqw; font-size: 0.8cqw; line-height: 1; }
+.mini-chart { position: relative; flex: 1; height: 2.6cqw; }
+.mini-chart svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.mini-chart .tl-area-home, .mini-chart .tl-area-away { opacity: 0.9; }
+.mini-chart .tl-zero { stroke: rgba(255, 255, 255, 0.45); }
+.mini-head { position: absolute; top: -0.2cqw; bottom: -0.2cqw; width: 0.2cqw; margin-left: -0.1cqw; background: var(--secondary); box-shadow: 0 0 0 0.08cqw rgba(0, 0, 0, 0.4); }
+.is-full .card, .is-full .recap { bottom: 7.6cqw; }
 #fullBtn { display: grid; place-items: center; }
 #fullBtn svg { width: 1.2cqw; height: 1.2cqw; }
 .vbar #fullBtn { width: 2.4cqw; height: 2.4cqw; padding: 0; }
 .controls #fullBtn svg { width: 0.9cqw; height: 0.9cqw; }
+
+/* ---------- notifications: what just happened, in the middle of the feed ---------- */
+.note-pop {
+  zoom: 0.9;
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: stretch;
+  max-width: 40cqw;
+  background: var(--secondary);
+  color: var(--primary);
+  border-left: 0.5cqw solid var(--club, var(--accent));
+  box-shadow: 0 0.4cqw 1.6cqw rgba(0, 0, 0, 0.5);
+  font-family: var(--display);
+  pointer-events: none;
+}
+.note-pop[hidden] { display: none; }
+.note-pop.on { animation: note-in 0.45s var(--ease) both; }
+@keyframes note-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.85); } to { opacity: 1; transform: translate(-50%, -50%); } }
+.np-icon { display: grid; place-items: center; width: 3.4cqw; background: var(--primary); color: var(--secondary); }
+.np-icon svg { width: 1.8cqw; height: 1.8cqw; }
+.np-text { display: flex; flex-direction: column; justify-content: center; padding: 0.5cqw 1.2cqw 0.55cqw; }
+.np-text b { font-weight: 800; font-size: 1.7cqw; line-height: 1.05; text-transform: uppercase; letter-spacing: 0.02em; white-space: nowrap; }
+.np-text span { font-weight: 700; font-size: 1.05cqw; letter-spacing: 0.03em; opacity: 0.75; white-space: nowrap; }
+/* a goal, and a big shift, take the scoring club's colour */
+.note-pop.kind-goal .np-icon, .note-pop.kind-big .np-icon { background: var(--club); }
+.note-pop.kind-goal, .note-pop.kind-big { background: var(--primary); color: var(--secondary); border-left-color: var(--accent); }
+.note-pop.kind-goal .np-text b, .note-pop.kind-big .np-text b { font-size: 2.1cqw; }
+.note-pop.kind-red .np-icon { background: var(--pink); }
+.note-pop.kind-shift .np-icon { color: var(--club); }
+.note-pop.kind-big .np-icon { color: var(--secondary); }
