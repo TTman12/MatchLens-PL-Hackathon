@@ -191,6 +191,7 @@ body { display: grid; place-items: center; overflow: hidden; }
 
 /* ---------- pop-up card (lower third of the feed) ---------- */
 .card {
+  zoom: 0.9; /* a touch smaller than the layout it was drawn at */
   position: absolute;
   left: 1.4cqw;
   bottom: 1.4cqw;
@@ -472,9 +473,10 @@ body { display: grid; place-items: center; overflow: hidden; }
 .card-head .xp { pointer-events: auto; }
 .card-cols { display: flex; align-items: stretch; }
 .card-main { flex: 1; min-width: 0; }
-.card.open { width: 61cqw; }
-.card.open .card-main { flex: 0 0 31cqw; }
-.card.open .detail { flex: 1; border-left: 0; }
+/* open: the line stays, the short table takes the big number's place */
+.card.open .detail { padding: 0.55cqw 1.1cqw 0.7cqw; }
+.card.open .dt { font-size: 1cqw; }
+.card.open .dt td { padding: 0.2cqw 0; }
 .card.still .card-head, .card.still .card-text, .card.still .stat { animation: none; }
 .card.on .detail { animation: rise 0.45s var(--ease) both; }
 .detail { background: var(--primary); color: var(--secondary); padding: 0.5cqw 1.1cqw 0.7cqw; border-left: 0.35cqw solid var(--accent); }
@@ -525,10 +527,10 @@ body { display: grid; place-items: center; overflow: hidden; }
 .follow[hidden] { display: none; }
 .fw-name { display: flex; align-items: center; gap: 0.5cqw; font-weight: 700; font-size: 1.25cqw; text-transform: uppercase; letter-spacing: 0.03em; }
 .fw-name .xp { margin-left: auto; width: 1.7cqw; height: 1.7cqw; padding: 0; justify-content: center; }
-.follow.open { width: 27cqw; }
-.follow.open .fw-nums { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.45cqw 0.8cqw; margin: 0.45cqw 0 0.5cqw; }
+.follow.open { width: 20cqw; }
+.follow.open .fw-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45cqw 0.8cqw; margin: 0.45cqw 0 0.2cqw; }
 .fw-sub { font-size: 0.65cqw; color: var(--mist); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.2cqw; }
-.fw-open .tag { top: 17.4cqw; }
+.fw-open .tag { top: 13.6cqw; }
 .fw-role { color: var(--faint); font-size: 0.8cqw; letter-spacing: 0.1em; }
 .fw-nums { display: flex; gap: 1cqw; margin: 0.3cqw 0 0.35cqw; }
 .fs { display: flex; flex-direction: column; }
@@ -618,6 +620,7 @@ body { display: grid; place-items: center; overflow: hidden; }
    to pick on the right, the controls inside the feed like a video player's. */
 .mode-user .panel, .mode-admin .picker, .mode-admin .vbar { display: none; }
 .mode-user .card { bottom: 4.6cqw; }
+.mode-user .controls { display: none; } /* the match list and Generate match are admin-only */
 .mode-user .recap { bottom: 4.6cqw; }
 .mode-btn { white-space: nowrap; }
 
@@ -672,7 +675,7 @@ body { display: grid; place-items: center; overflow: hidden; }
 .pk-sec { padding: 0.9cqw 1.1cqw 0; }
 .pk-title { margin: 0 0 0.6cqw; font-family: var(--display); font-weight: 700; font-size: 1.15cqw; letter-spacing: 0.14em; text-transform: uppercase; }
 .pk-note { margin: 0.45cqw 0 0; color: var(--mist); font-size: 0.85cqw; line-height: 1.3; min-height: 1.1cqw; }
-.crests { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5cqw; }
+.crests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7cqw; }
 .crest-btn {
   position: relative;
   display: flex;
@@ -691,7 +694,6 @@ body { display: grid; place-items: center; overflow: hidden; }
 .crest-btn:hover { background: rgba(255, 255, 255, 0.12); }
 .crest-btn .crest { width: 3.6cqw; height: 3.6cqw; filter: drop-shadow(0 0.15cqw 0.3cqw rgba(0, 0, 0, 0.4)); }
 .crest-name { font-family: var(--display); font-weight: 700; font-size: 0.85cqw; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; }
-.crest-btn.playing::after { content: ""; position: absolute; top: 0.4cqw; right: 0.4cqw; width: 0.45cqw; height: 0.45cqw; border-radius: 50%; background: #00ff85; }
 .crest-btn.on { background: var(--secondary); color: var(--primary); box-shadow: 0 0 0 0.2cqw var(--accent), 0 0.4cqw 1cqw rgba(0, 0, 0, 0.45); transform: translateY(-0.2cqw); }
 
 .pk-players { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-top: 0.4cqw; border-top: 1px solid var(--line); }
@@ -790,3 +792,27 @@ body { display: grid; place-items: center; overflow: hidden; }
 }
 .pk-admin:hover { color: var(--secondary); border-color: var(--secondary); }
 .prefs .mode-btn { font-size: 0.8cqw !important; }
+
+/* ---------- full screen: the feed fills the screen, the graphics keep their size ---------- */
+.video:fullscreen, .video:-webkit-full-screen { width: 100%; height: 100%; left: 0; top: 0; box-shadow: none; }
+.mo-mini { display: none; }
+.is-full .mo-mini {
+  position: absolute;
+  left: 1.4cqw;
+  right: 1.4cqw;
+  bottom: 3.9cqw;
+  display: flex;
+  align-items: center;
+  gap: 0.6cqw;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95cqw;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 0.4cqw rgba(0, 0, 0, 0.6);
+}
+.is-full .mo-mini .grad-bar { flex: 1; height: 0.55cqw; transition: --m 0.9s var(--ease); }
+.is-full .card, .is-full .recap { bottom: 6.4cqw; }
+#fullBtn { display: grid; place-items: center; }
+#fullBtn svg { width: 1.2cqw; height: 1.2cqw; }
+.vbar #fullBtn { width: 2.4cqw; height: 2.4cqw; padding: 0; }
+.controls #fullBtn svg { width: 0.9cqw; height: 0.9cqw; }

@@ -1,6 +1,6 @@
 # Generate match: an unseen match, live on the site
 
-The live site plays six prebuilt demo matches. **Generate match** (or the G key) makes a brand-new
+The live site plays six prebuilt demo matches. **Generate match** (on the admin screen, `?mode=admin`, or the G key there) makes a brand-new
 one and plays it through the whole pipeline while you watch, so the unseen-match path
 ([live-feed.md](live-feed.md)) can be seen working rather than taken on trust.
 

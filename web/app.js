@@ -209,6 +209,8 @@
     $("sbAwayCode").textContent = away.code;
     $("moHome").textContent = home.code;
     $("moAway").textContent = away.code;
+    $("miniHome").textContent = home.code;
+    $("miniAway").textContent = away.code;
     club = home.team_id;
     player = null;
     if (follow && !(bundle.follow && bundle.follow[follow])) follow = null;
@@ -348,6 +350,7 @@
     if (setText(aEl, a) && t > 0) bump(aEl);
 
     $("moTrack").style.setProperty("--m", `${momentumAt(t)}%`);
+    $("moMini").style.setProperty("--m", `${momentumAt(t)}%`);
 
     const p = (100 * t) / bundle.minutes;
     $("tlProgress").style.width = `${p}%`;
@@ -432,16 +435,35 @@
     return (es(c) && es(c).anchor) || c.anchor;
   }
 
-  // The expanded card: what the agents settled on, and both clubs before the anchor against since
+  // The expanded card swaps its big numbers for a short before-and-since table: the card's own
+  // stats first, then the stats that moved most, four rows at most, with the cause and momentum above.
+  const DETAIL_ROWS = 4;
+  const num = (v) => parseFloat(String(v).replace(/[^0-9.-]/g, "")) || 0;
+  const moved = (r) =>
+    Math.max(...Object.values(r.values).map(([a, b]) => Math.abs(num(b) - num(a)) / Math.max(Math.abs(num(a)), 1)));
+
+  function detailRows(c) {
+    const d = c.detail;
+    const rows = [];
+    for (const s of c.stats) {
+      const same = d.rows.find((r) => r.label.toLowerCase() === s.label.toLowerCase());
+      const label = s.player ? w("stat_of", s.player, L(s.label)) : L(s.label);
+      rows.push(same ? { ...same, label: L(same.label) } : { label, unit: "", values: { [s.team]: [before(s), s.value] } });
+    }
+    const rest = d.rows.filter((r) => !c.stats.some((s) => s.label.toLowerCase() === r.label.toLowerCase()));
+    rest.sort((a, b) => moved(b) - moved(a));
+    for (const r of rest) if (rows.length < DETAIL_ROWS) rows.push({ ...r, label: L(r.label) });
+    return rows;
+  }
+
   function detailHtml(c) {
     const d = c.detail;
     if (!d) return "";
     const [home, away] = bundle.teams;
-    const cell = (pair) => `<span class="dt-old">${pair[0]}</span>${ARROW}<b>${pair[1]}</b>`;
-    const rows = d.rows
+    const cell = (pair) => (pair ? `<span class="dt-old">${pair[0]}</span>${ARROW}<b>${pair[1]}</b>` : '<span class="dt-old">-</span>');
+    const rows = detailRows(c)
       .map(
-        (r) => `<tr><td>${esc(L(r.label))}${r.unit ? ` <span class="u">${r.unit}</span>` : ""}</td>
-          <td>${cell(r.values[home.team_id])}</td><td>${cell(r.values[away.team_id])}</td></tr>`,
+        (r) => `<tr><td>${esc(r.label)}</td><td>${cell(r.values[home.team_id])}</td><td>${cell(r.values[away.team_id])}</td></tr>`,
       )
       .join("");
     const mo = c.momentum;
@@ -449,7 +471,6 @@
       <div class="detail">
         <div class="dt-meta">
           <span class="dt-chip">${esc(causeName(d.cause))}</span>
-          ${d.confidence != null ? `<span>${Math.round(100 * d.confidence)}% ${w("confidence")}</span>` : ""}
           <span>${w("momentum")} ${home.code} <span class="dt-old">${Math.round(mo.before)}%</span>${ARROW}<b>${Math.round(mo.now)}%</b></span>
         </div>
         <table class="dt"><thead><tr><th>${w("before")} ${ARROW} ${w("since")} · ${d.minutes}'</th>
@@ -466,14 +487,13 @@
     return `<button type="button" class="xp${open ? " open" : ""}" data-expand="${what}" aria-expanded="${open}" aria-label="${label}">${open ? MINUS : PLUS}${words ? `<span>${label}</span>` : ""}</button>`;
   }
 
-  // Simple first: the anchor, one line and one stat. Expand adds the second stat, and beside them
-  // the cause, the confidence, momentum before and now, and both clubs before and since.
+  // Simple first: the anchor, one line and one big stat. Expand keeps the line and puts the short
+  // before-and-since table where the big stat was.
   function showCard(c, animate = true) {
     const el = $("card");
     const open = cardOpen && c.detail;
     el.className = `card kind-${c.kind}${open ? " open" : ""}`;
-    const stats = open ? c.stats : c.stats.slice(0, 1);
-    const more = c.detail || c.stats.length > 1 ? expandBtn("card", !!open) : "";
+    const more = c.detail ? expandBtn("card", !!open) : "";
     el.innerHTML = `
       <div class="card-head">
         <div class="card-anchor">${esc(cardAnchor(c))}</div>${c.by === "rules" ? `<span class="card-by">${w("by_rules")}</span>` : ""}${more}
@@ -481,8 +501,8 @@
       <div class="card-cols">
         <div class="card-main">
           <div class="card-text" id="cardText">${esc(cardText(c))}</div>
-          <div class="card-body">${stats.map(statRow).join("")}</div>
-        </div>${open ? detailHtml(c) : ""}
+          ${open ? detailHtml(c) : `<div class="card-body">${statRow(c.stats[0])}</div>`}
+        </div>
       </div>`;
     el.hidden = false;
     if (animate) {
@@ -672,10 +692,10 @@
     return bundle.stats.players.find((x) => x.id === follow) || null;
   }
 
-  // the strip shows three numbers; Expand shows the player's whole game so far
+  // the strip shows three numbers; Expand shows six
   const FOLLOW_STATS = {
     simple: ["touches", "passes", "distance"],
-    open: ["touches", "passes", "pass_accuracy", "progressive_passes", "duels_won", "defensive_actions", "shots", "xg", "distance", "sprints"],
+    open: ["touches", "passes", "pass_accuracy", "duels_won", "distance", "sprints"],
   };
 
   function drawFollow() {
@@ -691,13 +711,11 @@
     const nums = FOLLOW_STATS[followOpen ? "open" : "simple"]
       .map((k) => `<div class="fs"><b>${on ? fmt(p.stats[k][m], defs[k].unit) : "-"}</b><span>${esc(L(defs[k].label))}</span></div>`)
       .join("");
-    const inv = bundle.follow[p.id].involvement;
     el.classList.toggle("open", followOpen);
     $("stage").classList.toggle("fw-open", followOpen);
     el.innerHTML = `
       <div class="fw-name"><span class="an-chip" style="background:${sideOf(p.team)}"></span><span>${esc(p.name)}</span><span class="fw-role">${p.role}</span>${expandBtn("follow", followOpen, false)}</div>
-      <div class="fw-nums">${nums}</div>
-      ${followOpen ? `<div class="fw-sub">${w("involvement")}</div>` : ""}${spark(inv, Math.ceil((m + 1) / 5), followOpen ? "wide" : "")}`;
+      <div class="fw-nums">${nums}</div>`;
     el.hidden = false;
   }
 
@@ -1050,10 +1068,10 @@
     st.classList.toggle("mode-user", m === "user");
     st.classList.toggle("mode-admin", m === "admin");
     if (m === "user") {
+      // the fan's screen plays the match it opened on: the match list and Generate match stay in admin
       $("vbarLeft").append($("playBtn"));
-      $("vbarRight").prepend($("matchSelect"));
-      $("vbarRight").append($("speedBtn"));
-    } else $("controls").append($("matchSelect"), $("playBtn"), $("speedBtn"));
+      $("vbarRight").append($("speedBtn"), $("fullBtn"));
+    } else $("controls").append($("matchSelect"), $("playBtn"), $("speedBtn"), $("fullBtn"));
     drawPlay();
     if (remember) {
       const q = new URLSearchParams(location.search);
@@ -1066,6 +1084,30 @@
     drawPicker();
     wake();
   }
+
+  // ---------- full screen ----------
+  // The feed goes full screen, like a video player's. Its graphics are sized off the page, not the
+  // screen, so the cards stay the size they were rather than growing with the monitor.
+  const fullEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  function toggleFull() {
+    const v = document.querySelector(".video");
+    if (fullEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else (v.requestFullscreen || v.webkitRequestFullscreen).call(v);
+  }
+  const FULL_ICON =
+    '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>';
+  const EXIT_ICON =
+    '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 3v5H3M17 8h-5V3M12 17v-5h5M3 12h5v5" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>';
+  function drawFull() {
+    const on = Boolean(fullEl());
+    $("fullBtn").innerHTML = on ? EXIT_ICON : FULL_ICON;
+    $("fullBtn").setAttribute("aria-label", on ? "Exit full screen" : "Full screen");
+    $("stage").classList.toggle("is-full", on);
+  }
+  $("fullBtn").addEventListener("click", toggleFull);
+  document.addEventListener("fullscreenchange", drawFull);
+  document.addEventListener("webkitfullscreenchange", drawFull);
+  drawFull();
 
   // the feed's controls fade while the match plays and nobody touches the screen, like a video player
   let idleTimer = 0;
@@ -1156,13 +1198,12 @@
     if (!bundle || mode !== "user") return;
     const k = lens();
     const crest = (id, tm, label) => {
-      const on = (id === "neutral" ? k === "neutral" && fan === "neutral" : fan === id) ? " on" : "";
-      const inMatch = tm && bundle.teams.some((x) => x.team_id === tm.team_id) ? " playing" : "";
-      return `<button type="button" class="crest-btn${on}${inMatch}" data-fan="${id}" role="radio" aria-checked="${!!on}">
+      const on = (id === "neutral" ? k === "neutral" : fan === id) ? " on" : "";
+      return `<button type="button" class="crest-btn${on}" data-fan="${id}" role="radio" aria-checked="${!!on}">
         ${crestSvg(tm)}<span class="crest-name">${esc(label)}</span></button>`;
     };
     $("pkClubTitle").textContent = w("your_club");
-    $("crests").innerHTML = crest("neutral", null, w("neutral")) + clubs.map((tm) => crest(tm.team_id, tm, tm.short_name)).join("");
+    $("crests").innerHTML = crest("neutral", null, w("neutral")) + bundle.teams.map((tm) => crest(tm.team_id, tm, tm.short_name)).join("");
     const fav = clubs.find((x) => x.team_id === fan);
     $("pkClubNote").textContent = fav && k === "neutral" ? w("not_playing", fav.short_name) : fav ? w("fan_note", fav.short_name) : w("neutral_note");
 

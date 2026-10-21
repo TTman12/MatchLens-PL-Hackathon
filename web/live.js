@@ -245,7 +245,9 @@
     }
   });
   document.addEventListener("keydown", (e) => {
-    if ((e.key === "g" || e.key === "G") && e.target.tagName !== "SELECT" && !e.ctrlKey && !e.metaKey) generate();
+    // Generate match is the admin screen's: the user screen plays the match it opened on
+    const admin = $("stage").classList.contains("mode-admin");
+    if (admin && (e.key === "g" || e.key === "G") && e.target.tagName !== "SELECT" && !e.ctrlKey && !e.metaKey) generate();
   });
   setInterval(draw, 500);
 
