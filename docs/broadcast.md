@@ -13,10 +13,16 @@ The screen in `web/` plays a match on a condensed clock. By default 1 match minu
     - one line saying what the numbers mean for the game, written for the viewer's club ([explainer.md](explainer.md));
     - one or two numbers, each against the same team before the anchor. For a substitute, the comparison is with the player they replaced. Where it can, the card pairs two stats that explain each other, rather than showing a lone possession figure. Each number reads as one line and one path: a colour chip for the club, then "Brackenford's progressive passes" (or "Corvcombe's distance vs Brennow" for a substitute), then the number before (small and faded), an arrow and the number now (big and solid). The numbers show which way it went, so there are no extra symbols, and the momentum bar along the bottom of the screen shows momentum, so the card doesn't repeat it.
   - **the MatchLens analysis**, which follows a card when it leaves: what a club could do about the momentum, the take fans argue about. The side that lost it gets "How Dunmoor win it back" ("Dunmoor need to push the line back up and stop inviting Calderwick on"); the side that has it gets "How Calderwick keep it going". A fan of either club sees their own club's; a neutral sees the side that lost momentum. Under the line is the stat behind it. Every idea is backed by a stat in the match ([agents.md](agents.md), step 5).
+  - **the full-time recap**, which takes over the feed at the final whistle (or press F): the score and one headline for the viewer's club, who had the game in each quarter-hour (the home side's share of momentum, as a bar in the two clubs' colours), the three turning points (the cards whose momentum swung most), full-time stat pairs as two-sided bars, and a standout player for each club with the stat that sets them apart.
+  - **follow a player**, when a player is followed: a strip under the score with his name, a few live numbers and a bar for his touches in each five minutes so far. Name tags pop out beside it when something happens (a goal, an assist, a shot, a card, coming on or off) or a running total reaches a set threshold (5 and 10 km covered, 10, 20 and 30 sprints, 25, 50 and 75 passes, 5 and 10 duels won, 5, 10 and 15 defensive actions). His moments sit on the timeline, a card stat about him is outlined, and at full time the recap shows where he finished in his team on each stat and his touches across the match.
 - **Stats panel** (right):
   - **Your club**: neutral or either side. The card sentence is written for that club's fans. The choice is remembered on this device.
+  - **Casual or Analyst**: the same match at two densities.
+    - Casual: a card shows its line and one number; the Clubs tab shows six stats as two-sided bars; the recap shows three stat pairs.
+    - Analyst: a card also shows its second number, the cause the agents settled on and its confidence, momentum before and now, and both clubs on eight stats before the anchor against since it; the Clubs tab is the full table with a "last 15 minutes" column for each club; the recap adds xG and duels won, the momentum swing at each turning point, and the first half against the second.
+  - **EN or ES**: English or Spanish. Every label on screen, every card anchor and stat label, and every line is in the chosen language. The Spanish lines are translations of the English ones, checked in code, or the rules' own Spanish when a translation fails its check ([agents.md](agents.md), step 7). The view and language are remembered on this device.
   - **Clubs**: 24 stats for both sides at the current minute, the leader in bold. Tap a club to see its players.
-  - **Players**: every player who has played, and for each one 14 stats at the current minute.
+  - **Players**: every player who has played, and for each one 14 stats at the current minute. Open a player and press Follow to follow him.
   - **Agents**: what the agents did for the card on screen: each specialist's verdict, the Explainer's reason, whether the Verifier passed the card, and how the Interpreter and the Analyst did.
 
   Distance and sprints are modelled from tracking-style data, and are marked so.
@@ -29,14 +35,17 @@ Card types are **goal**, **red card**, **substitution**, **half-time**, **moment
 
 The page does no analysis. `matchlens-broadcast` runs the Watcher, the specialists, the Explainer and the Director, and writes one JSON bundle per match to `web/data/`. With `--agents foundry`, the agent crew on Microsoft Foundry explains each moment instead ([agents.md](agents.md)). Each card then carries the agents' log, which the Agents tab of the stats panel shows.
 
+Each bundle also carries the recap, follow-a-player and the Spanish screen (`matchlens/broadcast/extras.py`). `--enrich` adds them to the bundles already in `--out`, keeping their cards and the agents' lines; with `--agents foundry` the Recapper and Translator run too, and `--translator azure|agent|offline` picks the translation backend (by default, Azure AI Translator when `AZURE_TRANSLATOR_KEY` is set, else the Translator agent on Foundry).
+
 ```
 matchlens-broadcast --demo 6 --out web/data            # six fresh generated matches
+matchlens-broadcast --demo 6 --out web/data --enrich --agents foundry   # recap + Spanish on the bundles there
 matchlens-broadcast --demo 6 --out web/data --agents foundry   # explained by the agents on Foundry
 matchlens-broadcast out/matches/ash-brk-7 --out web/data   # or any match folder
 cd web && python3 -m http.server 8000                    # then open http://localhost:8000
 ```
 
-**URL options:** `?match=<id>`, `&speed=1|2|4`, `&autoplay=1`, `&hide=1` to hide the operator controls for screen capture, `&tab=clubs|players|agents` to open a panel tab, and `&fan=<team id>` to pick the viewer's club.
+**URL options:** `?match=<id>`, `&speed=1|2|4`, `&autoplay=1`, `&hide=1` to hide the operator controls for screen capture, `&tab=clubs|players|agents` to open a panel tab, `&fan=<team id>` to pick the viewer's club, `&view=casual|analyst`, `&lang=en|es`, and `&follow=<player id>` to follow a player.
 
 **Keys:**
 - Space: play or pause.
@@ -44,6 +53,9 @@ cd web && python3 -m http.server 8000                    # then open http://loca
 - R: restart.
 - H: hide the controls.
 - U: switch between the Agents tab and the Clubs tab.
+- F: jump to full time and the recap.
+- V: switch between Casual and Analyst.
+- L: switch between English and Spanish.
 
 Click the timeline to scrub.
 

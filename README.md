@@ -12,6 +12,7 @@ It is a fresh start for the Microsoft × Premier League hackathon. All match dat
 - **Watcher, specialists and Explainer:** built as deterministic tools that work on any match in the public format. Scored against the hidden truth on unseen matches ([docs/explainer.md](docs/explainer.md)).
 - **Broadcast screen:** score and clock, an always-on momentum scale, a timeline with the momentum history, and pop-up cards chosen by a Director ([docs/broadcast.md](docs/broadcast.md)).
 - **Agents on Microsoft Foundry:** four specialist agents, an Explainer agent and a Verifier share a findings board. Tools compute every number; the models choose; the Verifier rechecks every number against the tables ([docs/agents.md](docs/agents.md)).
+- **Made for every viewer:** a casual view and a denser analyst view, English or Spanish (translated by Azure AI Translator or a Foundry agent and checked in code), follow-a-player mode with name tags at set thresholds, and a full-time recap with a headline from a Recapper agent ([docs/broadcast.md](docs/broadcast.md)).
 - **Next:** a stadium still, then redeploy the live site and record the demo.
 
 ![The broadcast screen](docs/img/broadcast.png)

@@ -26,15 +26,26 @@
         <div class="sb-clock" id="sbClock">0:00</div>
       </div>
 
+      <!-- follow mode: the followed player's strip and his name tags -->
+      <div class="follow" id="follow" aria-live="polite" hidden></div>
+      <div class="tag" id="tag" aria-live="polite" hidden></div>
+
       <!-- the pop-up card, as a lower third over the feed -->
       <div class="card" id="card" aria-live="polite" hidden></div>
+
+      <!-- the full-time recap -->
+      <div class="recap" id="recap" aria-live="polite" hidden></div>
     </section>
 
     <!-- club and player stats, and what the agents did -->
     <aside class="panel" id="panel" aria-label="Stats">
       <div class="fan" role="group" aria-label="Your club">
-        <span class="fan-label">Your club</span>
+        <span class="fan-label" id="fanLabel">Your club</span>
         <div class="fan-opts" id="fanOpts"></div>
+      </div>
+      <div class="prefs">
+        <div class="fan-opts" id="viewOpts" role="group" aria-label="View"></div>
+        <div class="fan-opts" id="langOpts" role="group" aria-label="Language"></div>
       </div>
       <div class="tabs" role="tablist">
         <button type="button" role="tab" data-tab="clubs">Clubs</button>
@@ -47,7 +58,7 @@
     <!-- momentum now, and the match so far -->
     <section class="bottom" aria-label="Momentum and timeline">
       <div class="mo-row">
-        <span class="mo-label">Momentum</span>
+        <span class="mo-label" id="moLabel">Momentum</span>
         <span class="mo-code" id="moHome">HOM</span>
         <div class="grad-bar mo-track" id="moTrack"><div class="gb-mid"></div><div class="gb-now"></div></div>
         <span class="mo-code" id="moAway">AWY</span>
@@ -63,6 +74,7 @@
           <div class="tl-progress" id="tlProgress"></div>
           <div class="tl-ht" id="tlHt"><span>HT</span></div>
           <div class="tl-events" id="tlEvents"></div>
+          <div class="tl-mine" id="tlMe"></div>
           <div class="tl-head" id="tlHead"></div>
         </div>
         <div class="tl-ticks" id="tlTicks"></div>

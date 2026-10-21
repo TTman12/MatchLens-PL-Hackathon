@@ -19,6 +19,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from . import spanish
 from .specialists import Finding
 
 FIX, KEEP = "fix", "keep"  # for the side that lost momentum; for the side that has it
@@ -382,8 +383,8 @@ def _pick(spec: str | dict[str, str], state: str) -> str:
     return spec if isinstance(spec, str) else spec.get(state, spec["*"])
 
 
-def lines(afx: dict[str, Any], picks: dict[str, str] | None = None) -> dict[str, str]:
-    """The deterministic analysis line for each viewer who has one."""
+def lines(afx: dict[str, Any], picks: dict[str, str] | None = None, lang: str = "en") -> dict[str, str]:
+    """The deterministic analysis line for each viewer who has one, in English or Spanish ("es")."""
     picks = picks or default_picks(afx)
     by_id = {o["id"]: o for o in afx["options"]}
     teams = afx["teams"]
@@ -392,8 +393,15 @@ def lines(afx: dict[str, Any], picks: dict[str, str] | None = None) -> dict[str,
         lv = BY_KEY[by_id[picks[team]]["lever"]]
         other = next(t for t in teams if t != team)
         fill = {"T": teams[team]["name"], "O": teams[other]["name"]}
-        out[lens] = _pick(lv.neutral if lens == "neutral" else lv.fan, teams[team]["state"]).format(**fill)
+        out[lens] = lever_line(lv.key, lens == "neutral", teams[team]["state"], fill, lang)
     return out
+
+
+def lever_line(key: str, neutral: bool, state: str, fill: dict[str, str], lang: str = "en") -> str:
+    """One lever's line: for a neutral or for the advised club's fans, in the advised club's game state."""
+    lv = BY_KEY[key]
+    es = spanish.LEVERS[key] if lang == "es" else (lv.neutral, lv.fan)
+    return _pick(es[0] if neutral else es[1], state).format(**fill)
 
 
 def analyse(fx: dict[str, Any], menu_parts: tuple[str, str, list[dict[str, Any]]]) -> dict[str, Any]:
