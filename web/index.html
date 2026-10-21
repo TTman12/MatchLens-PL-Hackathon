@@ -15,12 +15,12 @@
     <div class="backdrop" aria-hidden="true"></div>
 
     <!-- the "video": a still of the stadium stands in for the match feed -->
-    <section class="video" aria-label="Match feed">
+    <section class="video" aria-label="Match feed" data-a11y="feed">
       <div class="feed" aria-hidden="true"></div>
       <div class="feed-note">Synthetic match · no video</div>
 
       <!-- score and clock -->
-      <div class="scorebug" id="scorebug" aria-label="Score">
+      <div class="scorebug" id="scorebug" role="group" aria-label="Score" data-a11y="score">
         <div class="sb-team sb-home"><span class="sb-strip"></span><span class="sb-code" id="sbHomeCode">HOM</span></div>
         <div class="sb-score"><span id="sbHomeGoals">0</span><span class="sb-sep">-</span><span id="sbAwayGoals">0</span></div>
         <div class="sb-team sb-away"><span class="sb-code" id="sbAwayCode">AWY</span><span class="sb-strip"></span></div>
@@ -50,31 +50,31 @@
       <div class="vbar" id="vbar">
         <div class="vbar-left" id="vbarLeft"></div>
         <div class="vbar-right" id="vbarRight">
-          <button id="langBtn" type="button" aria-label="Language">EN</button>
+          <button id="langBtn" type="button" aria-label="Language" data-a11y="language">EN</button>
         </div>
       </div>
     </section>
 
     <!-- club and player stats, and what the agents did -->
-    <aside class="panel" id="panel" aria-label="Stats">
-      <div class="fan" role="group" aria-label="Your club">
+    <aside class="panel" id="panel" aria-label="Stats" data-a11y="stats">
+      <div class="fan" role="group" aria-labelledby="fanLabel">
         <span class="fan-label" id="fanLabel">Your club</span>
         <div class="fan-opts" id="fanOpts"></div>
       </div>
       <div class="prefs">
-        <div class="fan-opts" id="langOpts" role="group" aria-label="Language"></div>
+        <div class="fan-opts" id="langOpts" role="group" aria-label="Language" data-a11y="languages"></div>
         <button type="button" class="mode-btn" data-mode="user" id="toUser">User view</button>
       </div>
-      <div class="tabs" role="tablist">
+      <div class="tabs" role="tablist" aria-label="Stats tabs" data-a11y="tabs">
         <button type="button" role="tab" data-tab="clubs">Clubs</button>
         <button type="button" role="tab" data-tab="players">Players</button>
         <button type="button" role="tab" data-tab="agents">Agents</button>
       </div>
-      <div class="panel-body" id="panelBody"></div>
+      <div class="panel-body" id="panelBody" role="tabpanel"></div>
     </aside>
 
     <!-- user mode: pick a club and a player instead of the stats tabs -->
-    <aside class="picker" id="picker" aria-label="Your club and player">
+    <aside class="picker" id="picker" aria-label="Your club and player" data-a11y="picker">
       <div class="pk-sec">
         <div class="pk-row pk-top">
           <h2 class="pk-title" id="pkClubTitle">Your club</h2>
@@ -86,21 +86,21 @@
       <div class="pk-sec pk-players">
         <div class="pk-row">
           <h2 class="pk-title" id="pkPlayerTitle">Your player</h2>
-          <div class="pk-teams" id="pkTeams" role="tablist"></div>
+          <div class="pk-teams" id="pkTeams" role="tablist" aria-labelledby="pkPlayerTitle"></div>
         </div>
-        <div class="squad" id="squad"></div>
+        <div class="squad" id="squad" role="tabpanel" aria-labelledby="pkPlayerTitle"></div>
       </div>
     </aside>
 
     <!-- momentum now, and the match so far -->
-    <section class="bottom" aria-label="Momentum and timeline">
+    <section class="bottom" aria-label="Momentum and timeline" data-a11y="bottom">
       <div class="mo-row" id="moRow">
         <span class="mo-label" id="moLabel">Momentum</span>
         <span class="mo-code" id="moHome">HOM</span>
         <div class="grad-bar mo-track" id="moTrack"><div class="gb-mid"></div><div class="gb-now"></div></div>
         <span class="mo-code" id="moAway">AWY</span>
-        <nav class="controls" id="controls" aria-label="Playback">
-          <select id="matchSelect" aria-label="Match"></select>
+        <nav class="controls" id="controls" aria-label="Playback" data-a11y="playback">
+          <select id="matchSelect" aria-label="Match" data-a11y="match"></select>
           <button id="playBtn" type="button" aria-label="Play">Play</button>
           <button id="speedBtn" type="button" aria-label="Speed">1x</button>
           <button id="fullBtn" type="button" aria-label="Full screen"></button>

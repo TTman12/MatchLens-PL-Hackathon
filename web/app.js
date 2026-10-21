@@ -85,6 +85,11 @@
       halves: "First half · second half", involvement: "Touches every 5 minutes", before: "before", since: "since",
       confidence: "confidence", stat_of: (who, label) => `${who}'s ${lower(label)}`, rank_at: (club) => `at ${club}`,
       no_bundle_stats: "This match bundle has no stats tables.", by_rules: "Rules-written",
+      // read out by screen readers
+      more_detail: "More detail", less_detail: "Less detail", full: "Full screen", exit_full: "Exit full screen",
+      speed: (x) => `Speed ${x}x`, language: "Language: English, switch to Spanish", feed: "Match feed", score: "Score",
+      playback: "Playback", match: "Match", stats: "Stats", picker: "Your club and player", bottom: "Momentum and timeline",
+      tabs: "Stats tabs", languages: "Language",
     },
     es: {
       your_club: "Tu club", neutral: "Neutral", clubs: "Clubes", players: "Jugadores", agents: "Agentes",
@@ -103,6 +108,10 @@
       halves: "Primera parte · segunda parte", involvement: "Toques cada 5 minutos", before: "antes", since: "desde",
       confidence: "confianza", stat_of: (who, label) => `${label} de ${who}`, rank_at: (club) => `en ${club}`,
       no_bundle_stats: "Este partido no tiene tablas de estadísticas.", by_rules: "Escrita por reglas",
+      more_detail: "Más detalle", less_detail: "Menos detalle", full: "Pantalla completa", exit_full: "Salir de pantalla completa",
+      speed: (x) => `Velocidad ${x}x`, language: "Idioma: español, cambiar a inglés", feed: "Imagen del partido", score: "Marcador",
+      playback: "Reproducción", match: "Partido", stats: "Estadísticas", picker: "Tu club y tu jugador", bottom: "Inercia y cronología",
+      tabs: "Pestañas de estadísticas", languages: "Idioma",
     },
   };
   const w = (k, ...a) => {
@@ -493,7 +502,8 @@
   const MINUS = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   function expandBtn(what, open, words = true) {
     const label = open ? w("less") : w("more");
-    return `<button type="button" class="xp${open ? " open" : ""}" data-expand="${what}" aria-expanded="${open}" aria-label="${label}">${open ? MINUS : PLUS}${words ? `<span>${label}</span>` : ""}</button>`;
+    const said = open ? w("less_detail") : w("more_detail"); // starts with the word on the button
+    return `<button type="button" class="xp${open ? " open" : ""}" data-expand="${what}" aria-expanded="${open}" aria-label="${said}">${open ? MINUS : PLUS}${words ? `<span>${label}</span>` : ""}</button>`;
   }
 
   // Simple first: the anchor, one line and one big stat. Expand keeps the line and puts the short
@@ -945,7 +955,7 @@
       .map((x) => {
         const on = x.from <= m;
         const meta = !on ? w("sub") : x.from > 0 ? `${w("on")} ${bundle.clock[x.from]}` : `${fmt(x.stats.passes[m])} ${w("passes")}`;
-        const star = x.id === follow ? '<span class="pl-f" aria-label="followed"></span>' : "";
+        const star = x.id === follow ? '<span class="pl-f" role="img" aria-label="${esc(w("following"))}"></span>' : "";
         return `<li class="${on ? "" : "off"}"><button type="button" data-player="${x.id}">
           <span class="role">${x.role}</span><span>${star}${esc(x.name)}</span><span class="meta">${meta}</span></button></li>`;
       })
@@ -959,8 +969,10 @@
     panelMinute = m;
     for (const b of document.querySelectorAll(".tabs button")) {
       b.classList.toggle("on", b.dataset.tab === tab);
+      b.setAttribute("aria-selected", String(b.dataset.tab === tab));
       b.textContent = w(b.dataset.tab);
     }
+    rove(document.querySelector(".tabs"), "button");
     const body = $("panelBody");
     if (tab === "agents") body.innerHTML = hoodHtml();
     else if (!bundle.stats) body.innerHTML = `<p class="hood-empty">${w("no_bundle_stats")}</p>`;
@@ -999,14 +1011,14 @@
 
   // ---------- favourite club ----------
   function drawFan() {
-    const opt = (id, label) => `<button type="button" data-fan="${id}" class="${id === lens() ? "on" : ""}">${label}</button>`;
+    const opt = (id, label) => `<button type="button" data-fan="${id}" class="${id === lens() ? "on" : ""}" aria-pressed="${id === lens()}">${label}</button>`;
     $("fanOpts").innerHTML = opt("neutral", w("neutral")) + bundle.teams.map((x) => opt(x.team_id, `${dot(x.team_id)}${x.code}`)).join("");
     $("fanLabel").textContent = w("your_club");
   }
 
   // English or Spanish, and the way between the two screens
   function drawPrefs() {
-    const opt = (k, v, label, on) => `<button type="button" data-${k}="${v}" class="${on ? "on" : ""}">${label}</button>`;
+    const opt = (k, v, label, on) => `<button type="button" data-${k}="${v}" class="${on ? "on" : ""}" aria-pressed="${on}">${label}</button>`;
     $("langOpts").innerHTML = opt("lang", "en", "EN", lang === "en") + opt("lang", "es", "ES", lang === "es");
     $("langBtn").textContent = lang.toUpperCase();
     $("toUser").textContent = w("user_view");
@@ -1014,6 +1026,10 @@
     drawPlay();
     $("moLabel").textContent = w("momentum");
     document.documentElement.lang = lang;
+    // the labels a screen reader reads out, in the same language as the screen
+    for (const el of document.querySelectorAll("[data-a11y]")) el.setAttribute("aria-label", w(el.dataset.a11y));
+    $("speedBtn").setAttribute("aria-label", w("speed", SPEEDS[speedIx]));
+    $("fullBtn").setAttribute("aria-label", w(document.fullscreenElement || document.webkitFullscreenElement ? "exit_full" : "full"));
   }
 
   // a change of club, view or language redraws whatever is up
@@ -1110,7 +1126,7 @@
   function drawFull() {
     const on = Boolean(fullEl());
     $("fullBtn").innerHTML = on ? EXIT_ICON : FULL_ICON;
-    $("fullBtn").setAttribute("aria-label", on ? "Exit full screen" : "Full screen");
+    $("fullBtn").setAttribute("aria-label", w(on ? "exit_full" : "full"));
     $("stage").classList.toggle("is-full", on);
   }
   $("fullBtn").addEventListener("click", toggleFull);
@@ -1208,7 +1224,7 @@
     const k = lens();
     const crest = (id, tm, label) => {
       const on = (id === "neutral" ? k === "neutral" : fan === id) ? " on" : "";
-      return `<button type="button" class="crest-btn${on}" data-fan="${id}" role="radio" aria-checked="${!!on}">
+      return `<button type="button" class="crest-btn${on}" data-fan="${id}" role="radio" aria-checked="${Boolean(on)}">
         ${crestSvg(tm)}<span class="crest-name">${esc(label)}</span></button>`;
     };
     $("pkClubTitle").textContent = w("your_club");
@@ -1223,6 +1239,8 @@
           ${crestSvg(tm)}<span>${esc(tm.short_name)}</span></button>`,
       )
       .join("");
+    rove($("crests"), ".crest-btn");
+    rove($("pkTeams"), "button");
     if (!bundle.stats) {
       $("squad").innerHTML = `<p class="pk-note">${w("no_bundle_stats")}</p>`;
       return;
@@ -1235,9 +1253,12 @@
       return line.length ? `<div class="pitch-line"><span class="pl-label">${w(key)}</span><div class="pl-cards">${line.map(playerCard).join("")}</div></div>` : "";
     }).join("");
     $("squad").innerHTML = `
-      <div class="pitch" role="radiogroup" aria-label="${esc(w("your_player"))}">${rows}</div>
-      ${bench.length ? `<div class="pitch-line bench"><span class="pl-label">${w("bench")}</span><div class="pl-cards">${bench.map(playerCard).join("")}</div></div>` : ""}
+      <div role="radiogroup" aria-label="${esc(w("your_player"))}">
+        <div class="pitch">${rows}</div>
+        ${bench.length ? `<div class="pitch-line bench"><span class="pl-label">${w("bench")}</span><div class="pl-cards">${bench.map(playerCard).join("")}</div></div>` : ""}
+      </div>
       <p class="pk-note">${w("pick_player")}</p>`;
+    rove($("squad"), ".pcard");
   }
 
   $("picker").addEventListener("click", (ev) => {
@@ -1251,8 +1272,60 @@
     } else if (b.dataset.pick) setFollow(b.dataset.pick === follow ? null : b.dataset.pick);
   });
 
+  // ---------- keyboard ----------
+  // Each group (the crests, the squad, the team tabs, the admin tabs) is one tab stop, and the arrow
+  // keys move along it, as in the WAI-ARIA radio and tab patterns. Picking a player changes what's
+  // on screen, so in the crests and the squad the arrows only move; Enter or Space picks.
+  function rove(group, items) {
+    const list = [...group.querySelectorAll(items)];
+    const on = (b) => b.getAttribute("aria-checked") === "true" || b.getAttribute("aria-selected") === "true";
+    const stop = list.find(on) || list[0];
+    for (const b of list) b.tabIndex = b === stop ? 0 : -1;
+  }
+  const ARROWS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1, Home: -Infinity, End: Infinity };
+  function arrows(group, items) {
+    group.addEventListener("keydown", (e) => {
+      const step = ARROWS[e.key];
+      const b = e.target.closest(items);
+      if (step === undefined || !b || e.altKey || e.ctrlKey || e.metaKey) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const list = [...group.querySelectorAll(items)];
+      const i = Math.max(0, Math.min(list.length - 1, list.indexOf(b) + step));
+      for (const x of list) x.tabIndex = x === list[i] ? 0 : -1;
+      list[i].focus();
+      if (list[i].getAttribute("role") === "tab") list[i].click(); // tabs follow the arrows
+    });
+  }
+  arrows($("crests"), ".crest-btn");
+  arrows($("squad"), ".pcard");
+  arrows($("pkTeams"), "button");
+  arrows(document.querySelector(".tabs"), "button");
+
+  // Most of the screen is redrawn as the match moves on, which would drop the keyboard's place.
+  // Focus goes back to the redrawn button (or, after a change of screen, the other screen's switch).
+  const FOCUS_KEYS = ["expand", "fan", "pick", "squad", "tab", "lang", "player"];
+  let focusWas = null; // [button, how to find it again, where]
+  document.addEventListener("focusin", (e) => {
+    const b = e.target;
+    const k = b.dataset && FOCUS_KEYS.find((x) => b.dataset[x] !== undefined);
+    const how = b.dataset && b.dataset.mode ? "button[data-mode]" : k ? `button[data-${k}="${CSS.escape(b.dataset[k])}"]` : b.id ? `#${b.id}` : null;
+    focusWas = how ? [b, how, b.closest("#picker, #panel, .video")] : null;
+    wake();
+  });
+  const shown = (el) => el.isConnected && el.getClientRects().length > 0;
+  function refocus() {
+    if (!focusWas || (document.activeElement && document.activeElement !== document.body)) return;
+    const [b, how, where] = focusWas;
+    if (shown(b)) return; // still there: focus was moved away on purpose
+    const next = [...(where && shown(where) ? where : document).querySelectorAll(how)].find(shown);
+    if (next) next.focus({ preventScroll: true });
+    else focusWas = null;
+  }
+
   // ---------- clock ----------
   function frame(now) {
+    refocus();
     const dt = last ? (now - last) / 1000 : 0;
     last = now;
     if (playing && bundle) {
@@ -1385,9 +1458,11 @@
   $("speedBtn").addEventListener("click", () => {
     speedIx = (speedIx + 1) % SPEEDS.length;
     $("speedBtn").textContent = `${SPEEDS[speedIx]}x`;
+    $("speedBtn").setAttribute("aria-label", w("speed", SPEEDS[speedIx]));
   });
   document.addEventListener("keydown", (e) => {
-    if (e.target.tagName === "SELECT") return;
+    if (e.target.tagName === "SELECT" || e.altKey || e.ctrlKey || e.metaKey) return;
+    if ((e.code === "Space" || e.key === "Enter") && e.target.closest("button")) return; // the button's own
     if (e.code === "Space") {
       e.preventDefault();
       setPlaying(!playing);
