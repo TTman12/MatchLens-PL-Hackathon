@@ -1,7 +1,7 @@
 """The Watcher: keeps the momentum scale and decides when something is worth explaining.
 
 It reads only the public tables, minute by minute, and never looks ahead: a moment found at
-minute `now` uses data from before `now` only. It raises three kinds of moment:
+minute `now` uses data from before `now` only, and is never revised by what happens later. It raises three kinds of moment:
 
 - **shift**: one side's share of final-third play over the last few minutes has moved a long way
   from the 15 minutes before. The anchor is the minute the change started.
@@ -81,29 +81,37 @@ def _anchor(md: MatchData, team: str, now: int) -> int:
     return best_s
 
 
-def find_shifts(md: MatchData) -> list[Moment]:
+def shift_at(md: MatchData, now: int) -> Moment | None:
+    """A shift that can go on screen at minute `now`, judged on play before `now` only (no cooldown)."""
     home = md.teams[0]
+    recent = _tilt(md, home, now - RECENT, now)
+    prior = _tilt(md, home, now - RECENT - PRIOR, now - RECENT)
+    if recent is None or prior is None or abs(recent - prior) < SWING:
+        return None
+    gainer = home if recent > prior else md.opp(home)
+    # the latest three minutes must still lean the same way, or it was a blip
+    tail = _tilt(md, gainer, now - 3, now)
+    g_prior = _tilt(md, gainer, now - RECENT - PRIOR, now - RECENT)
+    if tail is None or g_prior is None or tail - g_prior < SWING / 2:
+        return None
+    s = _anchor(md, gainer, now)
+    after, before = _tilt(md, gainer, s, now), _tilt(md, gainer, s - PRIOR, s)
+    if after is None or before is None:
+        return None
+    mode = "recovery" if _is_recovery(md, gainer, s, now) else "shift"
+    h_before, h_now = _tilt(md, home, s - PRIOR, s), _tilt(md, home, s, now)
+    return Moment(now, s, mode, gainer, after - before, h_before or 50.0, h_now or 50.0)
+
+
+def find_shifts(md: MatchData) -> list[Moment]:
     out: list[Moment] = []
     last = -99
     for now in range(SETTLE, md.last_minute + 2):
-        recent = _tilt(md, home, now - RECENT, now)
-        prior = _tilt(md, home, now - RECENT - PRIOR, now - RECENT)
-        if recent is None or prior is None or abs(recent - prior) < SWING or now - last < COOLDOWN:
+        if now - last < COOLDOWN:
             continue
-        gainer = home if recent > prior else md.opp(home)
-        # the latest three minutes must still lean the same way, or it was a blip
-        tail = _tilt(md, gainer, now - 3, now)
-        g_prior = _tilt(md, gainer, now - RECENT - PRIOR, now - RECENT)
-        if tail is None or g_prior is None or tail - g_prior < SWING / 2:
-            continue
-        s = _anchor(md, gainer, now)
-        after, before = _tilt(md, gainer, s, now), _tilt(md, gainer, s - PRIOR, s)
-        if after is None or before is None:
-            continue
-        mode = "recovery" if _is_recovery(md, gainer, s, now) else "shift"
-        h_before, h_now = _tilt(md, home, s - PRIOR, s), _tilt(md, home, s, now)
-        out.append(Moment(now, s, mode, gainer, after - before, h_before or 50.0, h_now or 50.0))
-        last = now
+        if (sh := shift_at(md, now)) is not None:
+            out.append(sh)
+            last = now
     return out
 
 
@@ -118,10 +126,10 @@ def _is_recovery(md: MatchData, team: str, s: int, now: int) -> bool:
     return dip <= level - DIP and back <= level + DIP * 1.5
 
 
-def group_events(md: MatchData) -> list[list[KeyEvent]]:
+def group_events(keys: list[KeyEvent]) -> list[list[KeyEvent]]:
     """Key events in time order; a team's substitutions within 3 minutes count as one change."""
     groups: list[list[KeyEvent]] = []
-    for k in md.key_events:
+    for k in keys:
         prev = groups[-1] if groups else None
         if (
             prev
@@ -136,36 +144,60 @@ def group_events(md: MatchData) -> list[list[KeyEvent]]:
     return groups
 
 
+def _gkey(g: list[KeyEvent]) -> tuple[str, int, str | None]:
+    return (g[0].kind, g[0].m, g[0].team_id)
+
+
+class Watcher:
+    """Raises moments minute by minute, deciding each one on the spot.
+
+    `step(md, now)` is called once per minute, in order, with the match as it stands (data before
+    `now` is all it reads, so the full match or a live feed give the same answer). An event is
+    claimed by the first moment that uses it: a shift that starts near it, or its own look once
+    EVENT_WAIT minutes have passed. Nothing raised earlier is ever revised.
+    """
+
+    def __init__(self) -> None:
+        self.last_shift = -99
+        self.used: set[tuple[str, int, str | None]] = set()
+
+    def step(self, md: MatchData, now: int) -> list[Moment]:
+        if now < SETTLE:
+            return []
+        home = md.teams[0]
+        groups = group_events([k for k in md.key_events if k.m < now])
+        out: list[Moment] = []
+        sh = shift_at(md, now) if now - self.last_shift >= COOLDOWN else None
+        if sh is not None:
+            self.last_shift = now
+            lo, hi = sh.anchor_m + EVENT_LINK[0], sh.anchor_m + EVENT_LINK[1]
+            near = [g for g in groups if lo <= g[0].m <= hi and g[0].m < sh.now - 4 and _gkey(g) not in self.used]
+            if near:
+                g = min(near, key=lambda g: (PRIORITY[g[0].kind], abs(g[0].m - sh.anchor_m)))
+                self.used.add(_gkey(g))
+                sh.events = g
+                sh.mode = "event"
+                sh.anchor_m = g[0].m
+                sh.momentum_before = _tilt(md, home, sh.anchor_m - PRIOR, sh.anchor_m) or 50.0
+                sh.momentum_now = _tilt(md, home, sh.anchor_m + 1, sh.now) or 50.0
+            out.append(sh)
+        for g in groups:
+            e = g[0]
+            if _gkey(g) in self.used or max(e.m + EVENT_WAIT, SETTLE) != now:
+                continue
+            before = _tilt(md, home, e.m - PRIOR, e.m)
+            after = _tilt(md, home, e.m + 1, now)
+            if before is None or after is None:
+                continue
+            self.used.add(_gkey(g))
+            moved = abs(after - before) >= SWING
+            gainer = (home if after > before else md.opp(home)) if moved else None
+            out.append(Moment(now, e.m, "event", gainer, abs(after - before) if moved else 0.0, before, after, g))
+        return sorted(out, key=lambda mo: mo.anchor_m)
+
+
 def watch(md: MatchData) -> list[Moment]:
-    """Every moment in the match, in the order they would go on screen."""
-    home = md.teams[0]
-    shifts = find_shifts(md)
-    groups = group_events(md)
-    used: set[int] = set()
-    for sh in shifts:
-        lo, hi = sh.anchor_m + EVENT_LINK[0], sh.anchor_m + EVENT_LINK[1]
-        near = [g for g in groups if lo <= g[0].m <= hi and g[0].m < sh.now - 4 and id(g) not in used]
-        if near:
-            g = min(near, key=lambda g: (PRIORITY[g[0].kind], abs(g[0].m - sh.anchor_m)))
-            used.add(id(g))
-            sh.events = g
-            sh.mode = "event"
-            sh.anchor_m = g[0].m
-            sh.momentum_before = _tilt(md, home, sh.anchor_m - PRIOR, sh.anchor_m) or 50.0
-            sh.momentum_now = _tilt(md, home, sh.anchor_m + 1, sh.now) or 50.0
-    moments = list(shifts)
-    for g in groups:
-        if id(g) in used:
-            continue
-        e = g[0]
-        now = max(e.m + EVENT_WAIT, SETTLE)
-        if now > md.last_minute + 1:
-            continue
-        before = _tilt(md, home, e.m - PRIOR, e.m)
-        after = _tilt(md, home, e.m + 1, now)
-        if before is None or after is None:
-            continue
-        moved = abs(after - before) >= SWING
-        gainer = (home if after > before else md.opp(home)) if moved else None
-        moments.append(Moment(now, e.m, "event", gainer, abs(after - before) if moved else 0.0, before, after, g))
-    return sorted(moments, key=lambda mo: (mo.now, mo.anchor_m))
+    """Every moment in the match, in the order they would go on screen: the live Watcher run over
+    the whole match, so a recorded match and a live feed raise exactly the same moments."""
+    w = Watcher()
+    return [mo for now in range(SETTLE, md.last_minute + 2) for mo in w.step(md, now)]

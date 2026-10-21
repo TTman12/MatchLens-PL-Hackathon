@@ -23,6 +23,7 @@ matchlens-explain = "matchlens.explain.cli:main"
 matchlens-explain-eval = "matchlens.explain.evaluate:main"
 matchlens-broadcast = "matchlens.broadcast.bundle:main"
 matchlens-agents = "matchlens.agents.crew:main"
+matchlens-feed = "matchlens.ingest.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["matchlens*"]
@@ -31,6 +32,7 @@ include = ["matchlens*"]
 "matchlens.gen" = ["priors.json.gz"]
 "matchlens.realism" = ["targets.json"]
 "matchlens.explain" = ["calibration.json"]
+"matchlens.ingest" = ["mappings/*.json"]
 
 [tool.ruff]
 line-length = 130
