@@ -21,6 +21,8 @@ foundry = [
     "azure-monitor-opentelemetry>=1.6",
     "azure-ai-contentsafety>=1.0",
 ]
+# Scoring the on-screen lines with Foundry Evaluations (matchlens-foundry-eval).
+eval = ["azure-ai-evaluation>=1.10", "azure-identity>=1.26"]
 
 [project.scripts]
 matchlens-gen = "matchlens.gen.cli:main"
@@ -29,6 +31,7 @@ matchlens-explain = "matchlens.explain.cli:main"
 matchlens-explain-eval = "matchlens.explain.evaluate:main"
 matchlens-broadcast = "matchlens.broadcast.bundle:main"
 matchlens-agents = "matchlens.agents.crew:main"
+matchlens-foundry-eval = "matchlens.foundry_eval:main"
 
 [tool.setuptools.packages.find]
 include = ["matchlens*"]
