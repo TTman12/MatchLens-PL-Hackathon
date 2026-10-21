@@ -191,6 +191,9 @@
         if (!job.seed) Object.assign(job, { seed: live.seed });
         if (!shown) {
           shown = true;
+          // a reopened ?live= link only knew the id: name the match list's entry from the bundle
+          const opt = [...$("matchSelect").options].find((o) => o.value === `live:${id}`);
+          if (opt) opt.textContent = w("option", b.teams[0].code, b.teams[1].code);
           screen().use(b);
           screen().play(true);
         } else screen().update(b);
