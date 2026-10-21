@@ -76,8 +76,8 @@ def span(name: str, **attrs: Any) -> Iterator[Any]:
 
 async def connect(project_client: Any | None = None) -> bool:
     """Send traces to Application Insights, once per process. True if they are being sent."""
-    if _state["exporting"] or os.environ.get("MATCHLENS_TRACING", "").lower() == "off":
-        return bool(_state["exporting"])
+    if _state["exporting"] is not False or os.environ.get("MATCHLENS_TRACING", "").lower() == "off":
+        return _state["exporting"] is True  # set up already (or being set up, or failed): once per process
     _state["exporting"] = None  # tried; don't try again in this process
     conn = os.environ.get(CONNECTION_VAR, "").strip()
     if not conn and project_client is not None:

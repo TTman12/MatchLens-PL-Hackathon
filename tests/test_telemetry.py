@@ -42,3 +42,29 @@ def test_a_match_is_one_trace_with_the_code_steps_and_agents_inside(tmp_path: Pa
     verifier = [s for s in spans if s.name == "matchlens.verifier"]
     assert verifier and all(s.attributes and s.attributes["matchlens.passed"] for s in verifier)
     assert {s.attributes["matchlens.cause"] for s in moments if s.attributes} == {c["cause"]["kind"] for c in result["cards"]}
+
+
+def test_tracing_is_set_up_once_per_process(monkeypatch: pytest.MonkeyPatch) -> None:
+    import asyncio
+
+    from matchlens import telemetry
+
+    calls: list[str] = []
+
+    class Project:
+        class telemetry:  # noqa: N801 - mirrors AIProjectClient.telemetry
+            @staticmethod
+            async def get_application_insights_connection_string() -> str:
+                calls.append("asked")
+                await asyncio.sleep(0)
+                return ""
+
+    monkeypatch.setitem(telemetry._state, "exporting", False)
+    monkeypatch.delenv(telemetry.CONNECTION_VAR, raising=False)
+
+    async def many() -> list[bool]:
+        return list(await asyncio.gather(*(telemetry.connect(Project()) for _ in range(8))))
+
+    assert asyncio.run(many()) == [False] * 8
+    assert asyncio.run(telemetry.connect(Project())) is False
+    assert calls == ["asked"]
