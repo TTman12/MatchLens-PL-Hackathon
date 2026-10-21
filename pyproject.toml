@@ -33,6 +33,7 @@ matchlens-broadcast = "matchlens.broadcast.bundle:main"
 matchlens-agents = "matchlens.agents.crew:main"
 matchlens-foundry-eval = "matchlens.foundry_eval:main"
 matchlens-feed = "matchlens.ingest.cli:main"
+matchlens-live = "matchlens.live.server:main"
 
 [tool.setuptools.packages.find]
 include = ["matchlens*"]

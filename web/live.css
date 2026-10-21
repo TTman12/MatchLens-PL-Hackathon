@@ -1,0 +1,59 @@
+/* "Generate match" (web/live.js): the button, the unseen-match badge on the feed, the part of the
+   timeline the feed hasn't sent yet, and the rules-written label on a card. */
+
+.controls .gen-btn, .vbar .gen-btn { background: var(--accent); border-color: var(--accent); }
+.controls .gen-btn:hover { border-color: var(--secondary); }
+.controls .gen-btn:disabled { opacity: 0.7; cursor: progress; }
+
+.live-badge {
+  position: absolute;
+  top: 1.4cqw;
+  right: 1.4cqw;
+  max-width: 34cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25cqw;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.8cqw;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.live-badge[hidden] { display: none; }
+.lb-head { display: flex; align-items: stretch; background: rgba(26, 0, 28, 0.82); color: var(--mist); }
+.lb-head span { padding: 0.25cqw 0.6cqw; white-space: nowrap; }
+.lb-head .lb-tag { background: var(--accent); color: var(--secondary); font-weight: 700; }
+.lb-status {
+  padding: 0.2cqw 0.6cqw;
+  background: rgba(26, 0, 28, 0.7);
+  color: var(--secondary);
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 0.85cqw;
+  text-align: right;
+}
+
+/* minutes the feed hasn't sent yet */
+.tl-pending {
+  position: absolute;
+  top: -0.2cqw;
+  bottom: -0.2cqw;
+  right: 0;
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0 0.3cqw, transparent 0.3cqw 0.6cqw);
+  pointer-events: none;
+}
+.tl-pending[hidden] { display: none; }
+
+.card-by {
+  display: flex;
+  align-items: center;
+  padding: 0 0.8cqw;
+  background: rgba(26, 0, 28, 0.92);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.8cqw;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mist);
+}

@@ -127,6 +127,8 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               value: 'https://${foundryAccountName}.services.ai.azure.com/api/projects/${foundryProjectName}'
             }
             { name: 'AZURE_AI_MODEL', value: model }
+            { name: 'MATCHLENS_DAILY_AI_MATCHES', value: '5' } // Generate match: AI-explained matches a day
+            { name: 'MATCHLENS_DAILY_MODEL_CALLS', value: '850' }
           ]
           probes: [
             {
@@ -154,7 +156,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
   }
 }
 
-// The app's identity may call the Foundry project (for a live-feed mode; the static site doesn't).
+// The app's identity calls the Foundry project when a viewer presses Generate match.
 resource appUsesFoundry 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(foundry.id, app.id, azureAiUser)
   scope: foundry

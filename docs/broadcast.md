@@ -50,6 +50,7 @@ matchlens-broadcast --demo 6 --out web/data --enrich --agents foundry   # recap 
 matchlens-broadcast --demo 6 --out web/data --agents foundry   # explained by the agents on Foundry
 matchlens-broadcast out/matches/ash-brk-7 --out web/data   # or any match folder
 cd web && python3 -m http.server 8000                    # then open http://localhost:8000
+matchlens-live --web web --agents offline                # the same, plus Generate match (docs/generate-match.md)
 ```
 
 **URL options:** `?match=<id>`, `&speed=1|2|4`, `&autoplay=1`, `&hide=1` to hide the operator controls for screen capture, `&tab=clubs|players|agents` to open a panel tab, `&mode=user|admin`, `&fan=<team id>` to pick the viewer's club, `&lang=en|es`, `&follow=<player id>` to follow a player, and `&open=1` to bring every card up expanded.

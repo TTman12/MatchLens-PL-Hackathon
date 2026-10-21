@@ -1,2 +1,8 @@
 *
 !web/
+!matchlens/
+!data/league.json
+!pyproject.toml
+!README.md
+!LICENSE
+**/__pycache__
