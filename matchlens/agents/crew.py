@@ -34,6 +34,7 @@ from ..explain.stories import find_stories
 from ..explain.watcher import Moment, momentum_series, watch
 from ..telemetry import span
 from .board import Board, is_stat
+from .mcp_server import register, release
 from .roles import EXPLAINER, SPECIALIST_ROLES, Role
 from .runners import Runner, RunnerError, ToolSpec, make_runner
 from .verifier import Option, Verifier, cause_menu
@@ -54,6 +55,7 @@ class Job:
     verifier: Verifier | None = None
     trace: list[dict[str, Any]] = field(default_factory=list)
     checks: int = 0
+    mcp_id: str = ""  # the moment's id on the MCP server, while it is open there
 
     def log(self, agent: str, status: str, t0: float, **extra: Any) -> None:
         self.trace.append({"agent": agent, "status": status, "ms": round(1000 * (time.monotonic() - t0)), **extra})
@@ -90,6 +92,7 @@ def specialist_tool(job: Job, key: str) -> ToolSpec:
         f"investigate_{key}",
         f"Compute the {key.replace('_', ' ')} findings for this moment and post them to the board.",
         investigate,
+        ("investigate", {"job": job.mcp_id, "specialist": key}) if job.mcp_id else None,
     )
 
 
@@ -101,7 +104,12 @@ def check_tool(job: Job) -> ToolSpec:
         problems = job.verifier.check(cause, list(stats))
         return json.dumps({"ok": not problems, "problems": problems})
 
-    return ToolSpec("check_card", "Recompute a draft card's numbers and check it against the screen rules.", check_card)
+    return ToolSpec(
+        "check_card",
+        "Recompute a draft card's numbers and check it against the screen rules.",
+        check_card,
+        ("check_card", {"job": job.mcp_id}) if job.mcp_id else None,
+    )
 
 
 def parse(text: str, keys: tuple[str, ...]) -> dict[str, Any]:
@@ -245,6 +253,15 @@ async def explain_moment(runner: Runner, md_full: MatchData, m: Moment) -> dict[
 
 async def _explain_moment(runner: Runner, md_full: MatchData, m: Moment) -> dict[str, Any]:
     job = Job(md_full.until(m.now), m, md_full.clock_of(m.now - 1))
+    job.mcp_id = register(job)  # the agents' tools reach this moment's board through the MCP server
+    try:
+        return await _work_moment(runner, job)
+    finally:
+        release(job.mcp_id)
+
+
+async def _work_moment(runner: Runner, job: Job) -> dict[str, Any]:
+    m = job.m
     reported = await asyncio.gather(*(run_specialist(runner, r, job) for r in SPECIALIST_ROLES))
     found = job.board.by_agent()
     job.menu = cause_menu(job.md, m, found)
@@ -313,6 +330,7 @@ async def explain_match_async(md: MatchData, runner: Runner) -> dict[str, Any]:
             "runner": runner.name,
             "usage": runner.usage.as_dict(),
             "versions": dict(getattr(runner, "versions", {})),
+            **({"mcp": bridge.as_dict()} if (bridge := getattr(runner, "mcp", None)) is not None else {}),
         },
     }
 

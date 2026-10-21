@@ -149,7 +149,7 @@ These sit beside the realism gate as the two headline charts for the judges.
 ## 8. What changed from the draft
 
 - **Clean slate.** The old repo (movement simulator, 10 Hz frames, camera and replay, the earlier Match-State MCP server) was wiped on 20 Oct. It stays in git history only.
-- **No MCP server on the crew's path.** The findings board is shared in process between the crew's agents. Anything offered to outside tools is listed in the README's Built on Microsoft section.
+- **A new, smaller MCP server.** The agents' tools (investigate, read the board, check a card) are served by the MatchLens MCP server, in process, with a fallback to direct calls. The same server runs on stdio for outside tools. See [agents.md](agents.md#the-mcp-server).
 - **The Translator translates sentences,** not just labels, because each card now has a line written for the viewer. A check in code compares each translation with the English.
 - **Agents after the card.** The Interpreter, the Analyst and the Recapper were added so the screen can say what a card means, what a club could do about it, and how the match went, each held to the facts by code and screened by Azure AI Content Safety.
 - **Strictly live.** The Watcher and the Director decide minute by minute with no look-ahead, so a recorded match and a live feed give the same cards ([live-feed.md](live-feed.md)). A feed adapter takes another provider's per-minute tables, and Generate match on the live site plays brand-new matches through the agents ([generate-match.md](generate-match.md)).

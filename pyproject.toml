@@ -12,7 +12,7 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11", "mcp>=1.24,<2"]
 # Running the agents on Microsoft Foundry (matchlens-agents --runner foundry).
 foundry = [
     "agent-framework-core>=1.22,<2",
@@ -20,6 +20,7 @@ foundry = [
     "azure-identity>=1.26",
     "azure-monitor-opentelemetry>=1.6",
     "azure-ai-contentsafety>=1.0",
+    "mcp>=1.24,<2",
 ]
 # Scoring the on-screen lines with Foundry Evaluations (matchlens-foundry-eval).
 eval = ["azure-ai-evaluation>=1.10", "azure-identity>=1.26"]
@@ -32,6 +33,7 @@ matchlens-explain-eval = "matchlens.explain.evaluate:main"
 matchlens-broadcast = "matchlens.broadcast.bundle:main"
 matchlens-agents = "matchlens.agents.crew:main"
 matchlens-foundry-eval = "matchlens.foundry_eval:main"
+matchlens-mcp = "matchlens.agents.mcp_server:main"
 matchlens-feed = "matchlens.ingest.cli:main"
 matchlens-live = "matchlens.live.server:main"
 
