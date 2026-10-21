@@ -17,7 +17,7 @@ Everyone can see when the tide turns; MatchLens shows *why*. Agents watch every 
 | | **Event mode** | **Spontaneous mode** |
 |---|---|---|
 | Trigger | A discrete event: goal, red card, substitution, half-time, injury | A detected shift (or recovery) with no event that explains it |
-| Anchor label | "Since A. Johnson red card" / "Since the double sub" | "Since 63'" (when the change started) [Choice: anchor to the start of the change rather than a fixed 15 min] |
+| Anchor label | "Since A. Johnson red card" / "Since the double sub" | "Last 6 minutes" (since the change started) [Choice: measure from the start of the change rather than a fixed 15 min, and say how long that is] |
 | Question the agents answer | What changed after the event, and did momentum move? | What changed in play, and what kind of cause does it look like (instruction, fatigue, a duel battle turning, opponent adjustment)? |
 | Momentum outcome | Any. "No shift, the block is holding" is a valid graphic. | A shift or recovery by definition |
 | Real frequency | Events barely raise the chance of a sustained shift: 22 to 29% after an event against 21% after a random minute [Real] | About 30% of shifts have no event in the 15 minutes before [Real] |

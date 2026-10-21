@@ -20,7 +20,7 @@ Both screens share the feed, the cards and the momentum bar:
 - **The feed** (top left). A still of the stadium stands in for the match video. Over it sit:
   - **the score and clock**;
   - **the cards**, as a lower third, which pop up when the Director puts one on screen. A card shows:
-    - its anchor, such as "Since Dunmoor goal 25'" or "Since 63'";
+    - its anchor, such as "Since Dunmoor goal 25'", or, when no event started it, how long it has been going on: "Last 6 minutes", the window the stats cover;
     - one line saying what the numbers mean for the game, written for the viewer's club ([explainer.md](explainer.md));
     - one big number, against the same team before the anchor. For a substitute, the comparison is with the player they replaced. Where it can, the card pairs two stats that explain each other, rather than showing a lone possession figure. Each number reads as one line and one path: a colour chip for the club, then "Brackenford's progressive passes" (or "Corvcombe's distance vs Brennow" for a substitute), then the number before (small and faded), an arrow and the number now (big and solid). The numbers show which way it went, so there are no extra symbols, and the momentum bar along the bottom of the screen shows momentum, so the card doesn't repeat it.
     - an **Expand** button. The card starts simple; Expand keeps the line and puts a short table where the big number was: the cause the agents settled on, momentum before and now, and four stats for both clubs before the anchor and since (the card's own stats first, then the ones that moved most). An open card stays up until it is closed.

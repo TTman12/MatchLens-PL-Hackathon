@@ -183,7 +183,8 @@ def anchor_label(md: MatchData, m: Moment, cause: dict[str, Any] | None = None) 
     if cause and cause["kind"] == "substitution_impact" and cause.get("player") and len(m.events) == 1:
         return f"Since {md.names.get(cause['player'], '')} came on"  # the sub the card is about
     if not m.events:
-        return f"Since {md.clock_of(m.anchor_m)}"
+        # no event to point at: say how long it has been going on, the window the stats cover
+        return f"Last {m.now - m.start} minutes"
     e = m.events[0]
     if e.kind == "half_time":
         return "Since half-time"
