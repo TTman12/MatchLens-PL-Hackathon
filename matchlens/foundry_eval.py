@@ -1,9 +1,9 @@
 """Foundry Evaluations on the lines that go on screen.
 
 The Verifier already proves every number on a card against the tables. That leaves the words: the
-Interpreter's one-line read of each card and the Analyst's "what next" line, for the neutral viewer
-and for each club's fans. This scores them with the Azure AI Evaluation SDK, as a Foundry
-evaluation run you can open in the portal:
+Interpreter's one-line read of each card, the Analyst's "what next" line and the Recapper's
+full-time headline, for the neutral viewer and for each club's fans, in English and in Spanish.
+This scores them with the Azure AI Evaluation SDK, as a Foundry evaluation run you can open in the portal:
 
 - **groundedness**: does the line say only what the card's facts support? (AI-judged, 1 to 5)
 - **relevance**: does it answer the card's question for that viewer? (AI-judged, 1 to 5)
@@ -66,8 +66,32 @@ def card_context(b: dict[str, Any], c: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def recap_context(b: dict[str, Any]) -> str:
+    """What the full-time recap knows: the result, the run of the game and the turning points."""
+    r = b["recap"]
+    fx = r.get("facts") or {}
+    teams = {t["team_id"]: t["name"] for t in b["teams"]}
+    home, away = (t["team_id"] for t in b["teams"])
+    score = b["score"][-1]
+    lines = [
+        f"Full time: {teams[home]} {score[0]}-{score[1]} {teams[away]}. {fx.get('result', '')}.",
+        f"Pattern of the match: {fx.get('pattern', '')}.",
+        f"{teams[home]}'s share of momentum: {fx.get('home_momentum_share', '')}%.",
+        *(f"Goal: {g['team']} {g['clock']}." for g in fx.get("goals") or []),
+        *(f"Red card: {g['team']} {g['clock']}." for g in fx.get("red_cards") or []),
+        *(f"Turning point {t['clock']}: {t['team']}, {t['what']}." for t in fx.get("turning_points") or []),
+        *(
+            f"{s['label']}: {teams[home]} {s['values'][0]:g}{unit}, {teams[away]} {s['values'][1]:g}{unit}."
+            for s in r.get("stats") or []
+            for unit in [s.get("unit", "")]
+        ),
+    ]
+    return "\n".join(lines)
+
+
 def rows(bundles: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """One row per line on screen: each card's read and each analysis line, per viewer."""
+    """One row per line on screen, per viewer: each card's read, each analysis line and the
+    full-time recap headline, in English and (where the bundle has them) in Spanish."""
     out: list[dict[str, Any]] = []
     for b in bundles:
         teams = {t["team_id"]: t["name"] for t in b["teams"]}
@@ -75,35 +99,41 @@ def rows(bundles: list[dict[str, Any]]) -> list[dict[str, Any]]:
         def viewer(lens: str, teams: dict[str, str] = teams) -> str:
             return "a neutral viewer" if lens == "neutral" else f"a fan of {teams.get(lens, lens)}"
 
+        def add(
+            agent: str, lang: str, clock: str, lens: str, query: str, response: str, context: str, match: str = b["match_id"]
+        ) -> None:
+            if lang == "es":
+                query = f"{query} Answer in Spanish."
+            name = agent if lang == "en" else f"{agent} (es)"
+            out.append(
+                {"match": match, "clock": clock, "agent": name, "lang": lang, "lens": lens}
+                | {"query": query, "response": response, "context": context}
+            )
+
         for c in b["cards"]:
             ctx = card_context(b, c)
-            for lens, text in (c.get("text") or {}).items():
-                out.append(
-                    {
-                        "match": b["match_id"],
-                        "clock": c["clock"],
-                        "agent": "interpreter",
-                        "lens": lens,
-                        "query": f"In one line for {viewer(lens)}, explain why momentum shifted at {c['clock']}.",
-                        "response": text,
-                        "context": ctx,
-                    }
-                )
+            es = ((c.get("i18n") or {}).get("es")) or {}
+            why = f"In one line for {{}}, explain why momentum shifted at {c['clock']}."
+            for lang, texts in (("en", c.get("text") or {}), ("es", es.get("text") or {})):
+                for lens, text in texts.items():
+                    add("interpreter", lang, c["clock"], lens, why.format(viewer(lens)), text, ctx)
             for lens, a in (c.get("analysis") or {}).items():
                 if not a or not a.get("line"):
                     continue
                 team = teams.get(a["team"], a["team"])
-                out.append(
-                    {
-                        "match": b["match_id"],
-                        "clock": c["clock"],
-                        "agent": "analyst",
-                        "lens": lens,
-                        "query": f"In one line for {viewer(lens)}, say what {team} should do next at {c['clock']}.",
-                        "response": a["line"],
-                        "context": ctx + "\nThe stat this line points to:\n" + _stat(a["stat"], teams),
-                    }
-                )
+                actx = ctx + "\nThe stat this line points to:\n" + _stat(a["stat"], teams)
+                q = f"In one line for {viewer(lens)}, say what {team} should do next at {c['clock']}."
+                add("analyst", "en", c["clock"], lens, q, a["line"], actx)
+                if (es.get("analysis") or {}).get(lens):
+                    add("analyst", "es", c["clock"], lens, q, es["analysis"][lens], actx)
+        r = b.get("recap")
+        if r:
+            ctx = recap_context(b)
+            es = ((r.get("i18n") or {}).get("es")) or {}
+            for lang, texts in (("en", r.get("text") or {}), ("es", es.get("text") or {})):
+                for lens, text in texts.items():
+                    q = f"In one headline for {viewer(lens)}, sum up the match at full time."
+                    add("recapper", lang, "FT", lens, q, text, ctx)
     return out
 
 

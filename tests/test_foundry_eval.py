@@ -15,13 +15,16 @@ def test_every_line_on_screen_becomes_a_row_with_its_evidence() -> None:
     table = rows(bundles)
     cards = [c for b in bundles for c in b["cards"]]
     analysis = [a for c in cards for a in (c.get("analysis") or {}).values() if a and a.get("line")]
-    expected = sum(len(c.get("text") or {}) for c in cards) + len(analysis)
-    assert len(table) == expected
+    recaps = sum(len((b.get("recap") or {}).get("text") or {}) for b in bundles)
+    english = [r for r in table if r["lang"] == "en"]
+    assert len(english) == sum(len(c.get("text") or {}) for c in cards) + len(analysis) + recaps
+    spanish = [r for r in table if r["lang"] == "es"]
+    assert spanish and all(r["agent"].endswith("(es)") and r["query"].endswith("Answer in Spanish.") for r in spanish)
     b = bundles[0]
     c = b["cards"][0]
     ctx = card_context(b, c)
     assert all(s["label"] in ctx and str(s["value"]) in ctx for s in c["stats"])
-    assert {r["agent"] for r in table} == {"interpreter", "analyst"}
+    assert {r["agent"] for r in english} == {"interpreter", "analyst", "recapper"}
 
 
 def test_the_code_check_catches_a_number_not_on_the_card() -> None:
