@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from . import spanish
 from .match import MatchData
 from .specialists import Finding
 from .stories import compose, match_story
@@ -322,8 +323,10 @@ def _pick(spec: Any, state: str) -> str:
     return str(spec.get(state, spec["*"]))
 
 
-def lines(fx: dict[str, Any]) -> dict[str, str]:
-    """The deterministic reading, written for a neutral and for each club's fans."""
+def lines(fx: dict[str, Any], lang: str = "en") -> dict[str, str]:
+    """The deterministic reading, written for a neutral and for each club's fans, in English or
+    Spanish ("es")."""
+    es = lang == "es"
     teams = fx["teams"]
     ids = list(teams)
     key, t = fx["reading"]["key"], fx["reading"]["team"] or fx["gainer"] or ids[0]
@@ -331,20 +334,20 @@ def lines(fx: dict[str, Any]) -> dict[str, str]:
     players = list(dict.fromkeys(s["player"] for s in fx["stats"] if s.get("player")))
     if key == "fresh_legs" or key == "sub_quiet":
         players = players[:1]
-    names = " and ".join(players) or teams[t]["name"]
+    names = (" y " if es else " and ").join(players) or teams[t]["name"]
     verb = "are" if len(players) > 1 else "is"
-    spec = dict(LINES[key])
+    spec = dict((spanish.LINES if es else LINES)[key])
     star = next((s for s in fx["stats"] if s.get("player")), None)
     if key in ("player_drive", "fresh_legs") and star and star.get("metric") in PLAYER_LINES:
         # say how the player's contribution moves the game, not just what he is doing more of
         names, verb = star["player"], "is"
-        spec = dict(PLAYER_LINES[star["metric"]])
+        spec = dict((spanish.PLAYER_LINES if es else PLAYER_LINES)[star["metric"]])
         if key == "fresh_legs":
-            spec = {k: "Off the bench, " + v for k, v in spec.items()}
+            spec = {k: spanish.off_the_bench(v) if es else "Off the bench, " + v for k, v in spec.items()}
     if key == "no_change":
-        spec["neutral"] = NO_CHANGE.get(fx["cause"], spec["neutral"])
+        spec["neutral"] = (spanish.NO_CHANGE if es else NO_CHANGE).get(fx["cause"], spec["neutral"])
     state = teams[t]["state"]
-    fill = {"T": teams[t]["name"], "O": teams[o]["name"], "P": names, "VERB": verb}
+    fill = {"T": teams[t]["name"], "O": teams[o]["name"], "P": names, "VERB": spanish.VERB[verb] if es else verb}
     return {
         "neutral": _pick(spec["neutral"], state).format(**fill),
         t: _pick(spec["own"], state).format(**fill),
