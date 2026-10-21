@@ -71,6 +71,6 @@ The Director is `matchlens/explain/director.py`. The pipeline raises about 12 ca
 - A card needs at least one number and something worth showing.
 - Cards are at least 5 minutes apart. A goal or red-card card may break that gap.
 - At most 5 cards go up per half.
-- When candidates compete within those 5 minutes, the most salient one wins.
+- It decides as each card arrives and never waits to see a later one, so it chooses the same way on a live feed as on a recorded match. When several cards arrive in the same minute, the most urgent, then the most salient, goes first.
 
 Individual players appear on a card only when the card is about them: a substitute against the player they replaced, or a player on the side that gained who is clearly doing more (see [explainer.md](explainer.md)). A player's row leads with his name, then the stat. A "usual" needs at least 12 minutes of match before the anchor, so an early goal gets no card rather than a misleading one.
