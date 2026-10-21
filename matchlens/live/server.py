@@ -5,6 +5,8 @@ on request, played through the agents as unseen matches (job.py).
     matchlens-live --web web --agents offline             # no Azure: the rules explain every match
 
     POST /api/generate        start a new match            -> 202 {id, seed, home, away, agents, note}
+         ?drill=<agent>[&drill_mode=down|flaky]   ... with that agent knocked out (the admin
+                              screen's fault drill, failover.py)
     GET  /api/live/<id>       the screen's bundle so far   (bundle.live says how far the feed has got)
     GET  /api/live            today's budget               -> {ai_matches_left, ...}
     GET  /healthz             for the Container Apps probes
@@ -17,6 +19,8 @@ Settings (environment):
 - MATCHLENS_DAILY_AI_MATCHES (5) and MATCHLENS_DAILY_MODEL_CALLS (850): today's budget. Past it,
   matches are explained by the rules, and the screen says so.
 - MATCHLENS_GENERATE_PER_HOUR (6): new matches a visitor may start an hour.
+- MATCHLENS_DRILLS (on) and MATCHLENS_DRILLS_PER_HOUR (3): the fault drill. A drill only affects the
+  match it starts, costs no model calls and needs no key; `off` refuses it.
 - MATCHLENS_STATE_DIR (/tmp/matchlens): where the day's budget is kept.
 """
 
@@ -36,8 +40,10 @@ from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
 from ..agents.runners import ENDPOINT_VAR, Runner
+from .failover import Drill
 from .job import Job, pick_fixture
 from .limits import DailyBudget, RateLimit
 
@@ -61,11 +67,19 @@ class Live:
     """The matches being played, the budget and the rate limit. Matches run on one asyncio loop in a
     background thread; the HTTP threads only read their published snapshots."""
 
-    def __init__(self, agents: str, budget: DailyBudget, limit: RateLimit, pace: float | None = None) -> None:
+    def __init__(
+        self,
+        agents: str,
+        budget: DailyBudget,
+        limit: RateLimit,
+        pace: float | None = None,
+        drills: RateLimit | None = None,
+    ) -> None:
         self.agents = agents
         self.budget = budget
         self.limit = limit
         self.pace = pace
+        self.drills = drills  # None: the fault drill is off
         self.jobs: dict[str, Job] = {}
         self._lock = threading.Lock()
         self._rng = random.Random(secrets.randbits(64))
@@ -86,7 +100,15 @@ class Live:
     def running(self) -> list[Job]:
         return [j for j in self.jobs.values() if j.status in ("generating", "playing")]
 
-    def generate(self, visitor: str) -> tuple[int, dict[str, Any]]:
+    def generate(self, visitor: str, drill: Drill | None = None) -> tuple[int, dict[str, Any]]:
+        if drill is not None:
+            if self.drills is None:
+                return 403, {"error": "The fault drill is switched off on this server."}
+            wait = self.drills.allow(visitor)
+            if wait:
+                minutes = max(1, round(wait / 60))
+                busy = f"You have run a lot of fault drills. Try again in about {minutes} min."
+                return 429, {"error": busy, "retry_after": wait}
         wait = self.limit.allow(visitor)
         if wait:
             minutes = max(1, round(wait / 60))
@@ -98,7 +120,7 @@ class Live:
                 busy = "The match engine is busy with other viewers' matches. Try again in a minute."
                 return 503, {"error": busy, "retry_after": 60}
             home, away, seed = pick_fixture(self._rng)
-            job = Job(id=secrets.token_urlsafe(6), home=home, away=away, seed=seed, budget=self.budget)
+            job = Job(id=secrets.token_urlsafe(6), home=home, away=away, seed=seed, budget=self.budget, drill=drill)
             if self.pace is not None:
                 job.pace = self.pace
             if self.agents != "foundry":
@@ -114,7 +136,8 @@ class Live:
             self.jobs[job.id] = job
         asyncio.run_coroutine_threadsafe(self._run(job), self.loop)
         agents = "foundry" if job.agents_on else "rules"
-        return 202, {"id": job.id, "seed": seed, "home": home, "away": away, "agents": agents, "note": job.note}
+        out = {"id": job.id, "seed": seed, "home": home, "away": away, "agents": agents, "note": job.note}
+        return 202, out | ({"drill": drill.as_dict()} if drill else {})
 
     def _foundry(self) -> Runner | None:
         try:
@@ -146,7 +169,7 @@ class Live:
             return False
 
     def status(self) -> dict[str, Any]:
-        return {**self.budget.as_dict(), "agents": self.agents, "running": len(self.running())}
+        return {**self.budget.as_dict(), "agents": self.agents, "running": len(self.running()), "drills": self.drills is not None}
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -176,10 +199,17 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self) -> None:
-        if self.path.split("?")[0] != "/api/generate":
+        url = urlsplit(self.path)
+        if url.path != "/api/generate":
             self._json(404, {"error": "not found"})
             return
-        code, body = self.live.generate(self._visitor())
+        q = {k: v[0] for k, v in parse_qs(url.query).items()}
+        try:
+            drill = Drill.parse(q.get("drill"), q.get("drill_mode"))
+        except ValueError as exc:
+            self._json(400, {"error": str(exc)})
+            return
+        code, body = self.live.generate(self._visitor(), drill)
         self._json(code, body)
 
     def do_GET(self) -> None:
@@ -246,7 +276,8 @@ def main() -> None:
     agents = args.agents or os.environ.get("MATCHLENS_LIVE_AGENTS") or ("foundry" if os.environ.get(ENDPOINT_VAR) else "offline")
     state = Path(os.environ.get("MATCHLENS_STATE_DIR", "/tmp/matchlens"))
     budget = DailyBudget(state / "budget.json", _int("MATCHLENS_DAILY_AI_MATCHES", 5), _int("MATCHLENS_DAILY_MODEL_CALLS", 850))
-    live = Live(agents, budget, RateLimit(_int("MATCHLENS_GENERATE_PER_HOUR", 6), 3600), args.pace)
+    drills = RateLimit(_int("MATCHLENS_DRILLS_PER_HOUR", 3), 3600) if os.environ.get("MATCHLENS_DRILLS", "on") != "off" else None
+    live = Live(agents, budget, RateLimit(_int("MATCHLENS_GENERATE_PER_HOUR", 6), 3600), args.pace, drills)
     server = make_server(args.web, args.port, live, args.host)
     log.info("serving %s on :%d, agents %s, %s", args.web, args.port, agents, budget.as_dict())
     server.serve_forever()

@@ -36,8 +36,27 @@ the Translator the Spanish lines.
 | **Past the budget** | The match is still generated and played; the deterministic rules write the cards, and the screen says so. |
 | **One at a time** | One match on the agents at a time; a second viewer's match gets the rules. At most three matches play at once. |
 | **Per visitor** | `MATCHLENS_GENERATE_PER_HOUR` (6) new matches an hour from one address. |
+| **One agent fails** | That call is tried once more, then a rules stand-in answers the same task and the chain carries on: its findings go on the board beside the other specialists', and its draft or lines still go through the Verifier or the line check in code. The card says which agent was recovered, and the Agents tab shows each try ([failover.py](../matchlens/live/failover.py)). |
 | **Foundry slow or down** | The app checks it can sign in before the first minute. A moment that takes over 45 s, or any failure, hands that card and the rest of the match to the rules, labelled "Rules-written" on the card. |
 | **Server gone** | A plain static copy of web/ hides the button; the demo matches always play. |
+
+## The fault drill: recovery on screen
+
+The admin screen has a **Fault drill** list beside Generate match. Pick an agent (a specialist, the
+Explainer, the Interpreter or the Analyst) and the next generated match runs with that agent failing
+every call (**Knock out**) or only its first try at each task (**Flaky**). For the demo video,
+`?mode=admin&tab=agents&drill=explainer` (add `&drill_mode=flaky` for the retry) arms it from the URL.
+
+What it shows, card by card: which agent failed and each try, the retry or the hand-off to the rules
+stand-in, the check in code the answer then passed, and the card going up on time. The card itself
+carries a small label ("Players down · recovered"), and the badge on the feed counts the recoveries.
+
+![Fault drill: the Players agent knocked out](img/drill-players.png)
+
+The fault is injected in the server before the call leaves it, so a drill costs no model calls and
+touches no other viewer's match. It is asked for with `POST /api/generate?drill=<agent>&drill_mode=down|flaky`,
+checked against the list of the card's agents, and limited to `MATCHLENS_DRILLS_PER_HOUR` (3) an hour
+per visitor on top of the usual limit. `MATCHLENS_DRILLS=off` switches it off. It needs no key.
 
 ## Running it
 

@@ -3,7 +3,11 @@
 // the agents one minute at a time as an unseen match, and rebuilds the screen's bundle after each
 // minute; this file polls for that bundle and hands it to the screen (app.js, window.matchlensScreen).
 //
-// URL option: ?live=<id> reopens a generated match while the server still has it.
+// URL options: ?live=<id> reopens a generated match while the server still has it.
+//              ?drill=<agent>[&drill_mode=flaky] arms the fault drill (admin screen): the next
+//              generated match has that agent knocked out, to show the others recover
+//              (matchlens/live/failover.py). Agents: team_play players substitutions match_events
+//              explainer interpreter analyst.
 
 (() => {
   "use strict";
@@ -21,6 +25,8 @@
       waiting: (m) => `Agents working on ${m}…`, full_time: "Full time",
       cards: (f, r) => [f ? `${f} by Foundry agents` : "", r ? `${r} rules-written` : ""].filter(Boolean).join(", ") || "no cards",
       offline: "Generating needs the live server. The demo matches still play.", option: (h, a) => `New: ${h} v ${a} (unseen)`,
+      drill_off: "Fault drill: off", knock: (a) => `Knock out: ${a}`, flaky: (a) => `Flaky: ${a}`,
+      drill: (a, m, n) => `Fault drill: ${a} ${m === "flaky" ? "flaky" : "down"} · ${n} recovered`,
     },
     es: {
       generate: "Generar partido", generating: "Generando…", unseen: "Partido inédito", seed: "semilla",
@@ -29,6 +35,8 @@
       waiting: (m) => `Los agentes trabajan en el ${m}…`, full_time: "Final",
       cards: (f, r) => [f ? `${f} por agentes de Foundry` : "", r ? `${r} por reglas` : ""].filter(Boolean).join(", ") || "sin tarjetas",
       offline: "Generar necesita el servidor en vivo. Los partidos de demostración siguen disponibles.", option: (h, a) => `Nuevo: ${h} v ${a} (inédito)`,
+      drill_off: "Simulacro de fallo: no", knock: (a) => `Tumbar: ${a}`, flaky: (a) => `Intermitente: ${a}`,
+      drill: (a, m, n) => `Simulacro: ${a} ${m === "flaky" ? "intermitente" : "caído"} · ${n} recuperados`,
     },
   };
   const w = (k, ...a) => {
@@ -49,10 +57,39 @@
   btn.id = "genBtn";
   btn.className = "gen-btn";
   btn.textContent = w("generate");
+  // the fault drill: knock one agent out of the next generated match. Admin only: it sits with the
+  // controls, which the user screen hides.
+  const DRILL_AGENTS = {
+    team_play: "Team play", players: "Players", substitutions: "Substitutions", match_events: "Match events",
+    explainer: "Explainer", interpreter: "Interpreter", analyst: "Analyst",
+  };
+  const drillSel = document.createElement("select");
+  drillSel.id = "drillSel";
+  drillSel.className = "drill-sel";
+  drillSel.title = "Fault drill: the next generated match runs with this agent failing, to show the recovery";
+  function drillOptions() {
+    const keep = drillSel.value;
+    const opts = [new Option(w("drill_off"), "")];
+    for (const [k, name] of Object.entries(DRILL_AGENTS)) opts.push(new Option(w("knock", name), k));
+    for (const k of ["players", "interpreter"]) opts.push(new Option(w("flaky", DRILL_AGENTS[k]), `${k}:flaky`));
+    drillSel.replaceChildren(...opts);
+    drillSel.value = keep;
+  }
+  drillOptions();
+  {
+    const want = params.get("drill");
+    if (want && DRILL_AGENTS[want]) drillSel.value = params.get("drill_mode") === "flaky" ? `${want}:flaky` : want;
+    if (drillSel.selectedIndex < 0) drillSel.value = "";
+  }
+  const armed = () => drillSel.classList.toggle("armed", Boolean(drillSel.value));
+  drillSel.addEventListener("change", armed);
+  armed();
+
   // the button sits just before the match list, which moves between the user and admin screens
   const place = () => {
     const sel = $("matchSelect");
     if (btn.nextElementSibling !== sel) sel.before(btn);
+    if (drillSel.nextElementSibling !== btn) btn.before(drillSel);
   };
   place();
 
@@ -78,8 +115,14 @@
     return b && b.live && job && b.live.id === job.id ? b.live : null;
   }
 
+  let drillLang = "";
   function draw() {
     place();
+    const lang = (screen() && screen().lang) || "en";
+    if (lang !== drillLang) {
+      drillLang = lang;
+      drillOptions();
+    }
     btn.textContent = job && !shown ? w("generating") : w("generate");
     btn.disabled = Boolean(job && !shown);
     const live = liveOf();
@@ -103,7 +146,8 @@
     const head = live || job
       ? `<span class="lb-tag">${w("unseen")}</span><span>${w("seed")} ${(live || job).seed}</span><span>${w("no_truth")}</span>`
       : "";
-    badge.innerHTML = `${head ? `<div class="lb-head">${head}</div>` : ""}<div class="lb-status">${esc(status)}</div>`;
+    const drill = live && live.drill ? `<div class="lb-status lb-drill">${esc(w("drill", DRILL_AGENTS[live.drill.agent] || live.drill.agent, live.drill.mode, live.incidents || 0))}</div>` : "";
+    badge.innerHTML = `${head ? `<div class="lb-head">${head}</div>` : ""}<div class="lb-status">${esc(status)}</div>${drill}`;
     badge.hidden = false;
     document.querySelector(".feed-note").hidden = Boolean(live || job);
     if (live && !live.done) {
@@ -124,7 +168,9 @@
     btn.disabled = true;
     let res;
     try {
-      res = await fetch("api/generate", { method: "POST" });
+      const [agent, mode] = drillSel.value.split(":");
+      const q = agent ? `?${new URLSearchParams(mode ? { drill: agent, drill_mode: mode } : { drill: agent })}` : "";
+      res = await fetch(`api/generate${q}`, { method: "POST" });
     } catch {
       btn.disabled = false;
       say(w("offline"));
@@ -251,13 +297,19 @@
   });
   setInterval(draw, 500);
 
-  // hide the button where there is no server to ask (a plain static copy of web/)
+  // hide the button where there is no server to ask (a plain static copy of web/), and the drill
+  // where the server has it switched off
   fetch("api/live")
     .then((r) => {
       if (!r.ok) throw new Error();
+      return r.json();
+    })
+    .then((s) => {
+      if (!s.drills) drillSel.hidden = true;
     })
     .catch(() => {
       btn.hidden = true;
+      drillSel.hidden = true;
     });
 
   // a shared ?live= link: once the screen has its match list, put the generated match on it

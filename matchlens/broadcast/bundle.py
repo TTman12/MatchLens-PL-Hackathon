@@ -180,6 +180,7 @@ def build(md: MatchData, result: dict[str, Any] | None = None) -> dict[str, Any]
                 "shifted": c["shifted"],
                 "hood": under_the_hood(c),
                 **({"by": c["written_by"]} if c.get("written_by") else {}),  # a generated match: foundry or rules
+                **({"recovery": c["recovery"]} if c.get("recovery") else {}),  # agents that failed and who stood in
             }
         )
     b = {

@@ -57,3 +57,18 @@
   text-transform: uppercase;
   color: var(--mist);
 }
+
+/* an agent failed on this card and was recovered (matchlens/live/failover.py) */
+.card-by.recovered { color: var(--secondary); box-shadow: inset 0.2cqw 0 0 var(--pink); }
+.st-stood-in .hood-chip { background: var(--pink); color: var(--secondary); }
+.hood-recovery { margin: 0 0 0.6cqw; padding: 0.3cqw 0 0.3cqw 0.5cqw; border-left: 0.2cqw solid var(--pink); }
+.hood-tries { margin: 0.2cqw 0 0; padding-left: 1.4cqw; font-size: 0.78cqw; }
+.hood-tries li { margin: 0.1cqw 0; }
+.hood-tries li.bad { color: var(--pink); }
+.hood-tries li.ok { color: var(--secondary); }
+.hood-tries li span { color: var(--faint); }
+
+/* the fault drill picker beside Generate match (admin only, like the rest of the controls) */
+.controls .drill-sel { max-width: 11em; }
+.controls .drill-sel.armed { border-color: var(--pink); color: var(--pink); }
+.lb-status.lb-drill { background: var(--pink); }
