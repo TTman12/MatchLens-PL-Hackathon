@@ -7,7 +7,29 @@
    1,
    0
   ],
-  "cards": 4
+  "cards": 4,
+  "teams": [
+   {
+    "team_id": "ash",
+    "code": "ASH",
+    "short_name": "Ashmere",
+    "colours": {
+     "primary": "#B3202A",
+     "secondary": "#F2E8D5",
+     "text": "#FFFFFF"
+    }
+   },
+   {
+    "team_id": "brk",
+    "code": "BRK",
+    "short_name": "Brackenford",
+    "colours": {
+     "primary": "#1D4E89",
+     "secondary": "#F5C518",
+     "text": "#F5C518"
+    }
+   }
+  ]
  },
  {
   "match_id": "cal-dun-32",
@@ -17,7 +39,29 @@
    0,
    3
   ],
-  "cards": 6
+  "cards": 6,
+  "teams": [
+   {
+    "team_id": "cal",
+    "code": "CAL",
+    "short_name": "Calderwick",
+    "colours": {
+     "primary": "#2E7D4F",
+     "secondary": "#FFFFFF",
+     "text": "#FFFFFF"
+    }
+   },
+   {
+    "team_id": "dun",
+    "code": "DUN",
+    "short_name": "Dunmoor",
+    "colours": {
+     "primary": "#6CABDD",
+     "secondary": "#0B1F3A",
+     "text": "#0B1F3A"
+    }
+   }
+  ]
  },
  {
   "match_id": "brk-cal-33",
@@ -27,7 +71,29 @@
    3,
    3
   ],
-  "cards": 8
+  "cards": 8,
+  "teams": [
+   {
+    "team_id": "brk",
+    "code": "BRK",
+    "short_name": "Brackenford",
+    "colours": {
+     "primary": "#1D4E89",
+     "secondary": "#F5C518",
+     "text": "#F5C518"
+    }
+   },
+   {
+    "team_id": "cal",
+    "code": "CAL",
+    "short_name": "Calderwick",
+    "colours": {
+     "primary": "#2E7D4F",
+     "secondary": "#FFFFFF",
+     "text": "#FFFFFF"
+    }
+   }
+  ]
  },
  {
   "match_id": "dun-ash-34",
@@ -37,7 +103,29 @@
    2,
    1
   ],
-  "cards": 9
+  "cards": 9,
+  "teams": [
+   {
+    "team_id": "dun",
+    "code": "DUN",
+    "short_name": "Dunmoor",
+    "colours": {
+     "primary": "#6CABDD",
+     "secondary": "#0B1F3A",
+     "text": "#0B1F3A"
+    }
+   },
+   {
+    "team_id": "ash",
+    "code": "ASH",
+    "short_name": "Ashmere",
+    "colours": {
+     "primary": "#B3202A",
+     "secondary": "#F2E8D5",
+     "text": "#FFFFFF"
+    }
+   }
+  ]
  },
  {
   "match_id": "ash-cal-35",
@@ -47,7 +135,29 @@
    2,
    1
   ],
-  "cards": 5
+  "cards": 5,
+  "teams": [
+   {
+    "team_id": "ash",
+    "code": "ASH",
+    "short_name": "Ashmere",
+    "colours": {
+     "primary": "#B3202A",
+     "secondary": "#F2E8D5",
+     "text": "#FFFFFF"
+    }
+   },
+   {
+    "team_id": "cal",
+    "code": "CAL",
+    "short_name": "Calderwick",
+    "colours": {
+     "primary": "#2E7D4F",
+     "secondary": "#FFFFFF",
+     "text": "#FFFFFF"
+    }
+   }
+  ]
  },
  {
   "match_id": "brk-dun-36",
@@ -57,6 +167,28 @@
    1,
    2
   ],
-  "cards": 6
+  "cards": 6,
+  "teams": [
+   {
+    "team_id": "brk",
+    "code": "BRK",
+    "short_name": "Brackenford",
+    "colours": {
+     "primary": "#1D4E89",
+     "secondary": "#F5C518",
+     "text": "#F5C518"
+    }
+   },
+   {
+    "team_id": "dun",
+    "code": "DUN",
+    "short_name": "Dunmoor",
+    "colours": {
+     "primary": "#6CABDD",
+     "secondary": "#0B1F3A",
+     "text": "#0B1F3A"
+    }
+   }
+  ]
  }
 ]
