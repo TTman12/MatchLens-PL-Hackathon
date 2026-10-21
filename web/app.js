@@ -90,6 +90,7 @@
       speed: (x) => `Speed ${x}x`, language: "Language: English, switch to Spanish", feed: "Match feed", score: "Score",
       playback: "Playback", match: "Match", stats: "Stats", picker: "Your club and player", bottom: "Momentum and timeline",
       tabs: "Stats tabs", languages: "Language",
+      recovered: (a) => `${a} down · recovered`, retried: (a) => `${a} retried`,
     },
     es: {
       your_club: "Tu club", neutral: "Neutral", clubs: "Clubes", players: "Jugadores", agents: "Agentes",
@@ -112,6 +113,7 @@
       speed: (x) => `Velocidad ${x}x`, language: "Idioma: español, cambiar a inglés", feed: "Imagen del partido", score: "Marcador",
       playback: "Reproducción", match: "Partido", stats: "Estadísticas", picker: "Tu club y tu jugador", bottom: "Inercia y cronología",
       tabs: "Pestañas de estadísticas", languages: "Idioma",
+      recovered: (a) => `${a} caído · recuperado`, retried: (a) => `${a} reintentado`,
     },
   };
   const w = (k, ...a) => {
@@ -515,7 +517,7 @@
     const more = c.detail ? expandBtn("card", !!open) : "";
     el.innerHTML = `
       <div class="card-head">
-        <div class="card-anchor">${esc(cardAnchor(c))}</div>${c.by === "rules" ? `<span class="card-by">${w("by_rules")}</span>` : ""}${more}
+        <div class="card-anchor">${esc(cardAnchor(c))}</div>${byLabel(c)}${more}
       </div>
       <div class="card-cols">
         <div class="card-main">
@@ -793,13 +795,26 @@
     redrawRecap();
   }
 
+  // who wrote the card, when it wasn't all the agents: the rules, or a stand-in for an agent that failed
+  function byLabel(c) {
+    const parts = c.by === "rules" ? [w("by_rules")] : [];
+    for (const r of c.recovery || []) parts.push(w(r.recovered_by === "retry" ? "retried" : "recovered", agentName(r.agent)));
+    return parts.length ? `<span class="card-by${c.recovery ? " recovered" : ""}">${esc(parts.join(" · "))}</span>` : "";
+  }
+
   // ---------- under the hood ----------
-  const AGENT_NAMES = {
-    team_play: "Team play",
-    players: "Players",
-    substitutions: "Substitutions",
-    match_events: "Match events",
-  };
+  function agentName(key) {
+    const names = {
+      team_play: "Team play",
+      players: "Players",
+      substitutions: "Substitutions",
+      match_events: "Match events",
+      explainer: "Explainer",
+      interpreter: "Interpreter",
+      analyst: "Analyst",
+    };
+    return names[key] || key;
+  }
   const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 
   function hoodHtml() {
@@ -811,11 +826,12 @@
       }</p>${translatorHtml()}`;
     }
     const runner = h.runner === "foundry" ? "Microsoft Foundry" : "Offline rules";
+    const stoodIn = (k) => (hoodCard.recovery || []).some((r) => r.agent === k && r.recovered_by === "standby");
     const rows = h.specialists
       .map((s) => {
-        const state = s.status === "failed" ? "failed" : s.verdict === "not_me" ? "not me" : "relevant";
+        const state = stoodIn(s.agent) ? "stood in" : s.status === "failed" ? "failed" : s.verdict === "not_me" ? "not me" : "relevant";
         return `<li class="hood-row st-${state.replace(" ", "-")}">
-          <span class="hood-agent">${esc(AGENT_NAMES[s.agent] || s.agent)}</span>
+          <span class="hood-agent">${esc(agentName(s.agent))}</span>
           <span class="hood-chip">${state}</span>
           <span class="hood-note">${esc(s.note)}</span></li>`;
       })
@@ -827,14 +843,47 @@
       : rejected
         ? `Passed after ${rejected} rejection${rejected > 1 ? "s" : ""}`
         : "Passed first time";
+    const why = h.fallback ? "No verified draft; the deterministic rules chose." : stoodIn("explainer") ? "Stand-in: the rules chose from the board." : h.why;
     return `
-      <div class="hood-head"><span>${esc(hoodCard.clock)} · ${esc(hoodCard.tag)}</span><span>${runner}</span></div>
+      <div class="hood-head"><span>${esc(hoodCard.clock)} · ${esc(hoodCard.tag)}</span><span>${runner}</span></div>${recoveryHtml(hoodCard)}
       <ul class="hood-list">${rows}</ul>
       <div class="hood-step"><span class="hood-agent">Explainer</span>
-        <span class="hood-why">${esc(h.fallback ? "No verified draft; the deterministic rules chose." : h.why)}</span></div>
+        <span class="hood-why">${esc(why)}</span></div>
       <div class="hood-step"><span class="hood-agent">Verifier</span>
         <span class="hood-chip ${h.fallback ? "st-failed" : "st-relevant"}">${verdict}</span>
-        <span class="hood-note">${h.board} findings on the board · confidence ${Math.round(100 * h.confidence)}%</span></div>${interpreterHtml(h.interpreter)}${analystHtml(h.analyst)}${translatorHtml(hoodCard)}`;
+        <span class="hood-note">${h.board} findings on the board · confidence ${Math.round(100 * h.confidence)}%</span></div>${interpreterHtml(h.interpreter, stoodIn("interpreter"))}${analystHtml(h.analyst, stoodIn("analyst"))}${translatorHtml(hoodCard)}`;
+  }
+
+  // an agent that failed on this card: its tries, who answered in the end, the check that answer
+  // passed in code, and the card going up anyway (matchlens/live/failover.py)
+  function recoveryHtml(c) {
+    const h = c.hood;
+    const last = (rounds) => (rounds && rounds.length ? rounds[rounds.length - 1].status : null);
+    const checks = {
+      explainer: () => ["Verifier", last(h.verifier)],
+      interpreter: () => ["Line check", h.interpreter && last(h.interpreter.rounds)],
+      analyst: () => ["Analysis check", h.analyst && last(h.analyst.rounds)],
+    };
+    return (c.recovery || [])
+      .map((r) => {
+        const [check, status] = (checks[r.agent] || checks.explainer)();
+        const steps = r.tries.map((t) => {
+          if (t.try === "stand-in") return `<li class="ok">Rules stand-in answered the same task <span>${t.ms} ms</span></li>`;
+          if (t.status === "answered") return `<li class="ok">Try ${t.try} answered <span>${t.ms} ms</span></li>`;
+          return `<li class="bad">Try ${t.try} failed: ${esc(t.drill ? "fault injected by the drill" : t.error)} <span>${t.ms} ms</span></li>`;
+        });
+        const board = r.agent in checks ? "" : " · its findings joined the other specialists' on the board";
+        steps.push(
+          `<li class="${status === "passed" ? "ok" : "bad"}">${check} in code: ${esc(status || "not run")}${board}</li>`,
+          `<li class="ok">Card went on screen at ${esc(c.clock)}</li>`,
+        );
+        const chip = r.drill ? "Fault drill" : "Failure";
+        return `<div class="hood-recovery"><div class="hood-step"><span class="hood-agent">${esc(agentName(r.agent))}</span>
+          <span class="hood-chip st-failed">${chip}</span>
+          <span class="hood-note">${r.recovered_by === "retry" ? "Recovered on retry" : "Handed off to a rules stand-in"}</span></div>
+          <ol class="hood-tries">${steps.join("")}</ol></div>`;
+      })
+      .join("");
   }
 
   // the full-time recap's agents: the Recapper's headline and the Translator
@@ -870,19 +919,19 @@
         <span class="hood-note">${esc(note)}</span></div>`;
   }
 
-  function interpreterHtml(it) {
+  function interpreterHtml(it, stoodIn) {
     if (!it) return "";
     const rejected = it.rounds.filter((r) => r.status === "rejected").length;
-    const verdict = it.fallback ? "Fell back to the rules" : rejected ? "Passed after a rewrite" : "Passed first time";
+    const verdict = it.fallback ? "Fell back to the rules" : stoodIn ? "Stand-in passed the check" : rejected ? "Passed after a rewrite" : "Passed first time";
     return `<div class="hood-step"><span class="hood-agent">Interpreter</span>
         <span class="hood-chip ${it.fallback ? "st-failed" : "st-relevant"}">${verdict}</span>
         <span class="hood-note">Wrote the line on the card for each lens, checked against the facts</span></div>`;
   }
 
-  function analystHtml(it) {
+  function analystHtml(it, stoodIn) {
     if (!it) return "";
     const rejected = it.rounds.filter((r) => r.status === "rejected").length;
-    const verdict = it.fallback ? "Fell back to the rules" : rejected ? "Passed after a rewrite" : "Passed first time";
+    const verdict = it.fallback ? "Fell back to the rules" : stoodIn ? "Stand-in passed the check" : rejected ? "Passed after a rewrite" : "Passed first time";
     return `<div class="hood-step"><span class="hood-agent">Analyst</span>
         <span class="hood-chip ${it.fallback ? "st-failed" : "st-relevant"}">${verdict}</span>
         <span class="hood-note">Picked what each club could do from the options the stats back, checked against them</span></div>`;

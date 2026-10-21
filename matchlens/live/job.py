@@ -11,9 +11,12 @@
 4. After each minute the screen's bundle is rebuilt from the match so far, so viewers can watch
    the cards arrive as the match plays.
 
-The agents run on Microsoft Foundry when the daily budget allows and Foundry answers. If a
-moment takes too long, Foundry fails, or the budget runs out mid-match, that card and the rest of
-the match are written by the deterministic rules instead, and labelled so on screen.
+The agents run on Microsoft Foundry when the daily budget allows and Foundry answers. An agent
+that fails is retried, then a rules stand-in takes its task and the chain carries on, with the
+incident logged on the card (failover.py; the admin screen's fault drill makes this happen on
+purpose). If a moment takes too long, Foundry can't be reached, or the budget runs out mid-match,
+that card and the rest of the match are written by the deterministic rules instead, and labelled so
+on screen.
 """
 
 from __future__ import annotations
@@ -36,6 +39,7 @@ from ..explain.match import MatchData
 from ..explain.watcher import Moment
 from ..ingest.feed import Feed, export_feed, load_mapping, read_feed
 from ..ingest.runner import LiveRunner
+from .failover import Drill, FailoverRunner, recording
 from .limits import DailyBudget
 
 log = logging.getLogger(__name__)
@@ -89,6 +93,7 @@ class Job:
     foundry: Runner | None = None  # None: the rules explain this match
     budget: DailyBudget | None = None
     note: str = ""  # why the rules are explaining, for the screen
+    drill: Drill | None = None  # an agent knocked out on purpose (the admin screen's fault drill)
     pace: float = PACE
     status: str = "generating"  # generating | playing | done | failed
     created: float = field(default_factory=time.time)
@@ -97,12 +102,23 @@ class Job:
     by: dict[str, int] = field(default_factory=lambda: {"foundry": 0, "rules": 0})
     live: LiveRunner | None = None
     _offline: OfflineRunner = field(default_factory=OfflineRunner)
+    _guarded: dict[int, FailoverRunner] = field(default_factory=dict)
     _counted: int = 0
     _built_at: float = 0.0
 
     @property
     def agents_on(self) -> bool:
         return self.foundry is not None
+
+    def _runner(self, runner: Runner) -> FailoverRunner:
+        """`runner` with the retry, the rules stand-in and the drill (one wrapper per runner)."""
+        if id(runner) not in self._guarded:
+            self._guarded[id(runner)] = FailoverRunner(runner, OfflineRunner(), self.drill)
+        return self._guarded[id(runner)]
+
+    @property
+    def incidents(self) -> int:
+        return sum(r.incidents for r in self._guarded.values())
 
     def _drop_agents(self, why: str) -> None:
         if self.foundry is not None:
@@ -126,30 +142,27 @@ class Job:
         from ..agents.crew import explain_moment
 
         self._count_calls()
+        happened = recording()  # this card's incidents
         if self.foundry is not None:
             try:
-                card = await asyncio.wait_for(explain_moment(self.foundry, md, m), MOMENT_TIMEOUT)
-                card["written_by"] = "rules" if card["agents"]["fallback"] else "foundry"
-                return card
+                card = await asyncio.wait_for(explain_moment(self._runner(self.foundry), md, m), MOMENT_TIMEOUT)
+                stood_in = any(i["agent"] == "explainer" and i["recovered_by"] == "standby" for i in happened)
+                card["written_by"] = "rules" if card["agents"]["fallback"] or stood_in else "foundry"
+                return _logged(card, happened)
             except TimeoutError:
                 self._drop_agents("Foundry was slow to answer, so the rules write the rest of this match.")
             except Exception as exc:  # any SDK failure: the screen must keep going
                 log.warning("match %s: crew failed: %s", self.id, exc)
                 self._drop_agents("Foundry could not be reached, so the rules write the rest of this match.")
-        card = await explain_moment(self._offline, md, m)
+        happened.clear()  # what Foundry did is gone with its card: the rules write this one afresh
+        card = await explain_moment(self._runner(self._offline), md, m)
         card["written_by"] = "rules"
-        return card
+        return _logged(card, happened)
 
     async def finish(self, md: MatchData, shown: list[dict[str, Any]]) -> None:
-        from ..agents.analyst import analyse_cards
-        from ..agents.interpreter import interpret_cards
-
         if self.foundry is not None:
             try:
-                await asyncio.wait_for(
-                    asyncio.gather(interpret_cards(self.foundry, md, shown), analyse_cards(self.foundry, md, shown)),
-                    FINISH_TIMEOUT,
-                )
+                await asyncio.wait_for(asyncio.gather(*(self._write(self.foundry, md, c) for c in shown)), FINISH_TIMEOUT)
                 return
             except TimeoutError:
                 self._drop_agents("Foundry was slow to answer, so the rules write the rest of this match.")
@@ -158,7 +171,19 @@ class Job:
                 self._drop_agents("Foundry could not be reached, so the rules write the rest of this match.")
         for c in shown:
             c["written_by"] = "rules"
-        await asyncio.gather(interpret_cards(self._offline, md, shown), analyse_cards(self._offline, md, shown))
+        await asyncio.gather(*(self._write(self._offline, md, c) for c in shown))
+
+    async def _write(self, runner: Runner, md: MatchData, card: dict[str, Any]) -> None:
+        """The Interpreter's and the Analyst's lines for one card, with their incidents on the card."""
+        from ..agents.analyst import analyse_cards
+        from ..agents.interpreter import interpret_cards
+
+        happened = recording()
+        guarded = self._runner(runner)
+        try:
+            await asyncio.gather(interpret_cards(guarded, md, [card]), analyse_cards(guarded, md, [card]))
+        finally:
+            _logged(card, happened, writers=True)
 
     # ---- playing it ----
 
@@ -216,6 +241,8 @@ class Job:
             "done": self.status == "done",
             "agents": "foundry" if self.agents_on else "rules",
             "note": self.note,
+            "drill": self.drill.as_dict() if self.drill else None,
+            "incidents": self.incidents,
             "by": dict(self.by),
             "calls": self._counted,
             "pace": self.pace,
@@ -240,3 +267,15 @@ class Job:
         version = (self.snapshot.version + 1) if self.snapshot else 1
         self.snapshot = Snapshot(version, body, gzip.compress(body, 6))
         self._built_at = time.monotonic()
+
+
+WRITERS = ("interpreter", "analyst")
+
+
+def _logged(card: dict[str, Any], log: list[dict[str, Any]], writers: bool = False) -> dict[str, Any]:
+    """Put a step's incidents on its card. `writers`: the Interpreter's and Analyst's step, which
+    replaces that step's incidents from an earlier try and keeps the explaining step's."""
+    kept = [i for i in card.get("recovery") or [] if not writers or i["agent"] not in WRITERS]
+    if kept or log:
+        card["recovery"] = kept + list(log)
+    return card
