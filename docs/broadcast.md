@@ -1,27 +1,34 @@
 # The broadcast screen
 
+![The user screen: club crests, the squad on a pitch, the controls in the feed](img/user-screen.png)
+
+![A card and the followed player's strip, expanded](img/expanded.png)
+
 ![A card on a substitute's running, with the club stats panel](img/broadcast.png)
 
 ![The MatchLens analysis card that follows: what the side that lost momentum could do](img/analysis.png)
 
-The screen in `web/` plays a match on a condensed clock. By default 1 match minute takes 1.6 seconds, so a full match runs about 2.5 minutes. It is laid out like a stream, over a photo of a stadium:
+The screen in `web/` plays a match on a condensed clock. By default 1 match minute takes 1.6 seconds, so a full match runs about 2.5 minutes. It is laid out like a stream, over a photo of a stadium. There are two screens:
+
+- **User** (the default): for fans. The right side is a picker instead of stats: **Your club** as a row of crests with the name under each (the chosen one is lifted and highlighted; a green dot marks the two clubs playing), and **Your player**: choose either team and its squad appears on a pitch, fantasy-football style, one line each for goalkeeper, defenders, midfield and attack, with the bench below. Each player is a card with a blank profile picture, his position and his name; the chosen one is highlighted and followed. Play, the speed, the language and the match sit in a control bar along the bottom of the feed, as on a video player, and fade while the match plays. The crests are drawn by the page from each club's colours (a shape, a pattern and an initial); there are no real marks or photos.
+- **Admin** (`?mode=admin`, the button in either screen, or M): the operator's screen, described below, with the stats tabs and what the agents did.
+
+Both screens share the feed, the cards and the momentum bar:
 
 - **The feed** (top left). A still of the stadium stands in for the match video. Over it sit:
   - **the score and clock**;
   - **the cards**, as a lower third, which pop up when the Director puts one on screen. A card shows:
     - its anchor, such as "Since Dunmoor goal 25'" or "Since 63'";
     - one line saying what the numbers mean for the game, written for the viewer's club ([explainer.md](explainer.md));
-    - one or two numbers, each against the same team before the anchor. For a substitute, the comparison is with the player they replaced. Where it can, the card pairs two stats that explain each other, rather than showing a lone possession figure. Each number reads as one line and one path: a colour chip for the club, then "Brackenford's progressive passes" (or "Corvcombe's distance vs Brennow" for a substitute), then the number before (small and faded), an arrow and the number now (big and solid). The numbers show which way it went, so there are no extra symbols, and the momentum bar along the bottom of the screen shows momentum, so the card doesn't repeat it.
+    - one number (Expand shows the second), each against the same team before the anchor. For a substitute, the comparison is with the player they replaced. Where it can, the card pairs two stats that explain each other, rather than showing a lone possession figure. Each number reads as one line and one path: a colour chip for the club, then "Brackenford's progressive passes" (or "Corvcombe's distance vs Brennow" for a substitute), then the number before (small and faded), an arrow and the number now (big and solid). The numbers show which way it went, so there are no extra symbols, and the momentum bar along the bottom of the screen shows momentum, so the card doesn't repeat it.
+    - an **Expand** button. The card starts simple; Expand opens its detail beside it: the second number, the cause the agents settled on and its confidence, momentum before and now, and both clubs on up to eight stats before the anchor against since it. An open card stays up until it is closed.
   - **the MatchLens analysis**, which follows a card when it leaves: what a club could do about the momentum, the take fans argue about. The side that lost it gets "How Dunmoor win it back" ("Dunmoor need to push the line back up and stop inviting Calderwick on"); the side that has it gets "How Calderwick keep it going". A fan of either club sees their own club's; a neutral sees the side that lost momentum. Under the line is the stat behind it. Every idea is backed by a stat in the match ([agents.md](agents.md), step 5).
-  - **the full-time recap**, which takes over the feed at the final whistle (or press F): the score and one headline for the viewer's club, who had the game in each quarter-hour (the home side's share of momentum, as a bar in the two clubs' colours), the three turning points (the cards whose momentum swung most), full-time stat pairs as two-sided bars, and a standout player for each club with the stat that sets them apart.
-  - **follow a player**, when a player is followed: a strip under the score with his name, a few live numbers and a bar for his touches in each five minutes so far. Name tags pop out beside it when something happens (a goal, an assist, a shot, a card, coming on or off) or a running total reaches a set threshold (5 and 10 km covered, 10, 20 and 30 sprints, 25, 50 and 75 passes, 5 and 10 duels won, 5, 10 and 15 defensive actions). His moments sit on the timeline, a card stat about him is outlined, and at full time the recap shows where he finished in his team on each stat and his touches across the match.
-- **Stats panel** (right):
+  - **the full-time recap**, which takes over the feed at the final whistle (or press F): the score and one headline for the viewer's club, who had the game in each quarter-hour (the home side's share of momentum, as a bar in the two clubs' colours), the three turning points (the cards whose momentum swung most), full-time stat pairs as two-sided bars, and a standout player for each club with the stat that sets them apart. Expand adds xG and duels won, the momentum swing at each turning point, and the first half against the second.
+  - **follow a player**, when a player is followed: a strip under the score with his name, three live numbers and a bar for his touches in each five minutes so far; its Expand button shows ten (passing, duels, defensive actions, shots, xG, running). Name tags pop out beside it when something happens (a goal, an assist, a shot, a card, coming on or off) or a running total reaches a set threshold (5 and 10 km covered, 10, 20 and 30 sprints, 25, 50 and 75 passes, 5 and 10 duels won, 5, 10 and 15 defensive actions). His moments sit on the timeline, a card stat about him is outlined, and at full time the recap shows where he finished in his team on each stat and his touches across the match.
+- **Stats panel** (right, admin screen):
   - **Your club**: neutral or either side. The card sentence is written for that club's fans. The choice is remembered on this device.
-  - **Casual or Analyst**: the same match at two densities.
-    - Casual: a card shows its line and one number; the Clubs tab shows six stats as two-sided bars; the recap shows three stat pairs.
-    - Analyst: a card also shows its second number, the cause the agents settled on and its confidence, momentum before and now, and both clubs on eight stats before the anchor against since it; the Clubs tab is the full table with a "last 15 minutes" column for each club; the recap adds xG and duels won, the momentum swing at each turning point, and the first half against the second.
-  - **EN or ES**: English or Spanish. Every label on screen, every card anchor and stat label, and every line is in the chosen language. The Spanish lines are translations of the English ones, checked in code, or the rules' own Spanish when a translation fails its check ([agents.md](agents.md), step 7). The view and language are remembered on this device.
-  - **Clubs**: 24 stats for both sides at the current minute, the leader in bold. Tap a club to see its players.
+  - **EN or ES**: English or Spanish. Every label on screen, every card anchor and stat label, and every line is in the chosen language. The Spanish lines are translations of the English ones, checked in code, or the rules' own Spanish when a translation fails its check ([agents.md](agents.md), step 7). The language is remembered on this device.
+  - **Clubs**: six stats as two-sided bars at the current minute; Expand shows all 24 for both sides, the leader in bold, with a "last 15 minutes" column for each club. Tap a club to see its players.
   - **Players**: every player who has played, and for each one 14 stats at the current minute. Open a player and press Follow to follow him.
   - **Agents**: what the agents did for the card on screen: each specialist's verdict, the Explainer's reason, whether the Verifier passed the card, and how the Interpreter and the Analyst did.
 
@@ -46,7 +53,7 @@ cd web && python3 -m http.server 8000                    # then open http://loca
 matchlens-live --web web --agents offline                # the same, plus Generate match (docs/generate-match.md)
 ```
 
-**URL options:** `?match=<id>`, `&speed=1|2|4`, `&autoplay=1`, `&hide=1` to hide the operator controls for screen capture, `&tab=clubs|players|agents` to open a panel tab, `&fan=<team id>` to pick the viewer's club, `&view=casual|analyst`, `&lang=en|es`, and `&follow=<player id>` to follow a player.
+**URL options:** `?match=<id>`, `&speed=1|2|4`, `&autoplay=1`, `&hide=1` to hide the operator controls for screen capture, `&tab=clubs|players|agents` to open a panel tab, `&mode=user|admin`, `&fan=<team id>` to pick the viewer's club, `&lang=en|es`, `&follow=<player id>` to follow a player, and `&open=1` to bring every card up expanded.
 
 **Keys:**
 - Space: play or pause.
@@ -55,7 +62,8 @@ matchlens-live --web web --agents offline                # the same, plus Genera
 - H: hide the controls.
 - U: switch between the Agents tab and the Clubs tab.
 - F: jump to full time and the recap.
-- V: switch between Casual and Analyst.
+- E: expand or close the card on screen.
+- M: switch between the user and admin screens.
 - L: switch between English and Spanish.
 
 Click the timeline to scrub.

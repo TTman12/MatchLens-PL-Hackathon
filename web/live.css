@@ -1,7 +1,7 @@
 /* "Generate match" (web/live.js): the button, the unseen-match badge on the feed, the part of the
    timeline the feed hasn't sent yet, and the rules-written label on a card. */
 
-.controls .gen-btn { background: var(--accent); border-color: var(--accent); }
+.controls .gen-btn, .vbar .gen-btn { background: var(--accent); border-color: var(--accent); }
 .controls .gen-btn:hover { border-color: var(--secondary); }
 .controls .gen-btn:disabled { opacity: 0.7; cursor: progress; }
 

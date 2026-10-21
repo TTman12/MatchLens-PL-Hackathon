@@ -1,11 +1,15 @@
 // MatchLens broadcast screen. Plays one match bundle (see matchlens/broadcast/bundle.py) on a
 // condensed clock. The page does no analysis: everything it shows is in the bundle.
 //
-// URL options: ?match=<id>  &speed=1|2|4  &autoplay=1  &hide=1 (no operator controls, for capture)
+// Two screens: user (the default, for fans: club crests and a squad to pick from, the playback
+// controls in the feed) and admin (?mode=admin: the stats tabs and what the agents did). Cards, the
+// followed player's strip, the clubs tab and the recap start simple; Expand opens the detail.
+//
+// URL options: ?match=<id>  &mode=user|admin  &speed=1|2|4  &autoplay=1  &hide=1 (no controls, for capture)
 //              &tab=clubs|players|agents  &fan=<team id> (whose fans the card text speaks to)
-//              &view=casual|analyst  &lang=en|es  &follow=<player id>
+//              &lang=en|es  &follow=<player id>  &open=1 (cards start expanded)
 // Keys: space play/pause, H hide controls, N jump to the next card, R restart, U under the hood,
-//       F full time (the recap), V casual/analyst, L English/Spanish.
+//       F full time (the recap), E expand/collapse the card, M user/admin, L English/Spanish.
 
 (() => {
   "use strict";
@@ -33,7 +37,13 @@
   let club = null; // the club the players tab lists
   let player = null; // the player the players tab shows
   let panelMinute = -1;
-  let view = pick(params.get("view") || store("matchlens.view"), ["casual", "analyst"], "casual");
+  let mode = pick(params.get("mode"), ["user", "admin"], "user");
+  let cardOpen = params.get("open") === "1"; // the card on screen shows its detail
+  let followOpen = false; // the followed player's strip shows every stat
+  let recapOpen = false; // the recap shows halves and every stat
+  let clubsOpen = false; // the clubs tab shows the full table
+  let squadClub = null; // the club whose squad the user screen shows
+  let clubs = []; // every club in the index, for the user screen's crests
   let lang = pick(params.get("lang") || store("matchlens.lang"), ["en", "es"], "en");
   let follow = params.get("follow"); // a player id: follow mode pins his match on screen
   let nextMoment = 0;
@@ -60,7 +70,11 @@
   const WORDS = {
     en: {
       your_club: "Your club", neutral: "Neutral", clubs: "Clubs", players: "Players", agents: "Agents",
-      casual: "Casual", analyst: "Analyst", play: "Play", pause: "Pause", momentum: "Momentum",
+      more: "More", less: "Less", play: "Play", pause: "Pause", momentum: "Momentum",
+      your_player: "Your player", not_playing: (c) => `${c} aren't in this match, so the cards stay neutral.`,
+      neutral_note: "Cards speak to both sides.", fan_note: (c) => `Cards speak to ${c} fans.`, pick_player: "Tap a player to follow them.",
+      gk: "Goalkeeper", def: "Defenders", mid: "Midfield", att: "Attack", bench: "Bench", came_on: "on",
+      user_view: "User view", admin_view: "Admin view",
       win_back: (c) => `How ${c} win it back`, keep_going: (c) => `How ${c} keep it going`, analysis: "MatchLens analysis",
       at: "At", last15: "Last 15'", modelled: "* modelled from tracking-style data.", tap_club: "Tap a club for its players.",
       back: "Back", not_on: "Not on the pitch yet.", on: "on", sub: "sub", passes: "passes",
@@ -72,7 +86,11 @@
     },
     es: {
       your_club: "Tu club", neutral: "Neutral", clubs: "Clubes", players: "Jugadores", agents: "Agentes",
-      casual: "Básica", analyst: "Analista", play: "Ver", pause: "Pausa", momentum: "Inercia",
+      more: "Más", less: "Menos", play: "Ver", pause: "Pausa", momentum: "Inercia",
+      your_player: "Tu jugador", not_playing: (c) => `${c} no juega este partido: las tarjetas siguen neutrales.`,
+      neutral_note: "Las tarjetas hablan a los dos equipos.", fan_note: (c) => `Las tarjetas hablan a la afición de ${c}.`, pick_player: "Toca un jugador para seguirlo.",
+      gk: "Portero", def: "Defensas", mid: "Centrocampistas", att: "Delanteros", bench: "Banquillo", came_on: "entra",
+      user_view: "Vista usuario", admin_view: "Vista admin",
       win_back: (c) => `Cómo recupera ${c} el control`, keep_going: (c) => `Cómo sigue ${c} mandando`, analysis: "Análisis MatchLens",
       at: "Min.", last15: "Últ. 15'", modelled: "* estimado con datos de seguimiento.", tap_club: "Toca un club para ver sus jugadores.",
       back: "Volver", not_on: "Todavía no ha salido al campo.", on: "entra", sub: "suplente", passes: "pases",
@@ -90,7 +108,7 @@
   // a stat label in the viewer's language
   const L = (label) => (lang === "es" && bundle && bundle.i18n ? bundle.i18n.es.labels[label] || label : label);
 
-  // what each cause is called on the analyst's card
+  // what each cause is called on the expanded card
   const CAUSES = {
     play_change: ["Play change", "Cambio de juego"],
     recovery: ["Recovery", "Reacción"],
@@ -160,6 +178,9 @@
   // ---------- loading ----------
   async function loadIndex() {
     const index = await (await fetch("data/index.json")).json();
+    const seen = new Map();
+    for (const m of index) for (const tm of m.teams || []) if (!seen.has(tm.team_id)) seen.set(tm.team_id, tm);
+    clubs = [...seen.values()].sort((a, b) => a.short_name.localeCompare(b.short_name));
     const sel = $("matchSelect");
     sel.innerHTML = index
       .map((m) => `<option value="${m.match_id}">${m.home} ${m.score[0]}-${m.score[1]} ${m.away}</option>`)
@@ -191,6 +212,10 @@
     club = home.team_id;
     player = null;
     if (follow && !(bundle.follow && bundle.follow[follow])) follow = null;
+    // a generated match can bring clubs the demo matches don't have: give them crests too
+    const extra = bundle.teams.filter((tm) => !clubs.some((x) => x.team_id === tm.team_id));
+    if (extra.length) clubs = [...clubs, ...extra].sort((a, b) => a.short_name.localeCompare(b.short_name));
+    squadClub = (followed() && followed().team) || (bundle.teams.some((x) => x.team_id === fan) ? fan : home.team_id);
     drawFan();
     drawPrefs();
     drawTimeline();
@@ -207,6 +232,7 @@
     drawFollow();
     render();
     renderPanel();
+    drawPicker();
   }
 
   // A generated match arrives a minute at a time (web/live.js): the clock may not pass the minutes
@@ -391,16 +417,22 @@
     return lang === "es" && c.i18n && c.i18n.es ? c.i18n.es : null;
   }
 
+  // whose fans the words speak to: the favourite club when it is playing, else both sides
+  function lens() {
+    return bundle && bundle.teams.some((x) => x.team_id === fan) ? fan : "neutral";
+  }
+
   function cardText(c) {
     const text = (es(c) && es(c).text) || c.text || {};
-    return text[fan] ?? text.neutral ?? (c.text || {})[fan] ?? (c.text || {}).neutral ?? "";
+    const k = lens();
+    return text[k] ?? text.neutral ?? (c.text || {})[k] ?? (c.text || {}).neutral ?? "";
   }
 
   function cardAnchor(c) {
     return (es(c) && es(c).anchor) || c.anchor;
   }
 
-  // The analyst's card: what the agents settled on, and both clubs before the anchor against since
+  // The expanded card: what the agents settled on, and both clubs before the anchor against since
   function detailHtml(c) {
     const d = c.detail;
     if (!d) return "";
@@ -425,35 +457,66 @@
       </div>`;
   }
 
-  function showCard(c) {
+  // the button that opens a graphic's detail, and closes it again
+  const PLUS =
+    '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const MINUS = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 6h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  function expandBtn(what, open, words = true) {
+    const label = open ? w("less") : w("more");
+    return `<button type="button" class="xp${open ? " open" : ""}" data-expand="${what}" aria-expanded="${open}" aria-label="${label}">${open ? MINUS : PLUS}${words ? `<span>${label}</span>` : ""}</button>`;
+  }
+
+  // Simple first: the anchor, one line and one stat. Expand adds the second stat, and beside them
+  // the cause, the confidence, momentum before and now, and both clubs before and since.
+  function showCard(c, animate = true) {
     const el = $("card");
-    el.className = `card kind-${c.kind} view-${view}`;
-    const stats = view === "analyst" ? c.stats : c.stats.slice(0, 1);
+    const open = cardOpen && c.detail;
+    el.className = `card kind-${c.kind}${open ? " open" : ""}`;
+    const stats = open ? c.stats : c.stats.slice(0, 1);
+    const more = c.detail || c.stats.length > 1 ? expandBtn("card", !!open) : "";
     el.innerHTML = `
       <div class="card-head">
-        <div class="card-anchor">${esc(cardAnchor(c))}</div>${c.by === "rules" ? `<span class="card-by">${w("by_rules")}</span>` : ""}
+        <div class="card-anchor">${esc(cardAnchor(c))}</div>${c.by === "rules" ? `<span class="card-by">${w("by_rules")}</span>` : ""}${more}
       </div>
-      <div class="card-text" id="cardText">${esc(cardText(c))}</div>
-      <div class="card-body">${stats.map(statRow).join("")}</div>${view === "analyst" ? detailHtml(c) : ""}`;
+      <div class="card-cols">
+        <div class="card-main">
+          <div class="card-text" id="cardText">${esc(cardText(c))}</div>
+          <div class="card-body">${stats.map(statRow).join("")}</div>
+        </div>${open ? detailHtml(c) : ""}
+      </div>`;
     el.hidden = false;
-    void el.offsetWidth;
-    el.classList.add("on");
+    if (animate) {
+      void el.offsetWidth;
+      el.classList.add("on");
+    } else el.classList.add("on", "still");
     phase = "stats";
-    cardUntil = performance.now() + (view === "analyst" ? CARD_SECONDS + 4 : CARD_SECONDS) * 1000;
+    cardUntil = performance.now() + CARD_SECONDS * 1000;
     hoodCard = c;
     if (tab === "agents") renderPanel();
+  }
+
+  // An open card stays up until it is closed, then leaves a few seconds later
+  function toggleCard() {
+    if (phase !== "stats" || !hoodCard) {
+      cardOpen = !cardOpen;
+      return;
+    }
+    cardOpen = !cardOpen;
+    const until = cardUntil;
+    showCard(hoodCard, false);
+    cardUntil = cardOpen ? until : Math.max(until, performance.now() + 3000);
   }
 
   // ---------- MatchLens analysis: what a club could do about it, after the card ----------
   function analysisFor(c) {
     const a = c && c.analysis;
-    return a ? (a[fan] ?? a.neutral ?? null) : null;
+    return a ? (a[lens()] ?? a.neutral ?? null) : null;
   }
 
   function analysisLine(c, a) {
     const x = es(c) && es(c).analysis;
-    const lens = c.analysis[fan] ? fan : "neutral";
-    return (x && x[lens]) || a.line;
+    const k = c.analysis[lens()] ? lens() : "neutral";
+    return (x && x[k]) || a.line;
   }
 
   function showAnalysis(c) {
@@ -474,13 +537,15 @@
     const team = teamById(a.team);
     const side = team === bundle.teams[0] ? "var(--home)" : "var(--away)";
     const ask = a.mode === "fix" ? w("win_back", team.short_name) : w("keep_going", team.short_name);
-    el.className = `card analysis view-${view}`;
+    el.className = "card analysis";
     el.innerHTML = `
       <div class="card-head">
         <div class="card-anchor"><span class="an-chip" style="background:${side}"></span>${esc(ask)}<span class="an-mark">${w("analysis")}</span></div>
       </div>
-      <div class="card-text" id="cardText">${esc(analysisLine(c, a))}</div>
-      <div class="card-body">${statRow(a.stat)}</div>`;
+      <div class="card-main">
+        <div class="card-text" id="cardText">${esc(analysisLine(c, a))}</div>
+        <div class="card-body">${statRow(a.stat)}</div>
+      </div>`;
     el.hidden = false;
     void el.offsetWidth;
     el.classList.add("on");
@@ -514,7 +579,7 @@
     const [home, away] = bundle.teams;
     const [hg, ag] = bundle.score[bundle.score.length - 1];
     const text = (lang === "es" && r.i18n && r.i18n.es.text) || r.text;
-    const headline = text[fan] ?? text.neutral;
+    const headline = text[lens()] ?? text.neutral;
     const spells = r.spells
       .map(
         (s) => `<div class="sp"><div class="sp-col"><span style="height:${s.home}%;background:var(--home)"></span><span style="height:${100 - s.home}%;background:var(--away)"></span></div><span class="sp-l">${s.label}</span></div>`,
@@ -523,17 +588,17 @@
     const turns = r.turning_points
       .map(
         (tp) => `<li><span class="tp-clock">${esc(tp.clock)}</span><span class="an-chip" style="background:${sideOf(tp.team)}"></span>
-          <span>${esc(tp.label[lang] || tp.label.en)}</span>${view === "analyst" ? `<span class="tp-mo">${tp.before}%${ARROW}${tp.now}%</span>` : ""}</li>`,
+          <span>${esc(tp.label[lang] || tp.label.en)}</span>${recapOpen ? `<span class="tp-mo">${tp.before}%${ARROW}${tp.now}%</span>` : ""}</li>`,
       )
       .join("");
     const p = followed();
-    const keep = p ? ["possession", "shots"] : view === "analyst" ? r.stats.map((s) => s.key) : ["possession", "shots", "shots_on_target"];
+    const keep = p && !recapOpen ? ["possession", "shots"] : recapOpen ? r.stats.map((s) => s.key) : ["possession", "shots", "shots_on_target"];
     const stats = r.stats
       .filter((s) => keep.includes(s.key))
       .map((s) => pairBar(L(s.label), s.values[0], s.values[1], s.unit))
       .join("");
     const halves =
-      view === "analyst"
+      recapOpen
         ? `<div class="rc-sec">${w("halves")}</div><table class="dt rc-halves"><thead><tr><th></th><th>${dot(home.team_id)}${home.code}</th><th>${dot(away.team_id)}${away.code}</th></tr></thead><tbody>${r.halves
             .slice(0, p ? 3 : 5)
             .map(
@@ -547,6 +612,7 @@
       <div class="rc-head">
         <span class="rc-ft">${w("full_time")}</span>
         <span class="rc-score"><span class="an-chip" style="background:var(--home)"></span>${home.short_name} <b>${hg}-${ag}</b> ${away.short_name}<span class="an-chip" style="background:var(--away)"></span></span>
+        ${expandBtn("recap", recapOpen)}
       </div>
       <div class="rc-line">${esc(headline)}</div>
       <div class="rc-grid">
@@ -578,6 +644,7 @@
     if (tab === "agents") setTimeout(renderPanel, 0);
     hideTag();
     const el = $("recap");
+    el.classList.toggle("open", recapOpen);
     el.innerHTML = recapHtml();
     el.hidden = false;
     $("follow").hidden = true;
@@ -594,7 +661,9 @@
   }
 
   function redrawRecap() {
-    if (recapOn) $("recap").innerHTML = recapHtml();
+    if (!recapOn) return;
+    $("recap").classList.toggle("open", recapOpen);
+    $("recap").innerHTML = recapHtml();
   }
 
   // ---------- follow a player ----------
@@ -603,9 +672,10 @@
     return bundle.stats.players.find((x) => x.id === follow) || null;
   }
 
+  // the strip shows three numbers; Expand shows the player's whole game so far
   const FOLLOW_STATS = {
-    casual: ["touches", "passes", "distance"],
-    analyst: ["touches", "pass_accuracy", "progressive_passes", "duels_won", "distance", "sprints"],
+    simple: ["touches", "passes", "distance"],
+    open: ["touches", "passes", "pass_accuracy", "progressive_passes", "duels_won", "defensive_actions", "shots", "xg", "distance", "sprints"],
   };
 
   function drawFollow() {
@@ -618,14 +688,16 @@
     const m = Math.min(lastMinute(), Math.floor(t));
     const defs = Object.fromEntries(bundle.stats.player_stats.map((d) => [d.key, d]));
     const on = p.from <= m;
-    const nums = FOLLOW_STATS[view]
+    const nums = FOLLOW_STATS[followOpen ? "open" : "simple"]
       .map((k) => `<div class="fs"><b>${on ? fmt(p.stats[k][m], defs[k].unit) : "-"}</b><span>${esc(L(defs[k].label))}</span></div>`)
       .join("");
     const inv = bundle.follow[p.id].involvement;
+    el.classList.toggle("open", followOpen);
+    $("stage").classList.toggle("fw-open", followOpen);
     el.innerHTML = `
-      <div class="fw-name"><span class="an-chip" style="background:${sideOf(p.team)}"></span><span>${esc(p.name)}</span><span class="fw-role">${p.role}</span></div>
+      <div class="fw-name"><span class="an-chip" style="background:${sideOf(p.team)}"></span><span>${esc(p.name)}</span><span class="fw-role">${p.role}</span>${expandBtn("follow", followOpen, false)}</div>
       <div class="fw-nums">${nums}</div>
-      ${spark(inv, Math.ceil((m + 1) / 5))}`;
+      ${followOpen ? `<div class="fw-sub">${w("involvement")}</div>` : ""}${spark(inv, Math.ceil((m + 1) / 5), followOpen ? "wide" : "")}`;
     el.hidden = false;
   }
 
@@ -680,6 +752,7 @@
     drawFollow();
     drawMoments();
     renderPanel();
+    drawPicker();
     redrawRecap();
   }
 
@@ -786,20 +859,20 @@
     return unit ? `${n}<span class="u">${unit}</span>` : `${n}`;
   }
 
-  // the casual view's clubs tab: a few stats as two-sided bars
-  const CASUAL_STATS = ["possession", "shots", "shots_on_target", "box_entries", "corners", "distance"];
+  // the clubs tab: a few stats as two-sided bars; Expand shows the full table with the last 15'
+  const SIMPLE_STATS = ["possession", "shots", "shots_on_target", "box_entries", "corners", "distance"];
 
   function clubsHtml(m) {
     const st = bundle.stats;
     const [home, away] = bundle.teams;
     const head = (tm) => `<th><button type="button" data-club="${tm.team_id}">${dot(tm.team_id)}${tm.code}</button></th>`;
-    if (view === "casual") {
+    if (!clubsOpen) {
       const bars = st.team_stats
-        .filter((d) => CASUAL_STATS.includes(d.key))
+        .filter((d) => SIMPLE_STATS.includes(d.key))
         .map((d) => pairBar(L(d.label), st.teams[home.team_id][d.key][m], st.teams[away.team_id][d.key][m], d.unit))
         .join("");
       return `<div class="pb-head">${head(home).replace(/<\/?th>/g, "")}<span>${w("at")} ${bundle.clock[m]}</span>${head(away).replace(/<\/?th>/g, "")}</div>
-        ${bars}<p class="note">${w("tap_club")}</p>`;
+        ${bars}<div class="pb-foot"><p class="note">${w("tap_club")}</p>${expandBtn("clubs", false)}</div>`;
     }
     const l15 = st.last15;
     const rows = st.team_stats
@@ -815,8 +888,8 @@
       })
       .join("");
     const recentHead = l15 ? `<th class="l15" colspan="2">${w("last15")}</th>` : "";
-    return `<table class="ct"><thead><tr><th>${w("at")} ${bundle.clock[m]}</th>${head(home)}${head(away)}${recentHead}</tr></thead><tbody>${rows}</tbody></table>
-      <p class="note">${w("modelled")} ${w("tap_club")}</p>`;
+    return `<table class="ct wide"><thead><tr><th>${w("at")} ${bundle.clock[m]}</th>${head(home)}${head(away)}${recentHead}</tr></thead><tbody>${rows}</tbody></table>
+      <div class="pb-foot"><p class="note">${w("modelled")} ${w("tap_club")}</p>${expandBtn("clubs", true)}</div>`;
   }
 
   function playersHtml(m) {
@@ -877,7 +950,11 @@
     if (!b) return;
     if (b.dataset.tab) setTab(b.dataset.tab);
     else if (b.dataset.fan) setFan(b.dataset.fan);
-    else if (b.dataset.view) setView(b.dataset.view);
+    else if (b.dataset.mode) setMode(b.dataset.mode);
+    else if (b.dataset.expand) {
+      clubsOpen = !clubsOpen;
+      renderPanel();
+    }
     else if (b.dataset.lang) setLang(b.dataset.lang);
     else if (b.dataset.follow !== undefined) setFollow(b.dataset.follow || null);
     else if (b.dataset.club) {
@@ -895,22 +972,21 @@
 
   // ---------- favourite club ----------
   function drawFan() {
-    const ids = bundle.teams.map((x) => x.team_id);
-    if (fan !== "neutral" && !ids.includes(fan)) fan = "neutral";
-    const opt = (id, label) => `<button type="button" data-fan="${id}" class="${id === fan ? "on" : ""}">${label}</button>`;
+    const opt = (id, label) => `<button type="button" data-fan="${id}" class="${id === lens() ? "on" : ""}">${label}</button>`;
     $("fanOpts").innerHTML = opt("neutral", w("neutral")) + bundle.teams.map((x) => opt(x.team_id, `${dot(x.team_id)}${x.code}`)).join("");
     $("fanLabel").textContent = w("your_club");
   }
 
-  // casual or analyst, English or Spanish
+  // English or Spanish, and the way between the two screens
   function drawPrefs() {
     const opt = (k, v, label, on) => `<button type="button" data-${k}="${v}" class="${on ? "on" : ""}">${label}</button>`;
-    $("viewOpts").innerHTML = opt("view", "casual", w("casual"), view === "casual") + opt("view", "analyst", w("analyst"), view === "analyst");
     $("langOpts").innerHTML = opt("lang", "en", "EN", lang === "en") + opt("lang", "es", "ES", lang === "es");
-    $("playBtn").textContent = playing ? w("pause") : w("play");
+    $("langBtn").textContent = lang.toUpperCase();
+    $("toUser").textContent = w("user_view");
+    $("toAdmin").textContent = w("admin_view");
+    drawPlay();
     $("moLabel").textContent = w("momentum");
     document.documentElement.lang = lang;
-    $("stage").classList.toggle("analyst", view === "analyst");
   }
 
   // a change of club, view or language redraws whatever is up
@@ -926,12 +1002,7 @@
     drawFollow();
     redrawRecap();
     renderPanel();
-  }
-
-  function setView(v) {
-    view = v;
-    store("matchlens.view", v);
-    redraw();
+    drawPicker();
   }
 
   function setLang(v) {
@@ -947,6 +1018,8 @@
     if (phase === "analysis" && hoodCard) drawAnalysis(hoodCard);
     else if (phase === "stats" && hoodCard) $("cardText").textContent = cardText(hoodCard);
     redrawRecap();
+    if (bundle.teams.some((x) => x.team_id === id)) squadClub = id;
+    drawPicker();
   }
 
   function hideCard(now) {
@@ -968,6 +1041,166 @@
     }, 450);
   }
 
+  // ---------- user and admin ----------
+  // Admin is the operator's screen: the stats tabs and the agents. User is the fan's: the same feed
+  // and momentum, a club and a player to pick on the right, and the controls in the feed.
+  function setMode(m, remember = true) {
+    mode = m;
+    const st = $("stage");
+    st.classList.toggle("mode-user", m === "user");
+    st.classList.toggle("mode-admin", m === "admin");
+    if (m === "user") {
+      $("vbarLeft").append($("playBtn"));
+      $("vbarRight").prepend($("matchSelect"));
+      $("vbarRight").append($("speedBtn"));
+    } else $("controls").append($("matchSelect"), $("playBtn"), $("speedBtn"));
+    drawPlay();
+    if (remember) {
+      const q = new URLSearchParams(location.search);
+      if (m === "admin") q.set("mode", "admin");
+      else q.delete("mode");
+      const qs = q.toString();
+      history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
+    }
+    renderPanel();
+    drawPicker();
+    wake();
+  }
+
+  // the feed's controls fade while the match plays and nobody touches the screen, like a video player
+  let idleTimer = 0;
+  function wake() {
+    $("vbar").classList.remove("idle");
+    clearTimeout(idleTimer);
+    if (playing) idleTimer = setTimeout(() => $("vbar").classList.add("idle"), 2600);
+  }
+  $("stage").addEventListener("pointermove", wake);
+
+  // Expand on the card, the followed player's strip and the recap
+  $("stage").addEventListener("click", (ev) => {
+    const b = ev.target.closest("button[data-expand]");
+    if (!b || b.closest("#panel")) return;
+    const what = b.dataset.expand;
+    if (what === "card") toggleCard();
+    else if (what === "follow") {
+      followOpen = !followOpen;
+      drawFollow();
+    } else if (what === "recap") {
+      recapOpen = !recapOpen;
+      redrawRecap();
+    }
+  });
+
+  // ---------- club crests ----------
+  // Made up here from each club's colours: a shape, a pattern and its initial. No real marks.
+  function hash(s) {
+    let h = 7;
+    for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return h;
+  }
+  const SHAPES = [
+    "M6 4h36v18c0 12-9 19-18 23C15 41 6 34 6 22z", // shield
+    "M24 2l19 6v14c0 11-8 19-19 24C13 41 5 33 5 22V8z", // pointed shield
+    "M24 3a21 21 0 1 1 0 42a21 21 0 1 1 0-42z", // roundel
+    "M10 3h28l6 10-20 33L4 13z", // diamond badge
+  ];
+  function crestSvg(tm) {
+    if (!tm) {
+      // neutral: half and half, no side taken
+      return `<svg class="crest" viewBox="0 0 48 48" aria-hidden="true"><defs><clipPath id="cr-n"><path d="${SHAPES[2]}"/></clipPath></defs>
+        <g clip-path="url(#cr-n)"><rect width="24" height="48" fill="#e6dde7"/><rect x="24" width="24" height="48" fill="#6b5470"/></g>
+        <path d="${SHAPES[2]}" fill="none" stroke="#fff" stroke-width="2"/><path d="M24 3v42" stroke="#fff" stroke-width="2"/></svg>`;
+    }
+    const h = hash(tm.team_id);
+    const shape = SHAPES[h % SHAPES.length];
+    const c1 = tm.colours.primary;
+    const c2 = tm.colours.secondary || "#ffffff";
+    const ink = luminance(c1) > 0.6 ? "#28002b" : "#ffffff";
+    const id = `cr-${tm.team_id}`;
+    const pattern = [
+      `<path d="M0 30l24-12 24 12v8L24 26 0 38z" fill="${c2}"/>`, // chevron
+      `<rect x="24" width="24" height="48" fill="${c2}" opacity="0.92"/>`, // halves
+      `<path d="M-4 40L40-4h10L6 50z" fill="${c2}"/>`, // sash
+      `<rect y="8" width="48" height="7" fill="${c2}"/><rect y="33" width="48" height="4" fill="${c2}"/>`, // bands
+    ][(h >> 3) % 4];
+    return `<svg class="crest" viewBox="0 0 48 48" aria-hidden="true"><defs><clipPath id="${id}"><path d="${shape}"/></clipPath></defs>
+      <g clip-path="url(#${id})"><rect width="48" height="48" fill="${c1}"/>${pattern}</g>
+      <path d="${shape}" fill="none" stroke="${c2}" stroke-width="2.4"/>
+      <text x="24" y="27" text-anchor="middle" dominant-baseline="middle" fill="${ink}" stroke="${c1}" stroke-width="1.2" paint-order="stroke"
+        font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="20">${esc(tm.short_name[0])}</text></svg>`;
+  }
+
+  // ---------- the user screen: pick a club, then a player ----------
+  const LINES = [
+    ["gk", ["GK"]],
+    ["def", ["LB", "LWB", "CB", "RB", "RWB"]],
+    ["mid", ["LM", "DM", "CM", "AM", "RM"]],
+    ["att", ["LW", "W", "ST", "CF", "RW"]],
+  ];
+  const lineOf = (role) => (LINES.find(([, roles]) => roles.includes(role)) || LINES[2])[0];
+  const slot = (role) => LINES.flatMap(([, roles]) => roles).indexOf(role);
+
+  const AVATAR =
+    '<svg class="pc-face" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="14.5" r="7.5" fill="currentColor"/><path d="M5 40c1.5-9 7.5-14 15-14s13.5 5 15 14z" fill="currentColor"/></svg>';
+
+  function playerCard(p) {
+    const on = p.id === follow;
+    const tm = teamById(p.team);
+    const bench = p.from > 0 ? `<span class="pc-sub">${w("came_on")} ${esc(bundle.clock[p.from])}</span>` : "";
+    return `<button type="button" class="pcard${on ? " on" : ""}" data-pick="${p.id}" role="radio" aria-checked="${on}" style="--club:${tm.colours.primary}">
+      <span class="pc-photo">${AVATAR}<span class="pc-role">${p.role}</span>${bench}${on ? '<span class="pc-tick" aria-hidden="true"></span>' : ""}</span>
+      <span class="pc-name">${esc(p.name)}</span></button>`;
+  }
+
+  function drawPicker() {
+    if (!bundle || mode !== "user") return;
+    const k = lens();
+    const crest = (id, tm, label) => {
+      const on = (id === "neutral" ? k === "neutral" && fan === "neutral" : fan === id) ? " on" : "";
+      const inMatch = tm && bundle.teams.some((x) => x.team_id === tm.team_id) ? " playing" : "";
+      return `<button type="button" class="crest-btn${on}${inMatch}" data-fan="${id}" role="radio" aria-checked="${!!on}">
+        ${crestSvg(tm)}<span class="crest-name">${esc(label)}</span></button>`;
+    };
+    $("pkClubTitle").textContent = w("your_club");
+    $("crests").innerHTML = crest("neutral", null, w("neutral")) + clubs.map((tm) => crest(tm.team_id, tm, tm.short_name)).join("");
+    const fav = clubs.find((x) => x.team_id === fan);
+    $("pkClubNote").textContent = fav && k === "neutral" ? w("not_playing", fav.short_name) : fav ? w("fan_note", fav.short_name) : w("neutral_note");
+
+    $("pkPlayerTitle").textContent = w("your_player");
+    $("pkTeams").innerHTML = bundle.teams
+      .map(
+        (tm) => `<button type="button" role="tab" class="${tm.team_id === squadClub ? "on" : ""}" data-squad="${tm.team_id}" aria-selected="${tm.team_id === squadClub}">
+          ${crestSvg(tm)}<span>${esc(tm.short_name)}</span></button>`,
+      )
+      .join("");
+    if (!bundle.stats) {
+      $("squad").innerHTML = `<p class="pk-note">${w("no_bundle_stats")}</p>`;
+      return;
+    }
+    const squad = bundle.stats.players.filter((x) => x.team === squadClub);
+    const starters = squad.filter((x) => x.from === 0);
+    const bench = squad.filter((x) => x.from > 0).sort((a, b) => a.from - b.from);
+    const rows = LINES.map(([key]) => {
+      const line = starters.filter((x) => lineOf(x.role) === key).sort((a, b) => slot(a.role) - slot(b.role));
+      return line.length ? `<div class="pitch-line"><span class="pl-label">${w(key)}</span><div class="pl-cards">${line.map(playerCard).join("")}</div></div>` : "";
+    }).join("");
+    $("squad").innerHTML = `
+      <div class="pitch" role="radiogroup" aria-label="${esc(w("your_player"))}">${rows}</div>
+      ${bench.length ? `<div class="pitch-line bench"><span class="pl-label">${w("bench")}</span><div class="pl-cards">${bench.map(playerCard).join("")}</div></div>` : ""}
+      <p class="pk-note">${w("pick_player")}</p>`;
+  }
+
+  $("picker").addEventListener("click", (ev) => {
+    const b = ev.target.closest("button");
+    if (!b) return;
+    if (b.dataset.mode) setMode(b.dataset.mode);
+    else if (b.dataset.fan) setFan(b.dataset.fan);
+    else if (b.dataset.squad) {
+      squadClub = b.dataset.squad;
+      drawPicker();
+    } else if (b.dataset.pick) setFollow(b.dataset.pick === follow ? null : b.dataset.pick);
+  });
+
   // ---------- clock ----------
   function frame(now) {
     const dt = last ? (now - last) / 1000 : 0;
@@ -976,11 +1209,12 @@
       const showing = cardUntil > 0;
       const rate = (SPEEDS[speedIx] / SECONDS_PER_MINUTE) * (showing ? CARD_SLOWDOWN : 1);
       t = Math.min(edge(), t + dt * rate);
-      if (showing && now >= cardUntil) {
+      if (showing && now >= cardUntil && !(phase === "stats" && cardOpen)) {
         if (phase === "stats" && analysisFor(hoodCard)) showAnalysis(hoodCard);
         else hideCard(false);
       }
       if (!showing && nextCard < bundle.cards.length && t >= bundle.cards[nextCard].at) {
+        cardOpen = params.get("open") === "1"; // each card comes up simple
         showCard(bundle.cards[nextCard]);
         nextCard++;
       }
@@ -1009,10 +1243,22 @@
   function setPlaying(on) {
     playing = on;
     if (on && bundle && t >= bundle.minutes) restart();
-    $("playBtn").textContent = on ? w("pause") : w("play");
+    drawPlay();
+    wake();
+  }
+
+  // the admin screen says Play and Pause; the user screen's feed has the usual icons
+  const PLAY_ICON = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3.2v13.6L16.4 10z" fill="currentColor"/></svg>';
+  const PAUSE_ICON = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 3h4v14h-4zM11.5 3h4v14h-4z" fill="currentColor"/></svg>';
+  function drawPlay() {
+    const b = $("playBtn");
+    const label = playing ? w("pause") : w("play");
+    b.setAttribute("aria-label", label);
+    b.innerHTML = mode === "user" ? (playing ? PAUSE_ICON : PLAY_ICON) : label;
   }
 
   $("playBtn").addEventListener("click", () => setPlaying(!playing));
+  $("langBtn").addEventListener("click", () => setLang(lang === "en" ? "es" : "en"));
   $("speedBtn").textContent = `${SPEEDS[speedIx]}x`;
   $("speedBtn").addEventListener("click", () => {
     speedIx = (speedIx + 1) % SPEEDS.length;
@@ -1025,6 +1271,7 @@
       setPlaying(!playing);
     } else if (e.key === "h" || e.key === "H") {
       $("controls").classList.toggle("hidden");
+      $("vbar").classList.toggle("hidden");
     } else if (e.key === "n" || e.key === "N") {
       const c = bundle && bundle.cards.find((x) => x.at > t + 0.1);
       if (c) seek(c.at - 0.05);
@@ -1035,13 +1282,19 @@
     } else if ((e.key === "f" || e.key === "F") && bundle) {
       seek(bundle.minutes);
       showRecap();
-    } else if (e.key === "v" || e.key === "V") {
-      setView(view === "casual" ? "analyst" : "casual");
+    } else if (e.key === "e" || e.key === "E") {
+      toggleCard();
+    } else if (e.key === "m" || e.key === "M") {
+      setMode(mode === "user" ? "admin" : "user");
     } else if (e.key === "l" || e.key === "L") {
       setLang(lang === "en" ? "es" : "en");
     }
   });
-  if (params.get("hide") === "1") $("controls").classList.add("hidden");
+  if (params.get("hide") === "1") {
+    $("controls").classList.add("hidden");
+    $("vbar").classList.add("hidden");
+  }
+  setMode(mode, false);
   // for web/live.js: show a generated match, and keep it up to date as its minutes arrive
   window.matchlensScreen = {
     use: useBundle,

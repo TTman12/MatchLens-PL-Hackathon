@@ -49,7 +49,12 @@
   btn.id = "genBtn";
   btn.className = "gen-btn";
   btn.textContent = w("generate");
-  $("controls").prepend(btn);
+  // the button sits just before the match list, which moves between the user and admin screens
+  const place = () => {
+    const sel = $("matchSelect");
+    if (btn.nextElementSibling !== sel) sel.before(btn);
+  };
+  place();
 
   const badge = document.createElement("div");
   badge.className = "live-badge";
@@ -74,6 +79,7 @@
   }
 
   function draw() {
+    place();
     btn.textContent = job && !shown ? w("generating") : w("generate");
     btn.disabled = Boolean(job && !shown);
     const live = liveOf();

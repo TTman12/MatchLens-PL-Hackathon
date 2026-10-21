@@ -295,6 +295,8 @@ def write_bundles(
                 "away": a["short_name"],
                 "score": b["score"][-1],
                 "cards": len(b["cards"]),
+                # the user screen's club picker shows every club in the index, not just this match's
+                "teams": [{k: t[k] for k in ("team_id", "code", "short_name", "colours")} for t in (h, a)],
             }
         )
     (out / "index.json").write_text(json.dumps(index, indent=1) + "\n")
