@@ -1,0 +1,62 @@
+name: Deploy
+
+# Rolls the live site on Azure Container Apps forward to the image the "Site image" workflow just
+# built from main. GitHub signs in to Azure with OpenID Connect as the matchlens-ci service
+# principal: a federated credential trusts this repository's main branch, so there is no password
+# or secret anywhere. The principal may only change the one container app (Contributor on it).
+#
+# Run it by hand (Actions > Deploy > Run workflow) to roll to a particular image sha, or back.
+on:
+  workflow_run:
+    workflows: ["Site image"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Image tag to deploy (a commit sha with a built image). Empty means the latest main commit.
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-live
+  cancel-in-progress: false
+
+env:
+  # matchlens-ci, in the MatchLens tenant. Ids, not secrets: OIDC needs no password.
+  AZURE_CLIENT_ID: 519837f7-fa8b-46b8-b6d0-1d6932fecf14
+  AZURE_TENANT_ID: 8b829b13-deec-40a6-982d-77a85344399f
+  RESOURCE_GROUP: rg-tristan.friend.12-4381
+  APP: matchlens-live
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - id: image
+        env:
+          SHA: ${{ inputs.sha || github.event.workflow_run.head_sha || github.sha }}
+        run: echo "ref=ghcr.io/${GITHUB_REPOSITORY,,}/live:${SHA}" >> "$GITHUB_OUTPUT"
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      - name: Roll the container app to the new image
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors
+          az containerapp update -n "$APP" -g "$RESOURCE_GROUP" --image "${{ steps.image.outputs.ref }}" \
+            --query properties.latestRevisionName -o tsv
+      - name: Check the site answers on the new revision
+        run: |
+          url=$(az containerapp show -n "$APP" -g "$RESOURCE_GROUP" --query properties.configuration.ingress.fqdn -o tsv)
+          for i in $(seq 1 30); do
+            if curl -fsS "https://${url}/healthz" > /dev/null; then echo "live: https://${url}"; exit 0; fi
+            sleep 5
+          done
+          echo "the site did not answer /healthz within 150 s" >&2
+          exit 1
