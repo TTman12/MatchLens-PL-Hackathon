@@ -2,20 +2,20 @@
 
 ![A card naming a player who is making more tackles, with the club stats panel](img/broadcast.png)
 
-The screen in `web/` plays a match on a condensed clock. By default 1 match minute takes 1.6 seconds, so a full match runs about 2.5 minutes. It is laid out like a stream, over a blurred photo of a stadium:
+The screen in `web/` plays a match on a condensed clock. By default 1 match minute takes 1.6 seconds, so a full match runs about 2.5 minutes. It is laid out like a stream, over a photo of a stadium:
 
 - **The feed** (top left). A still of the stadium stands in for the match video. Over it sit:
   - **the score and clock**;
   - **the cards**, as a lower third, which pop up when the Director puts one on screen. A card shows:
     - its anchor, such as "Since Dunmoor goal 25'" or "Since 63'";
-    - one sentence saying what changed in the way a team plays, written for the viewer's club ([explainer.md](explainer.md));
+    - one line saying what the numbers mean for the game, written for the viewer's club ([explainer.md](explainer.md));
     - one or two numbers, each against the same team before the anchor. For a substitute, the comparison is with the player they replaced. Where it can, the card pairs two stats that explain each other, rather than showing a lone possession figure;
     - a momentum bar with both clubs' codes, a gradient from one club's colour to the other's, and a faded line where momentum was before the bar moves to now.
 - **Stats panel** (right):
   - **Your club**: neutral or either side. The card sentence is written for that club's fans. The choice is remembered on this device.
   - **Clubs**: 24 stats for both sides at the current minute, the leader in bold. Tap a club to see its players.
   - **Players**: every player who has played, and for each one 14 stats at the current minute.
-  - **Agents**: what the agents did for the card on screen: each specialist's verdict, the Explainer's reason, and whether the Verifier passed the card.
+  - **Agents**: what the agents did for the card on screen: each specialist's verdict, the Explainer's reason, whether the Verifier passed the card, and how the Interpreter did.
 
   Distance and sprints are modelled from tracking-style data, and are marked so.
 - **Momentum and timeline** (bottom):
@@ -49,7 +49,7 @@ Click the timeline to scrub.
 
 - **Colours:** primary `#28002b`, secondary `#ffffff`, accent `#0000ee`. Team colours come from the fictional clubs. When two sides' colours are too close, the away side switches to its second colour.
 - **Type:** headings in the PremierLeague typeface at 700 (an H1 is 32px on a 1920-wide screen). That typeface is licensed, so it is not in this repo: the page uses it when it is installed, or when it is placed at `web/assets/fonts/PremierLeague.woff2`. Otherwise Barlow and Barlow Condensed stand in.
-- **Stadium:** `web/assets/stadium.jpg`, from a photo Tristan supplied, with the crest and the advertising boards blurred out. No league or club marks appear on screen.
+- **Stadium:** `web/assets/stadium.jpg`, a photo Tristan supplied. Its boards and stands carry no marks. No league or club marks appear on screen.
 
 ## The Director
 

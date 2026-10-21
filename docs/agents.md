@@ -27,6 +27,7 @@ For each moment the Watcher raises (a shift, a recovery or an event):
 | **Match-events analyst** | `matchlens-match-events` | `investigate_match_events` | Goals, red cards and game state. |
 | **Explainer** | `matchlens-explainer` | `check_card` | Chooses the cause and the one or two numbers that show it. |
 | **Verifier** | (code) | | Recomputes every number from the tables and enforces the screen rules. |
+| **Interpreter** | `matchlens-interpreter` | | Says what the card's numbers mean for the game, in one line for each viewer. |
 
 1. **The four specialists run at the same time.** Each one calls its tool. The tool computes findings from the match tables and posts them to the shared findings board, each with an id (F1, F2, ...). The specialist then says which of its findings matter, or "not me".
 2. **The Explainer reads the board.** It also gets a story menu: pairs of findings that together say how a team's play changed (see [explainer.md](explainer.md)), and a cause menu: only the causes the evidence allows for this moment. For example, a goal can be followed by "the scorers kept pushing", "the other side chased the game" or "no reaction". It picks a cause and up to two finding ids, then calls `check_card` to test its draft before answering.
@@ -38,6 +39,15 @@ For each moment the Watcher raises (a shift, a recovery or an event):
    - a share such as possession can't go on a card alone when a stat that moved with it is on the board.
 
    A rejected draft goes back to the Explainer once, with the problems listed. A second rejection, or an Explainer that fails, falls back to the deterministic choice.
+
+4. **The Interpreter reads the verified card** (for the cards the Director puts on screen). It gets the facts: the clubs, the score and minute, which side momentum moved to, the cause, the stats with before and after, and a draft reading from the rules (`matchlens/explain/insight.py`). It writes one line for a neutral and one for each club's fans, saying what is going on rather than reading the stats out. For example, more final-third passes and box entries from a side that is a goal down becomes "Brackenford have gone on the attack, looking for a way back into the game". A check in code holds each line to the facts:
+   - no numbers (the card shows them);
+   - only the two clubs and the players on the card;
+   - nothing the data can't see: a manager's instructions, injuries, the referee or the crowd;
+   - tiredness only on a fatigue or substitution card, and ten men only on a red-card card;
+   - talk of an equaliser or a lead only when the score allows it.
+
+   A rejected draft goes back once with the problems listed. After that, the card keeps the rules' lines.
 
 The models only ever refer to numbers by id. The card is built from the board, so the number on screen is the number the tool computed. A model cannot change a number by retyping it.
 

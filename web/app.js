@@ -331,7 +331,16 @@
         <span class="hood-why">${esc(h.fallback ? "No verified draft; the deterministic rules chose." : h.why)}</span></div>
       <div class="hood-step"><span class="hood-agent">Verifier</span>
         <span class="hood-chip ${h.fallback ? "st-failed" : "st-relevant"}">${verdict}</span>
-        <span class="hood-note">${h.board} findings on the board · confidence ${Math.round(100 * h.confidence)}%</span></div>`;
+        <span class="hood-note">${h.board} findings on the board · confidence ${Math.round(100 * h.confidence)}%</span></div>${interpreterHtml(h.interpreter)}`;
+  }
+
+  function interpreterHtml(it) {
+    if (!it) return "";
+    const rejected = it.rounds.filter((r) => r.status === "rejected").length;
+    const verdict = it.fallback ? "Fell back to the rules" : rejected ? "Passed after a rewrite" : "Passed first time";
+    return `<div class="hood-step"><span class="hood-agent">Interpreter</span>
+        <span class="hood-chip ${it.fallback ? "st-failed" : "st-relevant"}">${verdict}</span>
+        <span class="hood-note">Wrote the line on the card for each lens, checked against the facts</span></div>`;
   }
 
   // ---------- the stats panel ----------
