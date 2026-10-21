@@ -10,7 +10,8 @@
 Foundry settings come from the environment: ``AZURE_AI_PROJECT_ENDPOINT`` and
 ``AZURE_AI_MODEL`` (default ``gpt-4.1-mini``). Authentication is Microsoft Entra ID through
 ``DefaultAzureCredential`` (``az login`` on a laptop, a managed identity in Azure). The SDKs are
-imported lazily, so the rest of MatchLens installs and runs without them.
+imported lazily, so the rest of MatchLens installs and runs without them. Each Foundry run is
+traced to the project's Application Insights (see matchlens/telemetry.py).
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol
 
+from .. import telemetry
 from .roles import Role
 
 if TYPE_CHECKING:
@@ -135,6 +137,7 @@ class FoundryRunner:
         self.timeout = timeout
         self.versions: dict[str, str | None] = {}
         self.usage = Usage()
+        self.tracing: bool | None = None  # decided on the first task
 
     def _tools(self, tools: list[ToolSpec]) -> list[Any]:
         from agent_framework import tool
@@ -157,6 +160,8 @@ class FoundryRunner:
         )
 
     async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: Job | InterpretJob | AnalystJob) -> str:
+        if self.tracing is None:
+            self.tracing = await telemetry.connect(self._project)
         agent = await self._agent(role, tools)
         last: Exception | None = None
         for attempt in range(3):
@@ -218,6 +223,7 @@ class FoundryRunner:
         return str(created.version)
 
     async def close(self) -> None:
+        telemetry.flush()
         await self._project.close()
         await self._credential.close()
 

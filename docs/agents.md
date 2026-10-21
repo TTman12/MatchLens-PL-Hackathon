@@ -105,6 +105,12 @@ The truth can't score substitution claims yet, so it can't say whether the agent
 
 Run it with `matchlens-explain-eval --matches 30 --agents foundry`. CI runs the offline crew only, which gives the same cards as the deterministic Explainer.
 
+## Tracing
+
+Every Foundry run is traced with OpenTelemetry into the Application Insights resource linked to the Foundry project, so each run shows up on the Foundry portal's **Tracing** page with no setup. One match is one trace. The code steps are spans of their own: the Watcher, each moment, each specialist, each Explainer round, the Verifier's check and any fallback. The agents' own calls (`invoke_agent`, `chat`, `execute_tool`) come from Microsoft Agent Framework and sit underneath them. That makes it easy to see which agent was slow, which draft the Verifier rejected and why, and what each call cost in tokens.
+
+The connection string comes from `APPLICATIONINSIGHTS_CONNECTION_STRING`, or failing that from the project. `MATCHLENS_TRACING=off` turns tracing off, and `MATCHLENS_TRACE_CONTENT=0` leaves prompts and replies out of the traces. The code is in `matchlens/telemetry.py`. The offline runner and CI use the same spans as no-ops.
+
 ## Code
 
 - `matchlens/agents/board.py`: the findings board.
@@ -112,6 +118,7 @@ Run it with `matchlens-explain-eval --matches 30 --agents foundry`. CI runs the 
 - `matchlens/agents/verifier.py`: the cause menu and the Verifier.
 - `matchlens/agents/crew.py`: the crew, and `matchlens-agents`.
 - `matchlens/agents/runners.py`: the Foundry and offline runners.
+- `matchlens/telemetry.py`: tracing to Application Insights.
 
 Tests in `tests/test_agents.py` cover the following:
 - the offline crew gives the same cards as the deterministic Explainer;
@@ -119,3 +126,5 @@ Tests in `tests/test_agents.py` cover the following:
 - a fixed draft passes on its second round;
 - a failed specialist lowers confidence;
 - the Verifier catches a number that no longer matches the tables.
+
+`tests/test_telemetry.py` checks that a match is a single trace, with every moment, specialist and Verifier check in its place.

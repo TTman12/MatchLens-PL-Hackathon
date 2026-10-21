@@ -19,6 +19,7 @@ from typing import Any
 
 from ..explain.insight import lines
 from ..explain.match import MatchData
+from ..telemetry import span
 from .crew import parse
 from .roles import INTERPRETER
 from .runners import Runner, RunnerError
@@ -136,4 +137,5 @@ async def interpret_cards(runner: Runner, md: MatchData, cards: list[dict[str, A
         card["text"], fallback = await interpret(runner, job)
         card.setdefault("agents", {})["interpreter"] = {"fallback": fallback, "rounds": job.trace}
 
-    await asyncio.gather(*(one(c) for c in cards))
+    with span("interpreter", cards=len(cards)):
+        await asyncio.gather(*(one(c) for c in cards))

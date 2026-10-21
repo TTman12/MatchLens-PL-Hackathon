@@ -20,6 +20,7 @@ from typing import Any
 
 from ..explain.analysis import BY_KEY, EXCLUSIVE, default_picks, lenses, lines, speaks_to
 from ..explain.match import MatchData
+from ..telemetry import span
 from .crew import parse
 from .interpreter import EQUALISER, LEAD, TEN_MEN, TIRED
 from .roles import ANALYST
@@ -154,4 +155,5 @@ async def analyse_cards(runner: Runner, md: MatchData, cards: list[dict[str, Any
         a["picks"], a["text"], fallback = await analyse(runner, job)
         card.setdefault("agents", {})["analyst"] = {"fallback": fallback, "rounds": job.trace}
 
-    await asyncio.gather(*(one(c) for c in cards))
+    with span("analyst", cards=len(cards)):
+        await asyncio.gather(*(one(c) for c in cards))
