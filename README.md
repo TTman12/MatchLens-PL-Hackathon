@@ -12,6 +12,7 @@ It is a fresh start for the Microsoft × Premier League hackathon. All match dat
 - **Watcher, specialists and Explainer:** built as deterministic tools that work on any match in the public format. Scored against the hidden truth on unseen matches ([docs/explainer.md](docs/explainer.md)).
 - **Broadcast screen:** score and clock, an always-on momentum scale, a timeline with the momentum history, and pop-up cards chosen by a Director ([docs/broadcast.md](docs/broadcast.md)).
 - **Agents on Microsoft Foundry:** four specialist agents, an Explainer agent and a Verifier share a findings board. Tools compute every number; the models choose; the Verifier rechecks every number against the tables ([docs/agents.md](docs/agents.md)).
+- **Live feed:** a match can arrive from another provider as per-minute club and player tables plus key events, with a small file mapping its column names onto ours. It is explained a minute at a time with no look-ahead, and an unseen-match test checks this on fresh matches in CI ([docs/live-feed.md](docs/live-feed.md)).
 - **Next:** a stadium still, then redeploy the live site and record the demo.
 
 ![The broadcast screen](docs/img/broadcast.png)
@@ -44,6 +45,7 @@ matchlens-broadcast --demo 6 && (cd web && python3 -m http.server 8000)   # the 
 matchlens-agents out/matches/ash-brk-7 --runner foundry   # the agent crew on Foundry (pip install -e ".[foundry]")
 matchlens-realism                                     # generate 380 matches and check them against the real season
 matchlens-explain-eval                                # score the explainer against hidden truth on unseen matches
+matchlens-feed unseen                                 # fresh matches sent as a provider's live feed, checked end to end
 pytest -q
 ```
 
@@ -55,6 +57,7 @@ pytest -q
 - [docs/broadcast.md](docs/broadcast.md): the broadcast screen, its controls and the Director.
 - [docs/explainer.md](docs/explainer.md): the Watcher, the specialists and the Explainer, what stats can and can't tell you, and how well it scores.
 - [docs/agents.md](docs/agents.md): the agent crew on Microsoft Foundry, the shared findings board and the Verifier.
+- [docs/live-feed.md](docs/live-feed.md): taking a match live from another provider's feed, and the unseen-match test.
 - [docs/research/](docs/research/): which football stats exist and what each one reveals, plus what 380 real matches show about momentum shifts.
 
 ## Build order

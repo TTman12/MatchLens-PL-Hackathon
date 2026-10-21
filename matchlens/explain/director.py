@@ -1,14 +1,16 @@
 """The Director: decides which candidate cards actually go on screen.
 
 The Watcher and Explainer raise every candidate (about a dozen a match). A viewer wants a few
-good ones, spaced out. The Director keeps a card when:
+good ones, spaced out. The Director decides on the spot, as each card arrives, and never waits to
+see what comes later. It puts a card up when:
 
-- it is worth showing (`show`), and
-- it is at least COOLDOWN minutes after the last card on screen. A goal or red-card card may
-  break the cooldown, as broadcasters do.
+- it is worth showing (`show`) and has numbers to show,
+- it is at least COOLDOWN minutes after the last card on screen (a goal or red-card card may
+  break the cooldown, as broadcasters do), and
+- fewer than PER_HALF cards have gone up in that half.
 
-When two candidates compete inside one cooldown, the more salient one wins. No more than
-PER_HALF cards go up in a half.
+When several cards arrive in the same minute, the most urgent, then most salient, is offered
+first. Run over a recorded match, it makes exactly the choices it would have made live.
 """
 
 from __future__ import annotations
@@ -27,20 +29,31 @@ def _half(card: dict[str, Any]) -> int:
     return 1 if card["at"] <= 47 else 2
 
 
+class Director:
+    """The live Director: `offer` the cards that became available in one minute, in time order."""
+
+    def __init__(self) -> None:
+        self.shown: list[dict[str, Any]] = []
+
+    def offer(self, cards: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Of these cards (all from the same minute), the ones that go on screen now, marked `on_screen`."""
+        up = []
+        for c in sorted(cards, key=lambda c: (_urgent(c), c["salience"]), reverse=True):
+            if not (c["show"] and c["stats"]):
+                continue
+            last = self.shown[-1]["at"] if self.shown else -99
+            per_half = sum(1 for s in self.shown if _half(s) == _half(c))
+            if (c["at"] - last >= COOLDOWN or (_urgent(c) and c["at"] > last)) and per_half < PER_HALF:
+                c["on_screen"] = True
+                self.shown.append(c)
+                up.append(c)
+        return up
+
+
 def direct(cards: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Cards to put on screen, in time order. Each gets `on_screen: True`; the rest are untouched."""
-    pool = sorted((c for c in cards if c["show"] and c["stats"]), key=lambda c: c["at"])
-    chosen: list[dict[str, Any]] = []
-    i = 0
-    while i < len(pool):
-        # every candidate that becomes available inside one cooldown competes; the best goes up
-        window = [c for c in pool[i:] if c["at"] < pool[i]["at"] + COOLDOWN]
-        best = max(window, key=lambda c: (_urgent(c), c["salience"]))
-        last = chosen[-1]["at"] if chosen else -99
-        per_half = sum(1 for c in chosen if _half(c) == _half(best))
-        if (best["at"] - last >= COOLDOWN or _urgent(best)) and per_half < PER_HALF:
-            chosen.append(best)
-        i = pool.index(window[-1]) + 1
-    for c in chosen:
-        c["on_screen"] = True
-    return chosen
+    """Cards to put on screen, in time order, chosen as the live Director would have chosen them.
+    Each gets `on_screen: True`; the rest are untouched."""
+    d = Director()
+    for at in sorted({c["at"] for c in cards}):
+        d.offer([c for c in cards if c["at"] == at])
+    return d.shown
