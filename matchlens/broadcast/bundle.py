@@ -179,6 +179,7 @@ def build(md: MatchData, result: dict[str, Any] | None = None) -> dict[str, Any]
                 "analysis": screen_analysis(md, c.get("analysis")),
                 "shifted": c["shifted"],
                 "hood": under_the_hood(c),
+                **({"by": c["written_by"]} if c.get("written_by") else {}),  # a generated match: foundry or rules
             }
         )
     b = {

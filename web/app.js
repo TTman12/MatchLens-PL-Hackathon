@@ -68,7 +68,7 @@
       full_time: "Full time", who_had_it: "Who had the game", turning: "Turning points", standouts: "Standouts",
       halves: "First half · second half", involvement: "Touches every 5 minutes", before: "before", since: "since",
       confidence: "confidence", stat_of: (who, label) => `${who}'s ${lower(label)}`, rank_at: (club) => `at ${club}`,
-      no_bundle_stats: "This match bundle has no stats tables.",
+      no_bundle_stats: "This match bundle has no stats tables.", by_rules: "Rules-written",
     },
     es: {
       your_club: "Tu club", neutral: "Neutral", clubs: "Clubes", players: "Jugadores", agents: "Agentes",
@@ -80,7 +80,7 @@
       full_time: "Final", who_had_it: "Quién mandó", turning: "Momentos clave", standouts: "Destacados",
       halves: "Primera parte · segunda parte", involvement: "Toques cada 5 minutos", before: "antes", since: "desde",
       confidence: "confianza", stat_of: (who, label) => `${label} de ${who}`, rank_at: (club) => `en ${club}`,
-      no_bundle_stats: "Este partido no tiene tablas de estadísticas.",
+      no_bundle_stats: "Este partido no tiene tablas de estadísticas.", by_rules: "Escrita por reglas",
     },
   };
   const w = (k, ...a) => {
@@ -166,13 +166,19 @@
       .join("");
     const want = params.get("match");
     if (want && index.some((m) => m.match_id === want)) sel.value = want;
-    sel.addEventListener("change", () => loadMatch(sel.value));
+    sel.addEventListener("change", () => {
+      if (!sel.value.startsWith("live:")) loadMatch(sel.value); // a generated match: web/live.js plays it
+    });
     await loadMatch(sel.value);
     if (params.get("autoplay") === "1") setPlaying(true);
   }
 
   async function loadMatch(id) {
-    bundle = await (await fetch(`data/${id}.json`)).json();
+    useBundle(await (await fetch(`data/${id}.json`)).json());
+  }
+
+  function useBundle(b) {
+    bundle = b;
     const [home, away] = bundle.teams;
     const [hc, ac] = teamColours(home, away);
     const root = document.documentElement.style;
@@ -203,6 +209,22 @@
     renderPanel();
   }
 
+  // A generated match arrives a minute at a time (web/live.js): the clock may not pass the minutes
+  // that have come in. Every per-minute array holds those minutes; bundle.minutes is the span.
+  const edge = () => (bundle.live && !bundle.live.done ? bundle.live.ready : bundle.minutes);
+  const lastMinute = () => bundle.clock.length - 1;
+
+  // a newer bundle for the match on screen: same clock, the new minutes and cards drawn in
+  function updateBundle(b) {
+    bundle = b;
+    nextCard = bundle.cards.findIndex((c) => c.at > t);
+    if (nextCard < 0) nextCard = bundle.cards.length;
+    if (phase && hoodCard) hoodCard = bundle.cards.find((c) => c.at === hoodCard.at) || hoodCard;
+    drawTimeline();
+    render();
+    if (tab === "agents") renderPanel();
+  }
+
   // ---------- timeline ----------
   const xOf = (m) => `${(100 * m) / bundle.minutes}%`;
 
@@ -217,8 +239,8 @@
     svg.innerHTML = `
       <defs><clipPath id="played"><rect id="playedRect" x="0" y="0" width="0" height="100"/></clipPath></defs>
       <g clip-path="url(#played)">
-        <polygon class="tl-area-home" points="0.5,50 ${above} ${n - 0.5},50"/>
-        <polygon class="tl-area-away" points="0.5,50 ${below} ${n - 0.5},50"/>
+        <polygon class="tl-area-home" points="0.5,50 ${above} ${pts.length - 0.5},50"/>
+        <polygon class="tl-area-away" points="0.5,50 ${below} ${pts.length - 0.5},50"/>
       </g>
       <line class="tl-zero" x1="0" x2="${n}" y1="50" y2="50" vector-effect="non-scaling-stroke"/>`;
     $("tlHt").style.left = xOf(bundle.half_time_m);
@@ -244,7 +266,7 @@
   }
 
   function seek(m) {
-    t = Math.max(0, Math.min(bundle.minutes, m));
+    t = Math.max(0, Math.min(edge(), m));
     nextCard = bundle.cards.findIndex((c) => c.at > t);
     if (nextCard < 0) nextCard = bundle.cards.length;
     seekMoments();
@@ -311,7 +333,7 @@
       el.classList.toggle("done", done);
       el.classList.toggle("fresh", done && t - Number(el.dataset.m) < 1.5);
     }
-    const minute = Math.min(bundle.minutes - 1, Math.floor(t));
+    const minute = Math.min(lastMinute(), Math.floor(t));
     if (minute !== panelMinute) {
       if (tab !== "agents") renderPanel();
       else panelMinute = minute;
@@ -409,7 +431,7 @@
     const stats = view === "analyst" ? c.stats : c.stats.slice(0, 1);
     el.innerHTML = `
       <div class="card-head">
-        <div class="card-anchor">${esc(cardAnchor(c))}</div>
+        <div class="card-anchor">${esc(cardAnchor(c))}</div>${c.by === "rules" ? `<span class="card-by">${w("by_rules")}</span>` : ""}
       </div>
       <div class="card-text" id="cardText">${esc(cardText(c))}</div>
       <div class="card-body">${stats.map(statRow).join("")}</div>${view === "analyst" ? detailHtml(c) : ""}`;
@@ -593,7 +615,7 @@
       el.hidden = true;
       return;
     }
-    const m = Math.min(bundle.minutes - 1, Math.floor(t));
+    const m = Math.min(lastMinute(), Math.floor(t));
     const defs = Object.fromEntries(bundle.stats.player_stats.map((d) => [d.key, d]));
     const on = p.from <= m;
     const nums = FOLLOW_STATS[view]
@@ -833,7 +855,7 @@
 
   function renderPanel() {
     if (!bundle) return;
-    const m = Math.min(bundle.minutes - 1, Math.floor(t));
+    const m = Math.min(lastMinute(), Math.floor(t));
     panelMinute = m;
     for (const b of document.querySelectorAll(".tabs button")) {
       b.classList.toggle("on", b.dataset.tab === tab);
@@ -953,7 +975,7 @@
     if (playing && bundle) {
       const showing = cardUntil > 0;
       const rate = (SPEEDS[speedIx] / SECONDS_PER_MINUTE) * (showing ? CARD_SLOWDOWN : 1);
-      t = Math.min(bundle.minutes, t + dt * rate);
+      t = Math.min(edge(), t + dt * rate);
       if (showing && now >= cardUntil) {
         if (phase === "stats" && analysisFor(hoodCard)) showAnalysis(hoodCard);
         else hideCard(false);
@@ -1020,6 +1042,16 @@
     }
   });
   if (params.get("hide") === "1") $("controls").classList.add("hidden");
+  // for web/live.js: show a generated match, and keep it up to date as its minutes arrive
+  window.matchlensScreen = {
+    use: useBundle,
+    update: updateBundle,
+    play: setPlaying,
+    get bundle() { return bundle; },
+    get t() { return t; },
+    get playing() { return playing; },
+    get lang() { return lang; },
+  };
   requestAnimationFrame(frame);
   loadIndex();
 })();

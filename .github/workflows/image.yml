@@ -1,12 +1,12 @@
 name: Site image
 
-# Builds the live site image (the broadcast screen and its match bundles) and publishes it to
+# Builds the live site image (the broadcast screen, its match bundles and the Generate match server) and publishes it to
 # the GitHub Container Registry, where Azure Container Apps pulls it. Tags: the commit SHA
 # always, and `latest` from main.
 on:
   push:
     branches: [main, "claude/**"]
-    paths: [Dockerfile, .dockerignore, web/**, .github/workflows/image.yml]
+    paths: [Dockerfile, .dockerignore, web/**, matchlens/**, data/league.json, pyproject.toml, .github/workflows/image.yml]
   workflow_dispatch:
 
 permissions:

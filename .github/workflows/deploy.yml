@@ -49,13 +49,21 @@ jobs:
       - name: Roll the container app to the new image
         run: |
           az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors
+          # The settings "Generate match" runs on (matchlens/live/server.py): the Foundry project, and
+          # today's budget of AI-explained matches. Setting them is free; the app's managed identity
+          # signs in to Foundry.
           az containerapp update -n "$APP" -g "$RESOURCE_GROUP" --image "${{ steps.image.outputs.ref }}" \
+            --set-env-vars \
+              "AZURE_AI_PROJECT_ENDPOINT=https://matchlens-foundry-812.services.ai.azure.com/api/projects/matchlens" \
+              "AZURE_AI_MODEL=gpt-4.1-mini" \
+              "MATCHLENS_DAILY_AI_MATCHES=5" \
+              "MATCHLENS_DAILY_MODEL_CALLS=850" \
             --query properties.latestRevisionName -o tsv
       - name: Check the site answers on the new revision
         run: |
           url=$(az containerapp show -n "$APP" -g "$RESOURCE_GROUP" --query properties.configuration.ingress.fqdn -o tsv)
           for i in $(seq 1 30); do
-            if curl -fsS "https://${url}/healthz" > /dev/null; then echo "live: https://${url}"; exit 0; fi
+            if curl -fsS "https://${url}/healthz" > /dev/null && curl -fsS "https://${url}/api/live"; then echo; echo "live: https://${url}"; exit 0; fi
             sleep 5
           done
           echo "the site did not answer /healthz within 150 s" >&2

@@ -14,6 +14,7 @@ It is a fresh start for the Microsoft × Premier League hackathon. All match dat
 - **Agents on Microsoft Foundry:** four specialist agents, an Explainer agent and a Verifier share a findings board. Tools compute every number; the models choose; the Verifier rechecks every number against the tables ([docs/agents.md](docs/agents.md)).
 - **Made for every viewer:** a casual view and a denser analyst view, English or Spanish (translated by Azure AI Translator or a Foundry agent and checked in code), follow-a-player mode with name tags at set thresholds, and a full-time recap with a headline from a Recapper agent ([docs/broadcast.md](docs/broadcast.md)).
 - **Live feed:** a match can arrive from another provider as per-minute club and player tables plus key events, with a small file mapping its column names onto ours. It is explained a minute at a time with no look-ahead, and an unseen-match test checks this on fresh matches in CI ([docs/live-feed.md](docs/live-feed.md)).
+- **Generate match:** on the live site, a viewer can make a brand-new match and watch it go through the agents a minute at a time as an unseen match, with a daily budget and the rules as the fallback ([docs/generate-match.md](docs/generate-match.md)).
 - **Next:** a stadium still, then redeploy the live site and record the demo.
 
 ![The broadcast screen](docs/img/broadcast.png)
@@ -31,7 +32,7 @@ Every service below is used by code in this repo. Nothing is listed that the cod
 | **Azure AI Translator** | `matchlens/agents/translator.py` | One of the backends for the Spanish screen (Text Translation v3, free F0 tier). A check in code catches any translation that changed a number or a name. |
 | **Azure AI Content Safety** | `matchlens/agents/safety.py` | Screens every line the Interpreter, Analyst and Recapper write before it can go on air. A flagged line is sent back to the agent, then replaced by the rule-written line. |
 | **Azure Monitor Application Insights**, via **OpenTelemetry** | `matchlens/telemetry.py` | One trace per match. It covers the Watcher, each moment, specialist, Explainer round and Verifier check, with Agent Framework's agent and model spans underneath. The traces show on the Foundry project's Tracing page. |
-| **Azure Container Apps** | `infra/main.bicep`, `Dockerfile` | Hosts the live site. It scales to zero between viewers and has health probes. |
+| **Azure Container Apps** | `infra/main.bicep`, `Dockerfile`, `matchlens/live` | Hosts the live site and Generate match, which plays brand-new matches through the agents on Foundry with the app's managed identity. It scales to zero between viewers and has health probes. |
 | **Azure Linux** container image | `Dockerfile` | The base image for the site (`mcr.microsoft.com/azurelinux/base/python`). |
 | **Azure Monitor Log Analytics** | `infra/main.bicep` | Collects the container app's logs. |
 | **Microsoft Entra ID** | everywhere | There are no keys anywhere. Locally and in Cloud Shell, `DefaultAzureCredential` signs in. The app uses a managed identity. GitHub Actions signs in with **workload identity federation (OIDC)**. |
@@ -60,6 +61,7 @@ pytest -q
 - [docs/explainer.md](docs/explainer.md): the Watcher, the specialists and the Explainer, what stats can and can't tell you, and how well it scores.
 - [docs/agents.md](docs/agents.md): the agent crew on Microsoft Foundry, the shared findings board and the Verifier.
 - [docs/live-feed.md](docs/live-feed.md): taking a match live from another provider's feed, and the unseen-match test.
+- [docs/generate-match.md](docs/generate-match.md): Generate match on the live site.
 - [docs/research/](docs/research/): which football stats exist and what each one reveals, plus what 380 real matches show about momentum shifts.
 
 ## Build order

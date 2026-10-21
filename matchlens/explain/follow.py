@@ -44,10 +44,10 @@ def _assists(md: MatchData) -> dict[int, str]:
     out = {}
     ev = md.events
     for i, e in enumerate(ev):
-        if e["type"] != "shot" or e["outcome"] != "goal":
-            continue
+        if e["type"] != "shot" or e["outcome"] != "goal" or "possession" not in e:
+            continue  # a live feed's goals come without the move behind them
         for p in reversed(ev[max(0, i - 6) : i]):
-            if p["possession"] != e["possession"]:
+            if p.get("possession") != e["possession"]:
                 break
             if p["type"] == "pass" and p["team_id"] == e["team_id"]:
                 if p.get("outcome") == "complete" and p.get("receiver_id") == e["player_id"] and p["player_id"] != e["player_id"]:
