@@ -136,11 +136,11 @@ The Interpreter, the Analyst and the Recapper write the free text that goes on a
 
 ## Foundry Evaluations
 
-The Verifier proves the numbers. `matchlens-foundry-eval` scores the words, as a Foundry evaluation run that appears on the project's Evaluations page. Every line on the live screen becomes a row: each card's read and each "what next" line, for the neutral viewer and for each club's fans. The row's context is what the card shows and knows. The scores are:
+The Verifier proves the numbers. `matchlens-foundry-eval` scores the words, as a Foundry evaluation run that appears on the project's Evaluations page. Every line on the live screen becomes a row: each card's read, each "what next" line and each full-time headline, for the neutral viewer and for each club's fans, in English and in Spanish. The row's context is what the card shows and knows. The scores are:
 - **groundedness**, **relevance** and **coherence**, from the Azure AI Evaluation SDK with the project's own model as judge (1 to 5; a line passes at 3);
 - **numbers on card**, a code check that every number in the line is on the card.
 
-The report lists the weakest lines with the judge's reasons, so the weak spots are on the record. Run it from GitHub (Actions > Foundry evaluation; it signs in with OIDC), or locally with `pip install -e ".[eval]"` and `matchlens-foundry-eval web/data`. `--offline` runs the code check only, and that is what CI tests.
+The report lists the weakest lines with the judge's reasons, so the weak spots are on the record. The latest run's results, with caveats, are in [foundry-eval.md](foundry-eval.md): over 448 lines, groundedness is 4.86 (97% pass) and numbers on card is 100%. Most failures are club-fan lines that put a positive spin on bad news. Run it from GitHub (Actions > Foundry evaluation; it signs in with OIDC), or locally with `pip install -e ".[eval]"` and `matchlens-foundry-eval web/data`. `--offline` runs the code check only, and that is what CI tests.
 
 ## Tracing
 
