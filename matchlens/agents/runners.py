@@ -11,7 +11,8 @@ Foundry settings come from the environment: ``AZURE_AI_PROJECT_ENDPOINT`` and
 ``AZURE_AI_MODEL`` (default ``gpt-4.1-mini``). Authentication is Microsoft Entra ID through
 ``DefaultAzureCredential`` (``az login`` on a laptop, a managed identity in Azure). The SDKs are
 imported lazily, so the rest of MatchLens installs and runs without them. Each Foundry run is
-traced to the project's Application Insights (see matchlens/telemetry.py).
+traced to the project's Application Insights (see matchlens/telemetry.py), and the agents' tool
+calls are served by the MatchLens MCP server (see matchlens/agents/mcp_server.py).
 """
 
 from __future__ import annotations
@@ -61,6 +62,7 @@ class ToolSpec:
     name: str
     description: str
     fn: Callable[..., str]
+    via: tuple[str, dict[str, Any]] | None = None  # the MCP tool that serves it, and the arguments the pipeline adds
 
 
 @dataclass
@@ -151,11 +153,21 @@ class FoundryRunner:
         from .safety import ContentSafety
 
         self.safety = ContentSafety(self._credential)
+        from .mcp_server import McpBridge
+
+        self.mcp = McpBridge()
 
     def _tools(self, tools: list[ToolSpec]) -> list[Any]:
+        """Each tool as Agent Framework declares it. The declaration comes from the direct function, so
+        it is the same whether the call then goes over MCP or not."""
         from agent_framework import tool
 
-        return [tool(t.fn, name=t.name, description=t.description) for t in tools]
+        out = []
+        for t in tools:
+            direct = tool(t.fn, name=t.name, description=t.description)
+            fn = self.mcp.wrap(t)
+            out.append(direct if fn is t.fn else tool(fn, name=t.name, description=t.description, schema=direct.parameters()))
+        return out
 
     def _local(self, role: Role, tools: list[ToolSpec]) -> Any:
         from agent_framework import Agent
@@ -175,6 +187,7 @@ class FoundryRunner:
     async def run(self, role: Role, prompt: str, tools: list[ToolSpec], job: AnyJob) -> str:
         if self.tracing is None:
             self.tracing = await telemetry.connect(self._project)
+        await self.mcp.start()
         agent = await self._agent(role, tools)
         last: Exception | None = None
         for attempt in range(3):
@@ -237,6 +250,7 @@ class FoundryRunner:
 
     async def close(self) -> None:
         telemetry.flush()
+        await self.mcp.close()
         await self.safety.close()
         await self._project.close()
         await self._credential.close()

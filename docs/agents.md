@@ -84,6 +84,20 @@ The models only ever refer to numbers by id. The card is built from the board, s
 
 **On Foundry.** Each role is published once to the project's Agent Service as a prompt agent, with its instructions, model and tool declarations. A new version is published only when the definition changes. Tasks run as those agents through Microsoft Agent Framework (`FoundryAgent`). The tools run in the pipeline, on the match tables.
 
+## The MCP server
+
+The agents' tools are served by the MatchLens MCP server (`matchlens/agents/mcp_server.py`). On Foundry, each published agent declares its function tool as before, for example `investigate_team_play` or `check_card`. When the model calls the tool, Agent Framework runs it and the call goes over the Model Context Protocol to the server's `investigate` or `check_card` tool. The server computes the findings from the match tables, posts them to that moment's board and answers. The pipeline adds which moment the call is about (`job`), so the model still sees only the tool's own arguments.
+
+In the crew the server runs in the same process, over in-memory streams. The protocol is the real one and there is no network to fail. If a call fails, the tool runs directly. The bundle counts calls and fallbacks under `agents.mcp`, and `MATCHLENS_MCP=off` turns the server off. The offline runner and CI call the tools directly, apart from `tests/test_mcp.py`, which runs the crew over MCP and checks that it writes the same cards.
+
+The same server runs on stdio for any MCP client, such as VS Code, Claude Desktop or the MCP Inspector:
+
+```
+matchlens-mcp out/matches
+```
+
+Over a folder of matches it adds `list_matches`, `momentum`, `moments` and `open_moment`. Opening a moment gives you a board to work with `investigate`, `read_board` and `check_card`, just as the crew's agents do.
+
 ## The shared board
 
 One record per finding, as in [design.md](design.md) section 5:
@@ -144,6 +158,7 @@ The connection string comes from `APPLICATIONINSIGHTS_CONNECTION_STRING`, or fai
 - `matchlens/agents/interpreter.py`, `analyst.py`, `recapper.py`, `translator.py`: the agents after the card, each with its check and fallback.
 - `matchlens/telemetry.py`: tracing to Application Insights.
 - `matchlens/agents/safety.py`: Content Safety on the on-screen lines.
+- `matchlens/agents/mcp_server.py`: the MCP server that serves the agents' tools, and `matchlens-mcp`.
 - `matchlens/foundry_eval.py`: Foundry Evaluations, and `matchlens-foundry-eval`.
 
 Tests in `tests/test_agents.py` cover the following:
