@@ -1,11 +1,11 @@
-# Azure Developer CLI: `azd provision` stands up MatchLens from infra/main.bicep.
+# Azure Developer CLI: `azd provision` stands up Swing from infra/main.bicep.
 # Set AZURE_RESOURCE_GROUP and AZURE_LOCATION (azd env set ...). For a new environment set
-# MATCHLENS_NEW_FOUNDRY=true and a new MATCHLENS_FOUNDRY name; MATCHLENS_BUDGET_EMAIL adds the budget.
+# SWING_NEW_FOUNDRY=true and a new SWING_FOUNDRY name; SWING_BUDGET_EMAIL adds the budget.
 # The site image is built by GitHub Actions (image.yml) and rolled out by deploy.yml, so there is
 # no `azd deploy` step and no container registry to pay for.
-name: matchlens
+name: swing
 metadata:
-  template: matchlens@0.2.0
+  template: swing@0.2.0
 infra:
   provider: bicep
   path: infra

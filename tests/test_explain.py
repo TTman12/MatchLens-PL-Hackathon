@@ -2,13 +2,13 @@ import json
 import shutil
 from pathlib import Path
 
-from matchlens.explain import evaluate
-from matchlens.explain.director import direct
-from matchlens.explain.explainer import explain_match
-from matchlens.explain.match import load
-from matchlens.explain.watcher import SETTLE
-from matchlens.gen import generate_match
-from matchlens.gen.cli import write_one
+from swing.explain import evaluate
+from swing.explain.director import direct
+from swing.explain.explainer import explain_match
+from swing.explain.match import load
+from swing.explain.watcher import SETTLE
+from swing.gen import generate_match
+from swing.gen.cli import write_one
 
 
 def _write(tmp: Path, home: str, away: str, seed: int) -> Path:
@@ -65,7 +65,7 @@ def test_evaluation_runs(tmp_path: Path) -> None:
 
 
 def test_broadcast_bundle(tmp_path: Path) -> None:
-    from matchlens.broadcast.bundle import write_bundles
+    from swing.broadcast.bundle import write_bundles
 
     folder = _write(tmp_path / "gen", "ash", "cal", 12)
     index = write_bundles([folder], tmp_path / "web")

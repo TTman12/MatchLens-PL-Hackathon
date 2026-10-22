@@ -8,9 +8,9 @@ The Watcher, the specialists and the Explainer ([explainer.md](explainer.md)) al
 pip install -e ".[foundry]"
 az login
 export AZURE_AI_PROJECT_ENDPOINT=https://<resource>.services.ai.azure.com/api/projects/<project>
-matchlens-agents out/matches/ash-brk-7 --runner foundry           # the cards, with each agent's reasoning
-matchlens-broadcast --demo 6 --agents foundry                     # bundles for the screen, explained by the agents
-matchlens-explain-eval --matches 30 --agents foundry              # score the crew against hidden truth
+swing-agents out/matches/ash-brk-7 --runner foundry           # the cards, with each agent's reasoning
+swing-broadcast --demo 6 --agents foundry                     # bundles for the screen, explained by the agents
+swing-explain-eval --matches 30 --agents foundry              # score the crew against hidden truth
 ```
 
 `AZURE_AI_MODEL` picks the model deployment (default `gpt-4.1-mini`). Sign-in is Microsoft Entra ID through `DefaultAzureCredential`, so no key is stored anywhere. Without the `foundry` extra, or with `--runner offline`, the same crew runs on the deterministic rules.
@@ -43,7 +43,7 @@ For each moment the Watcher raises (a shift, a recovery or an event):
 
    A rejected draft goes back to the Explainer once, with the problems listed. A second rejection, or an Explainer that fails, falls back to the deterministic choice.
 
-4. **The Interpreter reads the verified card** (for the cards the Director puts on screen). It gets the facts: the clubs, the score and minute, which side momentum moved to, the cause, the stats with before and after, and a draft reading from the rules (`matchlens/explain/insight.py`). It writes one line for a neutral and one for each club's fans, saying what is going on rather than reading the stats out. For example, more final-third passes and box entries from a side that is a goal down becomes "Brackenford have gone on the attack, looking for a way back into the game". A check in code holds each line to the facts:
+4. **The Interpreter reads the verified card** (for the cards the Director puts on screen). It gets the facts: the clubs, the score and minute, which side momentum moved to, the cause, the stats with before and after, and a draft reading from the rules (`swing/explain/insight.py`). It writes one line for a neutral and one for each club's fans, saying what is going on rather than reading the stats out. For example, more final-third passes and box entries from a side that is a goal down becomes "Brackenford have gone on the attack, looking for a way back into the game". A check in code holds each line to the facts:
    - no numbers (the card shows them);
    - only the two clubs and the players on the card;
    - nothing the data can't see: a manager's instructions, injuries, the referee or the crowd;
@@ -54,7 +54,7 @@ For each moment the Watcher raises (a shift, a recovery or an event):
 
    A rejected draft goes back once with the problems listed. After that, the card keeps the rules' lines.
 
-5. **The Analyst gives the debate** (at the same time as the Interpreter, for the cards on screen). When the card leaves, a MatchLens analysis card follows: what the side that lost momentum could do to win it back, or what the side that has it should keep doing. The Analyst can only pick from a menu of levers, built in `matchlens/explain/analysis.py`, and each lever is there only because a stat backs it:
+5. **The Analyst gives the debate** (at the same time as the Interpreter, for the cards on screen). When the card leaves, a Swing analysis card follows: what the side that lost momentum could do to win it back, or what the side that has it should keep doing. The Analyst can only pick from a menu of levers, built in `swing/explain/analysis.py`, and each lever is there only because a stat backs it:
    - "push the line back up" needs that side's defending height to have dropped;
    - "stop going long" needs its long balls or pass length up;
    - "play through their press" needs the other side's high turnovers up;
@@ -69,14 +69,14 @@ For each moment the Watcher raises (a shift, a recovery or an event):
 
    A rejected draft goes back once; after that, the card keeps the rules' picks and lines.
 
-6. **The Recapper writes the full-time headline** (once a match). The recap's graphics are counted by code (`matchlens/explain/recap.py`): who had the game in each quarter-hour, the three cards whose momentum swung most, full-time and half-by-half stats, and a standout per club. The code also names the pattern of the result: a comeback, a late winner, the better side winning, winning against the run of play, a tight game, a late draw, a draw one side should have won, or an even draw. The Recapper gets those facts and writes one headline for a neutral and one for each club's fans. A check in code (`matchlens/agents/recapper.py`) holds them to the facts: no numbers, only the clubs, no win in a draw or draw in a win, a late goal, comeback or ten men only when there was one, nothing the data can't see. A rejected draft goes back once; after that, the recap keeps the rules' headlines.
-7. **The Translator puts the screen into Spanish** (once a match, after everything else). Every English line on the bundle (each card's line and analysis lines, the recap headlines) goes in one batch to a backend: Azure AI Translator (Text Translation v3, with names wrapped so the service leaves them alone), or the Translator agent on Foundry. A check in code (`matchlens/agents/translator.py`) compares each translation with its English line:
+6. **The Recapper writes the full-time headline** (once a match). The recap's graphics are counted by code (`swing/explain/recap.py`): who had the game in each quarter-hour, the three cards whose momentum swung most, full-time and half-by-half stats, and a standout per club. The code also names the pattern of the result: a comeback, a late winner, the better side winning, winning against the run of play, a tight game, a late draw, a draw one side should have won, or an even draw. The Recapper gets those facts and writes one headline for a neutral and one for each club's fans. A check in code (`swing/agents/recapper.py`) holds them to the facts: no numbers, only the clubs, no win in a draw or draw in a win, a late goal, comeback or ten men only when there was one, nothing the data can't see. A rejected draft goes back once; after that, the recap keeps the rules' headlines.
+7. **The Translator puts the screen into Spanish** (once a match, after everything else). Every English line on the bundle (each card's line and analysis lines, the recap headlines) goes in one batch to a backend: Azure AI Translator (Text Translation v3, with names wrapped so the service leaves them alone), or the Translator agent on Foundry. A check in code (`swing/agents/translator.py`) compares each translation with its English line:
    - the same numbers;
    - every club and player name kept exactly, and no new ones;
    - a sensible length;
    - no English left in it.
 
-   A failed line goes back once to the agent with its problems listed. After that, or with Azure, it falls back to the rules' Spanish twin of the line (`matchlens/explain/spanish.py`): every template the rules write has one, so the Spanish screen always has a line that says what the stats show. Stat labels and card anchors are translated by a fixed glossary, never by a model.
+   A failed line goes back once to the agent with its problems listed. After that, or with Azure, it falls back to the rules' Spanish twin of the line (`swing/explain/spanish.py`): every template the rules write has one, so the Spanish screen always has a line that says what the stats show. Stat labels and card anchors are translated by a fixed glossary, never by a model.
 
 The models only ever refer to numbers by id. The card is built from the board, so the number on screen is the number the tool computed. A model cannot change a number by retyping it.
 
@@ -86,14 +86,14 @@ The models only ever refer to numbers by id. The card is built from the board, s
 
 ## The MCP server
 
-The agents' tools are served by the MatchLens MCP server (`matchlens/agents/mcp_server.py`). On Foundry, each published agent declares its function tool as before, for example `investigate_team_play` or `check_card`. When the model calls the tool, Agent Framework runs it and the call goes over the Model Context Protocol to the server's `investigate` or `check_card` tool. The server computes the findings from the match tables, posts them to that moment's board and answers. The pipeline adds which moment the call is about (`job`), so the model still sees only the tool's own arguments.
+The agents' tools are served by the Swing MCP server (`swing/agents/mcp_server.py`). On Foundry, each published agent declares its function tool as before, for example `investigate_team_play` or `check_card`. When the model calls the tool, Agent Framework runs it and the call goes over the Model Context Protocol to the server's `investigate` or `check_card` tool. The server computes the findings from the match tables, posts them to that moment's board and answers. The pipeline adds which moment the call is about (`job`), so the model still sees only the tool's own arguments.
 
-In the crew the server runs in the same process, over in-memory streams. The protocol is the real one and there is no network to fail. If a call fails, the tool runs directly. The bundle counts calls and fallbacks under `agents.mcp`, and `MATCHLENS_MCP=off` turns the server off. The offline runner and CI call the tools directly, apart from `tests/test_mcp.py`, which runs the crew over MCP and checks that it writes the same cards.
+In the crew the server runs in the same process, over in-memory streams. The protocol is the real one and there is no network to fail. If a call fails, the tool runs directly. The bundle counts calls and fallbacks under `agents.mcp`, and `SWING_MCP=off` turns the server off. The offline runner and CI call the tools directly, apart from `tests/test_mcp.py`, which runs the crew over MCP and checks that it writes the same cards.
 
 The same server runs on stdio for any MCP client, such as VS Code, Claude Desktop or the MCP Inspector:
 
 ```
-matchlens-mcp out/matches
+swing-mcp out/matches
 ```
 
 Over a folder of matches it adds `list_matches`, `momentum`, `moments` and `open_moment`. Opening a moment gives you a board to work with `investigate`, `read_board` and `check_card`, just as the crew's agents do.
@@ -128,38 +128,38 @@ The Watcher is the same code in both columns, so the first three rows match by c
 
 The truth can't score substitution claims yet, so it can't say whether the agents' extra caution there is right.
 
-Run it with `matchlens-explain-eval --matches 30 --agents foundry`. CI runs the offline crew only, which gives the same cards as the deterministic Explainer.
+Run it with `swing-explain-eval --matches 30 --agents foundry`. CI runs the offline crew only, which gives the same cards as the deterministic Explainer.
 
 ## Content Safety
 
-The Interpreter, the Analyst and the Recapper write the free text that goes on air. Each line in a draft goes through Azure AI Content Safety's text analysis (hate, sexual, violence, self-harm) before the draft is accepted. Content Safety runs on the same Foundry account and signs in with Entra ID. A line at severity 2 or more counts as a problem, just like a wrong number: the draft goes back once with the problem listed, and a second miss falls back to the rule-written lines. The bundle counts how many lines were screened, flagged or left unscreened (`agents.content_safety`). If the service can't be reached, the run carries on and the count says so. The code is in `matchlens/agents/safety.py`.
+The Interpreter, the Analyst and the Recapper write the free text that goes on air. Each line in a draft goes through Azure AI Content Safety's text analysis (hate, sexual, violence, self-harm) before the draft is accepted. Content Safety runs on the same Foundry account and signs in with Entra ID. A line at severity 2 or more counts as a problem, just like a wrong number: the draft goes back once with the problem listed, and a second miss falls back to the rule-written lines. The bundle counts how many lines were screened, flagged or left unscreened (`agents.content_safety`). If the service can't be reached, the run carries on and the count says so. The code is in `swing/agents/safety.py`.
 
 ## Foundry Evaluations
 
-The Verifier proves the numbers. `matchlens-foundry-eval` scores the words, as a Foundry evaluation run that appears on the project's Evaluations page. Every line on the live screen becomes a row: each card's read, each "what next" line and each full-time headline, for the neutral viewer and for each club's fans, in English and in Spanish. The row's context is what the card shows and knows. The scores are:
+The Verifier proves the numbers. `swing-foundry-eval` scores the words, as a Foundry evaluation run that appears on the project's Evaluations page. Every line on the live screen becomes a row: each card's read, each "what next" line and each full-time headline, for the neutral viewer and for each club's fans, in English and in Spanish. The row's context is what the card shows and knows. The scores are:
 - **groundedness**, **relevance** and **coherence**, from the Azure AI Evaluation SDK with the project's own model as judge (1 to 5; a line passes at 3);
 - **numbers on card**, a code check that every number in the line is on the card.
 
-The report lists the weakest lines with the judge's reasons, so the weak spots are on the record. The latest run's results, with caveats, are in [foundry-eval.md](foundry-eval.md): over 448 lines, groundedness is 4.86 (97% pass) and numbers on card is 100%. Most failures are club-fan lines that put a positive spin on bad news. Run it from GitHub (Actions > Foundry evaluation; it signs in with OIDC), or locally with `pip install -e ".[eval]"` and `matchlens-foundry-eval web/data`. `--offline` runs the code check only, and that is what CI tests.
+The report lists the weakest lines with the judge's reasons, so the weak spots are on the record. The latest run's results, with caveats, are in [foundry-eval.md](foundry-eval.md): over 448 lines, groundedness is 4.86 (97% pass) and numbers on card is 100%. Most failures are club-fan lines that put a positive spin on bad news. Run it from GitHub (Actions > Foundry evaluation; it signs in with OIDC), or locally with `pip install -e ".[eval]"` and `swing-foundry-eval web/data`. `--offline` runs the code check only, and that is what CI tests.
 
 ## Tracing
 
 Every Foundry run is traced with OpenTelemetry into the Application Insights resource linked to the Foundry project, so each run shows up on the Foundry portal's **Tracing** page with no setup. One match is one trace. The code steps are spans of their own: the Watcher, each moment, each specialist, each Explainer round, the Verifier's check and any fallback. The agents' own calls (`invoke_agent`, `chat`, `execute_tool`) come from Microsoft Agent Framework and sit underneath them. That makes it easy to see which agent was slow, which draft the Verifier rejected and why, and what each call cost in tokens.
 
-The connection string comes from `APPLICATIONINSIGHTS_CONNECTION_STRING`, or failing that from the project. `MATCHLENS_TRACING=off` turns tracing off, and `MATCHLENS_TRACE_CONTENT=0` leaves prompts and replies out of the traces. The code is in `matchlens/telemetry.py`. The offline runner and CI use the same spans as no-ops.
+The connection string comes from `APPLICATIONINSIGHTS_CONNECTION_STRING`, or failing that from the project. `SWING_TRACING=off` turns tracing off, and `SWING_TRACE_CONTENT=0` leaves prompts and replies out of the traces. The code is in `swing/telemetry.py`. The offline runner and CI use the same spans as no-ops.
 
 ## Code
 
-- `matchlens/agents/board.py`: the findings board.
-- `matchlens/agents/roles.py`: each agent's instructions.
-- `matchlens/agents/verifier.py`: the cause menu and the Verifier.
-- `matchlens/agents/crew.py`: the crew, and `matchlens-agents`.
-- `matchlens/agents/runners.py`: the Foundry and offline runners.
-- `matchlens/agents/interpreter.py`, `analyst.py`, `recapper.py`, `translator.py`: the agents after the card, each with its check and fallback.
-- `matchlens/telemetry.py`: tracing to Application Insights.
-- `matchlens/agents/safety.py`: Content Safety on the on-screen lines.
-- `matchlens/agents/mcp_server.py`: the MCP server that serves the agents' tools, and `matchlens-mcp`.
-- `matchlens/foundry_eval.py`: Foundry Evaluations, and `matchlens-foundry-eval`.
+- `swing/agents/board.py`: the findings board.
+- `swing/agents/roles.py`: each agent's instructions.
+- `swing/agents/verifier.py`: the cause menu and the Verifier.
+- `swing/agents/crew.py`: the crew, and `swing-agents`.
+- `swing/agents/runners.py`: the Foundry and offline runners.
+- `swing/agents/interpreter.py`, `analyst.py`, `recapper.py`, `translator.py`: the agents after the card, each with its check and fallback.
+- `swing/telemetry.py`: tracing to Application Insights.
+- `swing/agents/safety.py`: Content Safety on the on-screen lines.
+- `swing/agents/mcp_server.py`: the MCP server that serves the agents' tools, and `swing-mcp`.
+- `swing/foundry_eval.py`: Foundry Evaluations, and `swing-foundry-eval`.
 
 Tests in `tests/test_agents.py` cover the following:
 - the offline crew gives the same cards as the deterministic Explainer;

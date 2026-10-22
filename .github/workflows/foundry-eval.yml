@@ -40,7 +40,7 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
       - name: Score the on-screen lines
-        run: matchlens-foundry-eval web/data --out out/foundry-eval ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
+        run: swing-foundry-eval web/data --out out/foundry-eval ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
       - if: always()
         run: cat out/foundry-eval/report.md >> "$GITHUB_STEP_SUMMARY" || true
       - if: always()

@@ -1,14 +1,14 @@
 from pathlib import Path
 from typing import Any
 
-from matchlens.broadcast.bundle import build
-from matchlens.broadcast.tables import PLAYER_STATS, TEAM_STATS
-from matchlens.explain import explainer
-from matchlens.explain.match import load
-from matchlens.explain.metrics import METRICS
-from matchlens.explain.stories import BY_KEY, SHARES, compose, find_stories, match_story
-from matchlens.gen import generate_match
-from matchlens.gen.cli import write_one
+from swing.broadcast.bundle import build
+from swing.broadcast.tables import PLAYER_STATS, TEAM_STATS
+from swing.explain import explainer
+from swing.explain.match import load
+from swing.explain.metrics import METRICS
+from swing.explain.stories import BY_KEY, SHARES, compose, find_stories, match_story
+from swing.gen import generate_match
+from swing.gen.cli import write_one
 
 
 def _write(tmp: Path, home: str, away: str, seed: int) -> Path:

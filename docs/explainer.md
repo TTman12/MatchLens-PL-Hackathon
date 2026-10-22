@@ -1,12 +1,12 @@
 # The Watcher, the specialists and the Explainer
 
-`matchlens-explain` reads any match folder in the [public format](data-format.md) and produces the cards that would go on screen. Each card has an anchor ("Last 6 minutes", "Since B. Ostrand red card"), one or two numbers measured against the match so far, a momentum bar showing before and now, and a cause. These parts only ever read the public tables. The generator's hidden truth is read by the scorer and nothing else.
+`swing-explain` reads any match folder in the [public format](data-format.md) and produces the cards that would go on screen. Each card has an anchor ("Last 6 minutes", "Since B. Ostrand red card"), one or two numbers measured against the match so far, a momentum bar showing before and now, and a cause. These parts only ever read the public tables. The generator's hidden truth is read by the scorer and nothing else.
 
 ```
-matchlens-gen match --home ash --away brk --seed 7
-matchlens-explain out/matches/ash-brk-7                        # print the cards
-matchlens-explain out/matches/ash-brk-7 --json cards.json      # every card with all the findings behind it
-matchlens-explain-eval --matches 380 --seed 9000               # score against hidden truth on unseen matches
+swing-gen match --home ash --away brk --seed 7
+swing-explain out/matches/ash-brk-7                        # print the cards
+swing-explain out/matches/ash-brk-7 --json cards.json      # every card with all the findings behind it
+swing-explain-eval --matches 380 --seed 9000               # score against hidden truth on unseen matches
 ```
 
 ## How a card is made

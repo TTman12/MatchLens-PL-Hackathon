@@ -1,4 +1,4 @@
-/* MatchLens broadcast screen, laid out like a stream: the feed top left, stats on the right,
+/* Swing broadcast screen, laid out like a stream: the feed top left, stats on the right,
    momentum and the timeline along the bottom.
    A 16:9 stage sized in container units (1cqw = 1% of the stage width), so it scales as one picture.
    Colours: primary #28002b, secondary #ffffff, accent #0000ee. No league marks. */
@@ -252,7 +252,7 @@ body { display: grid; place-items: center; overflow: hidden; }
 .card.on .stat:nth-child(2) { animation-delay: 0.44s; }
 .card.off { animation: out 0.45s var(--ease) both; }
 
-/* MatchLens analysis: the card that follows, on what a club could do about it */
+/* Swing analysis: the card that follows, on what a club could do about it */
 .card.analysis .card-anchor { gap: 0.7cqw; background: linear-gradient(90deg, var(--accent), var(--primary) 75%); }
 .an-chip { width: 1cqw; height: 1cqw; flex: none; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5); }
 .an-mark { margin-left: auto; font-size: 0.75cqw; letter-spacing: 0.14em; color: var(--mist); }

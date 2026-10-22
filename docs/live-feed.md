@@ -1,8 +1,8 @@
 # Taking a match live from another provider
 
-MatchLens doesn't need our generator or our raw event stream. A match can arrive live from any provider as **per-minute tables**: one row per club and one row per player on the pitch each minute, plus the minute's key events. The provider uses its own column names, and a small mapping file says which of its columns is which of ours.
+Swing doesn't need our generator or our raw event stream. A match can arrive live from any provider as **per-minute tables**: one row per club and one row per player on the pitch each minute, plus the minute's key events. The provider uses its own column names, and a small mapping file says which of its columns is which of ours.
 
-The code is in `matchlens/ingest/`:
+The code is in `swing/ingest/`:
 
 | Part | File | What it does |
 |---|---|---|
@@ -12,11 +12,11 @@ The code is in `matchlens/ingest/`:
 | Unseen-match test | `unseen.py` | Fresh matches sent as a provider's feed, checked end to end |
 
 ```
-matchlens-feed export out/matches/ash-brk-7 feed/ash-brk-7      # write one of our matches as a provider's feed
-matchlens-feed run feed/ash-brk-7                               # play it through a minute at a time
-matchlens-feed run feed/ash-brk-7 --agents foundry --pace 2     # the agent crew on Microsoft Foundry, a minute every 2 s
-matchlens-feed run feed/ash-brk-7 --mapping their-names.json    # another provider's column names
-matchlens-feed unseen                                           # the unseen-match test
+swing-feed export out/matches/ash-brk-7 feed/ash-brk-7      # write one of our matches as a provider's feed
+swing-feed run feed/ash-brk-7                               # play it through a minute at a time
+swing-feed run feed/ash-brk-7 --agents foundry --pace 2     # the agent crew on Microsoft Foundry, a minute every 2 s
+swing-feed run feed/ash-brk-7 --mapping their-names.json    # another provider's column names
+swing-feed unseen                                           # the unseen-match test
 ```
 
 ## The feed
@@ -48,12 +48,12 @@ Making the Watcher and Director strictly live changed little. Over 100 evaluatio
 
 ## The unseen-match test
 
-`matchlens-feed unseen` generates fresh matches with new seeds and pairings that nothing was tuned on. It sends each one only as a provider's feed: renamed per-minute tables and key events, with no final score, seed or raw event stream, and with the hidden truth held back. It plays the feed through the adapter and the live runner, explains the original match folder in one go, and passes only if:
+`swing-feed unseen` generates fresh matches with new seeds and pairings that nothing was tuned on. It sends each one only as a provider's feed: renamed per-minute tables and key events, with no final score, seed or raw event stream, and with the hidden truth held back. It plays the feed through the adapter and the live runner, explains the original match folder in one go, and passes only if:
 
 - **tables:** the adapter rebuilt exactly the tables the original match has;
 - **numbers:** every number on every card going on screen, recomputed from the original match's events, is the same, and so is the momentum bar;
 - **no look-ahead:** the live run raised the same moments, made the same cards and put the same ones on screen as the one-go run, though it never had a minute it hadn't reached; and
-- **causes:** scored against the hidden truth, the live cards clear the same floors as `matchlens-explain-eval --check`. This is judged from 20 matches up.
+- **causes:** scored against the hidden truth, the live cards clear the same floors as `swing-explain-eval --check`. This is judged from 20 matches up.
 
 Result on 30 unseen matches (seed 5150, about 30 s; re-run 22 Oct 2026 with the Director's current rules):
 
@@ -72,6 +72,6 @@ With `--agents foundry`, the first match also goes through the agent crew on Fou
 
 ## What a real feed would still need
 
-- **Calibration:** `matchlens/explain/calibration.json` was fitted on generated matches. A real feed's numbers should be refitted with `calibrate.py` before trusting the effect sizes.
+- **Calibration:** `swing/explain/calibration.json` was fitted on generated matches. A real feed's numbers should be refitted with `calibrate.py` before trusting the effect sizes.
 - **No truth:** a real feed has no hidden truth, so the causes can't be scored. The numbers and the no-look-ahead checks still apply.
 - **Physical columns:** distance, high-speed running and sprints come from tracking. A provider without tracking leaves them out, and cards built on them won't appear (the run lists them as missing).

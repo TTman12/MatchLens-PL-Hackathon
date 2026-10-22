@@ -145,7 +145,7 @@ Each entry: **metric → formula from team-level events → what it tells you �
 
 ### 3.6 Momentum
 
-Every momentum stat on the market is a smoothed, differenced threat measure [Sourced: Opta, Bundesliga]. Our repo already has one (`matchlens/stats/momentum.py`: threat points over 5 minutes, `(home − away)/(home + away)`). Improvements [Inferred]:
+Every momentum stat on the market is a smoothed, differenced threat measure [Sourced: Opta, Bundesliga]. Our repo already has one (`swing/stats/momentum.py`: threat points over 5 minutes, `(home − away)/(home + away)`). Improvements [Inferred]:
 - Use xT-per-action as the threat input, so build-up counts proportionally.
 - Exponential decay instead of a hard 5-minute box (a half-life of ≈2 to 3 minutes avoids the cliff when an event leaves the window).
 - Track the **derivative** (who is gaining) as well as the level. "Momentum shifting" is the graphic moment, not "momentum is high".
@@ -314,7 +314,7 @@ Every graphic has the same data contract: `{template, team(s), metric values, ba
 ## 8. What already exists in the repo that we'd reuse
 
 - `schemas/match_event.schema.json`: event shape, zones and qualifiers already fit (pass difficulty, `pressure_on_passer`, `line_breaking`, ball speed).
-- `matchlens/stats/`: metrics, momentum, win probability, contribution; a starting point for the aggregator.
+- `swing/stats/`: metrics, momentum, win probability, contribution; a starting point for the aggregator.
 - Match-State MCP server, Verifier, Director attention budget, Translator, cue schema and the live Azure pipeline: all still apply; only the "moment" source changes from big events to tactical states.
 
 ---

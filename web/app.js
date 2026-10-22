@@ -1,4 +1,4 @@
-// MatchLens broadcast screen. Plays one match bundle (see matchlens/broadcast/bundle.py) on a
+// Swing broadcast screen. Plays one match bundle (see swing/broadcast/bundle.py) on a
 // condensed clock. The page does no analysis: everything it shows is in the bundle.
 //
 // Two screens: user (the default, for fans: club crests and a squad to pick from, the playback
@@ -16,7 +16,7 @@
 
   const SECONDS_PER_MINUTE = 1.6; // at 1x a 95-minute match plays in about 2.5 minutes
   const CARD_SECONDS = 9; // how long a card stays up
-  const ANALYSIS_SECONDS = 8; // how long the MatchLens analysis that follows it stays up
+  const ANALYSIS_SECONDS = 8; // how long the Swing analysis that follows it stays up
   const CARD_SLOWDOWN = 0.12; // the clock creeps while a card is up
   const SPEEDS = [1, 2, 4];
 
@@ -29,11 +29,11 @@
   let speedIx = Math.max(0, SPEEDS.indexOf(Number(params.get("speed")) || 1));
   let nextCard = 0;
   let cardUntil = 0; // performance.now() ms when the current card leaves
-  let phase = null; // "stats" while a card is up, "analysis" while its MatchLens analysis is
+  let phase = null; // "stats" while a card is up, "analysis" while its Swing analysis is
   let last = 0;
   let hoodCard = null; // the card the agents tab describes
   let tab = ["clubs", "players", "agents"].includes(params.get("tab")) ? params.get("tab") : params.get("hood") === "1" ? "agents" : "clubs";
-  let fan = params.get("fan") || store("matchlens.fan") || "neutral"; // a team id, or "neutral"
+  let fan = params.get("fan") || store("swing.fan") || "neutral"; // a team id, or "neutral"
   let club = null; // the club the players tab lists
   let player = null; // the player the players tab shows
   let panelMinute = -1;
@@ -44,7 +44,7 @@
   let clubsOpen = false; // the clubs tab shows the full table
   let squadClub = null; // the club whose squad the user screen shows
   let clubs = []; // every club in the index, for the user screen's crests
-  let lang = pick(params.get("lang") || store("matchlens.lang"), ["en", "es"], "en");
+  let lang = pick(params.get("lang") || store("swing.lang"), ["en", "es"], "en");
   let follow = params.get("follow"); // a player id: follow mode pins his match on screen
   let nextMoment = 0;
   let tagUntil = 0;
@@ -77,7 +77,7 @@
       user_view: "User view", admin_view: "Admin view",
       n_goal: "Goal", n_sub: "Substitution", n_red: "Red card", n_shift: "Momentum shift", n_big: "Big momentum shift",
       n_on_off: (on, off) => `${on} on · ${off} off`, n_towards: (c) => `towards ${c}`,
-      win_back: (c) => `How ${c} win it back`, keep_going: (c) => `How ${c} keep it going`, analysis: "MatchLens analysis",
+      win_back: (c) => `How ${c} win it back`, keep_going: (c) => `How ${c} keep it going`, analysis: "Swing analysis",
       at: "At", last15: "Last 15'", modelled: "* modelled from tracking-style data.", tap_club: "Tap a club for its players.",
       back: "Back", not_on: "Not on the pitch yet.", on: "on", sub: "sub", passes: "passes",
       follow: "Follow", following: "Following", unfollow: "Stop following",
@@ -101,7 +101,7 @@
       user_view: "Vista usuario", admin_view: "Vista admin",
       n_goal: "Gol", n_sub: "Cambio", n_red: "Tarjeta roja", n_shift: "Cambio de inercia", n_big: "Gran cambio de inercia",
       n_on_off: (on, off) => `entra ${on} · sale ${off}`, n_towards: (c) => `a favor de ${c}`,
-      win_back: (c) => `Cómo recupera ${c} el control`, keep_going: (c) => `Cómo sigue ${c} mandando`, analysis: "Análisis MatchLens",
+      win_back: (c) => `Cómo recupera ${c} el control`, keep_going: (c) => `Cómo sigue ${c} mandando`, analysis: "Análisis Swing",
       at: "Min.", last15: "Últ. 15'", modelled: "* estimado con datos de seguimiento.", tap_club: "Toca un club para ver sus jugadores.",
       back: "Volver", not_on: "Todavía no ha salido al campo.", on: "entra", sub: "suplente", passes: "pases",
       follow: "Seguir", following: "Siguiendo", unfollow: "Dejar de seguir",
@@ -548,7 +548,7 @@
     cardUntil = cardOpen ? until : Math.max(until, performance.now() + 3000);
   }
 
-  // ---------- MatchLens analysis: what a club could do about it, after the card ----------
+  // ---------- Swing analysis: what a club could do about it, after the card ----------
   function analysisFor(c) {
     const a = c && c.analysis;
     return a ? (a[lens()] ?? a.neutral ?? null) : null;
@@ -855,7 +855,7 @@
   }
 
   // an agent that failed on this card: its tries, who answered in the end, the check that answer
-  // passed in code, and the card going up anyway (matchlens/live/failover.py)
+  // passed in code, and the card going up anyway (swing/live/failover.py)
   function recoveryHtml(c) {
     const h = c.hood;
     const last = (rounds) => (rounds && rounds.length ? rounds[rounds.length - 1].status : null);
@@ -1099,13 +1099,13 @@
 
   function setLang(v) {
     lang = v;
-    store("matchlens.lang", v);
+    store("swing.lang", v);
     redraw();
   }
 
   function setFan(id) {
     fan = id;
-    store("matchlens.fan", id);
+    store("swing.fan", id);
     drawFan();
     if (phase === "analysis" && hoodCard) drawAnalysis(hoodCard);
     else if (phase === "stats" && hoodCard) $("cardText").textContent = cardText(hoodCard);
@@ -1542,7 +1542,7 @@
   }
   setMode(mode, false);
   // for web/live.js: show a generated match, and keep it up to date as its minutes arrive
-  window.matchlensScreen = {
+  window.swingScreen = {
     use: useBundle,
     update: updateBundle,
     play: setPlaying,

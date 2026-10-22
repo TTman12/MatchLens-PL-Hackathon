@@ -2,11 +2,11 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "image": { "value": "${MATCHLENS_IMAGE=ghcr.io/ttman12/matchlens-pl-hackathon/live:latest}" },
+    "image": { "value": "${SWING_IMAGE=ghcr.io/ttman12/matchlens-pl-hackathon/live:latest}" },
     "location": { "value": "${AZURE_LOCATION=eastus2}" },
-    "newFoundry": { "value": ${MATCHLENS_NEW_FOUNDRY=false} },
-    "foundryAccountName": { "value": "${MATCHLENS_FOUNDRY=matchlens-foundry-812}" },
-    "ciPrincipalId": { "value": "${MATCHLENS_CI_PRINCIPAL_ID=}" },
-    "budgetEmail": { "value": "${MATCHLENS_BUDGET_EMAIL=}" }
+    "newFoundry": { "value": ${SWING_NEW_FOUNDRY=false} },
+    "foundryAccountName": { "value": "${SWING_FOUNDRY=matchlens-foundry-812}" },
+    "ciPrincipalId": { "value": "${SWING_CI_PRINCIPAL_ID=}" },
+    "budgetEmail": { "value": "${SWING_BUDGET_EMAIL=}" }
   }
 }

@@ -3,13 +3,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-from matchlens.agents.crew import explain_match
-from matchlens.agents.interpreter import InterpretJob, check_lines, interpret, interpret_cards
-from matchlens.agents.runners import OfflineRunner, Usage
-from matchlens.explain.director import direct
-from matchlens.explain.match import load
-from matchlens.gen import generate_match
-from matchlens.gen.cli import write_one
+from swing.agents.crew import explain_match
+from swing.agents.interpreter import InterpretJob, check_lines, interpret, interpret_cards
+from swing.agents.runners import OfflineRunner, Usage
+from swing.explain.director import direct
+from swing.explain.match import load
+from swing.gen import generate_match
+from swing.gen.cli import write_one
 
 
 def _md(tmp: Path, home: str, away: str, seed: int) -> Any:

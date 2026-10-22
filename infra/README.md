@@ -1,6 +1,6 @@
 # infra
 
-MatchLens on Azure, as code. Everything runs in one resource group, next to the Microsoft Foundry project.
+Swing on Azure, as code. Everything runs in one resource group, next to the Microsoft Foundry project.
 
 | File | What it does |
 | --- | --- |
@@ -23,8 +23,8 @@ az deployment group create -g rg-tristan.friend.12-4381 -f infra/main.bicep \
      ciPrincipalId=$(az ad sp show --id 519837f7-fa8b-46b8-b6d0-1d6932fecf14 --query id -o tsv)
 
 # a new environment from nothing
-azd env new matchlens-dev && azd env set AZURE_LOCATION eastus2
-azd env set MATCHLENS_NEW_FOUNDRY true && azd env set MATCHLENS_FOUNDRY <globally unique name>
+azd env new swing-dev && azd env set AZURE_LOCATION eastus2
+azd env set SWING_NEW_FOUNDRY true && azd env set SWING_FOUNDRY <globally unique name>
 azd provision
 ```
 

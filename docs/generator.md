@@ -1,20 +1,20 @@
 # The synthetic match generator
 
-`matchlens-gen` writes fictional matches that behave like real Premier League matches. Each match has a full event stream, minute-by-minute team and player tables, and modelled physical output. It also writes a hidden record of *why* each match went the way it did. The fictional clubs and squads are in `data/league.json`.
+`swing-gen` writes fictional matches that behave like real Premier League matches. Each match has a full event stream, minute-by-minute team and player tables, and modelled physical output. It also writes a hidden record of *why* each match went the way it did. The fictional clubs and squads are in `data/league.json`.
 
 ```
 pip install -e .
-matchlens-gen clubs
-matchlens-gen match --home ash --away brk --seed 7     # -> out/matches/ash-brk-7/ and out/truth/ash-brk-7.json
-matchlens-gen season --limit 40
-matchlens-realism                                       # generate 380 matches and check them against the real season
+swing-gen clubs
+swing-gen match --home ash --away brk --seed 7     # -> out/matches/ash-brk-7/ and out/truth/ash-brk-7.json
+swing-gen season --limit 40
+swing-realism                                       # generate 380 matches and check them against the real season
 ```
 
 ## How it works
 
 1. **Learned from a real season, then generated fresh.**
    - `research/learn_priors.py` reads the public Wyscout event data for the 2017-18 Premier League (Pappalardo et al. 2019, CC BY 4.0).
-   - It writes only aggregate tables to `matchlens/gen/priors.json.gz`:
+   - It writes only aggregate tables to `swing/gen/priors.json.gz`:
      - which action follows which, by pitch zone;
      - how far passes travel and how often they succeed;
      - timing between actions;
@@ -51,7 +51,7 @@ matchlens-realism                                       # generate 380 matches a
 
 ## Realism gate
 
-`matchlens-realism` generates a full 380-match season and measures it with the same code used on the real season (`matchlens/realism/`). It then checks 31 numbers against tolerances, and CI runs it on every push. They cover:
+`swing-realism` generates a full 380-match season and measures it with the same code used on the real season (`swing/realism/`). It then checks 31 numbers against tolerances, and CI runs it on every push. They cover:
 
 - volumes: passes, accuracy, duels, shots, fouls, goals, cards and subs;
 - how matches split: home pass-share spread, home wins and draws;

@@ -3,7 +3,7 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "matchlens"
+name = "swing"
 version = "0.2.0"
 description = "Explains why momentum shifts in football matches, from minute-by-minute statistics."
 readme = "README.md"
@@ -13,7 +13,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11", "mcp>=1.24,<2"]
-# Running the agents on Microsoft Foundry (matchlens-agents --runner foundry).
+# Running the agents on Microsoft Foundry (swing-agents --runner foundry).
 foundry = [
     "agent-framework-core>=1.22,<2",
     "agent-framework-foundry>=1.15,<2",
@@ -22,29 +22,29 @@ foundry = [
     "azure-ai-contentsafety>=1.0",
     "mcp>=1.24,<2",
 ]
-# Scoring the on-screen lines with Foundry Evaluations (matchlens-foundry-eval).
+# Scoring the on-screen lines with Foundry Evaluations (swing-foundry-eval).
 eval = ["azure-ai-evaluation>=1.10", "azure-identity>=1.26"]
 
 [project.scripts]
-matchlens-gen = "matchlens.gen.cli:main"
-matchlens-realism = "matchlens.realism.gate:main"
-matchlens-explain = "matchlens.explain.cli:main"
-matchlens-explain-eval = "matchlens.explain.evaluate:main"
-matchlens-broadcast = "matchlens.broadcast.bundle:main"
-matchlens-agents = "matchlens.agents.crew:main"
-matchlens-foundry-eval = "matchlens.foundry_eval:main"
-matchlens-mcp = "matchlens.agents.mcp_server:main"
-matchlens-feed = "matchlens.ingest.cli:main"
-matchlens-live = "matchlens.live.server:main"
+swing-gen = "swing.gen.cli:main"
+swing-realism = "swing.realism.gate:main"
+swing-explain = "swing.explain.cli:main"
+swing-explain-eval = "swing.explain.evaluate:main"
+swing-broadcast = "swing.broadcast.bundle:main"
+swing-agents = "swing.agents.crew:main"
+swing-foundry-eval = "swing.foundry_eval:main"
+swing-mcp = "swing.agents.mcp_server:main"
+swing-feed = "swing.ingest.cli:main"
+swing-live = "swing.live.server:main"
 
 [tool.setuptools.packages.find]
-include = ["matchlens*"]
+include = ["swing*"]
 
 [tool.setuptools.package-data]
-"matchlens.gen" = ["priors.json.gz"]
-"matchlens.realism" = ["targets.json"]
-"matchlens.explain" = ["calibration.json"]
-"matchlens.ingest" = ["mappings/*.json"]
+"swing.gen" = ["priors.json.gz"]
+"swing.realism" = ["targets.json"]
+"swing.explain" = ["calibration.json"]
+"swing.ingest" = ["mappings/*.json"]
 
 [tool.ruff]
 line-length = 130
@@ -58,7 +58,7 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["matchlens"]
+files = ["swing"]
 
 [[tool.mypy.overrides]]
 # the Foundry SDKs are an optional extra, imported lazily

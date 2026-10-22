@@ -5,21 +5,21 @@ import string
 from pathlib import Path
 from typing import Any
 
-from matchlens.agents.recapper import RecapJob, check_recap, write_recap
-from matchlens.agents.runners import OfflineRunner, Usage
-from matchlens.agents.translator import AzureBackend, TranslateJob, check_translation, items, translate, translate_bundle
-from matchlens.broadcast.bundle import build, enriched, finish, redirected
-from matchlens.broadcast.tables import PLAYER_STATS, TEAM_STATS
-from matchlens.explain import director, spanish
-from matchlens.explain.analysis import LEVERS
-from matchlens.explain.follow import THRESHOLDS
-from matchlens.explain.insight import LINES, NO_CHANGE, PLAYER_LINES
-from matchlens.explain.match import load
-from matchlens.explain.metrics import METRICS
-from matchlens.explain.recap import HEADLINES, headlines, pattern
-from matchlens.explain.specialists import PLAYER_STATS as SPECIALIST_STATS
-from matchlens.gen import generate_match
-from matchlens.gen.cli import write_one
+from swing.agents.recapper import RecapJob, check_recap, write_recap
+from swing.agents.runners import OfflineRunner, Usage
+from swing.agents.translator import AzureBackend, TranslateJob, check_translation, items, translate, translate_bundle
+from swing.broadcast.bundle import build, enriched, finish, redirected
+from swing.broadcast.tables import PLAYER_STATS, TEAM_STATS
+from swing.explain import director, spanish
+from swing.explain.analysis import LEVERS
+from swing.explain.follow import THRESHOLDS
+from swing.explain.insight import LINES, NO_CHANGE, PLAYER_LINES
+from swing.explain.match import load
+from swing.explain.metrics import METRICS
+from swing.explain.recap import HEADLINES, headlines, pattern
+from swing.explain.specialists import PLAYER_STATS as SPECIALIST_STATS
+from swing.gen import generate_match
+from swing.gen.cli import write_one
 
 
 def _md(tmp: Path, home: str = "dun", away: str = "ash", seed: int = 34) -> Any:
@@ -161,7 +161,7 @@ def test_azure_names_are_wrapped_so_the_service_leaves_them_alone() -> None:
 
 
 def test_a_failed_translation_goes_back_once_then_falls_back(tmp_path: Path) -> None:
-    from matchlens.agents.translator import AgentBackend
+    from swing.agents.translator import AgentBackend
 
     job = TranslateJob(
         [
@@ -231,7 +231,7 @@ def test_follow_tags_fire_once_per_threshold(tmp_path: Path) -> None:
 
 
 def test_translate_bundle_writes_spanish_and_skips_english_leftovers(tmp_path: Path) -> None:
-    from matchlens.agents.translator import AgentBackend
+    from swing.agents.translator import AgentBackend
 
     md = _md(tmp_path)
     b = build(md)

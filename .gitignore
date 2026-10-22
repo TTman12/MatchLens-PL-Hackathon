@@ -28,7 +28,7 @@ local.settings.json
 
 # Generated output that is not published
 out/
-# The demo match (45 MB of frames): rebuild with matchlens-demo
+# The demo match (45 MB of frames): rebuild with swing-demo
 data/demo/
 *.log
 

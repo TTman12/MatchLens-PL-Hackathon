@@ -1,6 +1,6 @@
 *
 !web/
-!matchlens/
+!swing/
 !data/league.json
 !pyproject.toml
 !README.md

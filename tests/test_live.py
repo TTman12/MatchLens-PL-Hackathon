@@ -1,4 +1,4 @@
-"""Generate match on the live site (matchlens/live): the budget, the rate limit, a generated match
+"""Generate match on the live site (swing/live): the budget, the rate limit, a generated match
 played as an unseen match, the rules taking over when the agents can't, and the HTTP API."""
 
 from __future__ import annotations
@@ -16,11 +16,11 @@ from typing import Any
 
 import pytest
 
-from matchlens.agents.runners import OfflineRunner, Usage
-from matchlens.live import job as job_mod
-from matchlens.live.job import Job, make_feed
-from matchlens.live.limits import CALLS_PER_MATCH, DailyBudget, RateLimit
-from matchlens.live.server import Live, make_server
+from swing.agents.runners import OfflineRunner, Usage
+from swing.live import job as job_mod
+from swing.live.job import Job, make_feed
+from swing.live.limits import CALLS_PER_MATCH, DailyBudget, RateLimit
+from swing.live.server import Live, make_server
 
 HOME, AWAY, SEED = "ash", "kes", 424242
 

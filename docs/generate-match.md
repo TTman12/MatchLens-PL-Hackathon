@@ -32,11 +32,11 @@ the Translator the Spanish lines.
 
 | | |
 |---|---|
-| **Daily budget** | `MATCHLENS_DAILY_AI_MATCHES` (5) matches a day are explained by the agents on Foundry, within `MATCHLENS_DAILY_MODEL_CALLS` (850) model calls. A match takes about 65 calls for the cards, plus a few for the recap and Spanish. The count is kept in `MATCHLENS_STATE_DIR` and resets at midnight UTC. |
+| **Daily budget** | `SWING_DAILY_AI_MATCHES` (5) matches a day are explained by the agents on Foundry, within `SWING_DAILY_MODEL_CALLS` (850) model calls. A match takes about 65 calls for the cards, plus a few for the recap and Spanish. The count is kept in `SWING_STATE_DIR` and resets at midnight UTC. |
 | **Past the budget** | The match is still generated and played; the deterministic rules write the cards, and the screen says so. |
 | **One at a time** | One match on the agents at a time; a second viewer's match gets the rules. At most three matches play at once. |
-| **Per visitor** | `MATCHLENS_GENERATE_PER_HOUR` (6) new matches an hour from one address. |
-| **One agent fails** | That call is tried once more, then a rules stand-in answers the same task and the chain carries on: its findings go on the board beside the other specialists', and its draft or lines still go through the Verifier or the line check in code. The card says which agent was recovered, and the Agents tab shows each try ([failover.py](../matchlens/live/failover.py)). |
+| **Per visitor** | `SWING_GENERATE_PER_HOUR` (6) new matches an hour from one address. |
+| **One agent fails** | That call is tried once more, then a rules stand-in answers the same task and the chain carries on: its findings go on the board beside the other specialists', and its draft or lines still go through the Verifier or the line check in code. The card says which agent was recovered, and the Agents tab shows each try ([failover.py](../swing/live/failover.py)). |
 | **Foundry slow or down** | The app checks it can sign in before the first minute. A moment that takes over 45 s, or any failure, hands that card and the rest of the match to the rules, labelled "Rules-written" on the card. |
 | **Server gone** | A plain static copy of web/ hides the button; the demo matches always play. |
 
@@ -55,14 +55,14 @@ carries a small label ("Players down · recovered"), and the badge on the feed c
 
 The fault is injected in the server before the call leaves it, so a drill costs no model calls and
 touches no other viewer's match. It is asked for with `POST /api/generate?drill=<agent>&drill_mode=down|flaky`,
-checked against the list of the card's agents, and limited to `MATCHLENS_DRILLS_PER_HOUR` (3) an hour
-per visitor on top of the usual limit. `MATCHLENS_DRILLS=off` switches it off. It needs no key.
+checked against the list of the card's agents, and limited to `SWING_DRILLS_PER_HOUR` (3) an hour
+per visitor on top of the usual limit. `SWING_DRILLS=off` switches it off. It needs no key.
 
 ## Running it
 
 ```
-matchlens-live --web web --agents offline     # no Azure: the rules explain every match
-matchlens-live --web web                      # agents on Foundry when AZURE_AI_PROJECT_ENDPOINT is set
+swing-live --web web --agents offline     # no Azure: the rules explain every match
+swing-live --web web                      # agents on Foundry when AZURE_AI_PROJECT_ENDPOINT is set
 ```
 
 On Azure Container Apps the app signs in with its managed identity, which needs the **Azure AI

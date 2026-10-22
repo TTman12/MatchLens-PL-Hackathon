@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # matchlens-ci, in the MatchLens tenant. Ids, not secrets: OIDC needs no password.
+  # matchlens-ci, in the project's Azure tenant. Ids, not secrets: OIDC needs no password.
   AZURE_CLIENT_ID: 519837f7-fa8b-46b8-b6d0-1d6932fecf14
   AZURE_TENANT_ID: 8b829b13-deec-40a6-982d-77a85344399f
   RESOURCE_GROUP: rg-tristan.friend.12-4381
@@ -49,15 +49,15 @@ jobs:
       - name: Roll the container app to the new image
         run: |
           az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors
-          # The settings "Generate match" runs on (matchlens/live/server.py): the Foundry project, and
+          # The settings "Generate match" runs on (swing/live/server.py): the Foundry project, and
           # today's budget of AI-explained matches. Setting them is free; the app's managed identity
           # signs in to Foundry.
           az containerapp update -n "$APP" -g "$RESOURCE_GROUP" --image "${{ steps.image.outputs.ref }}" \
             --set-env-vars \
               "AZURE_AI_PROJECT_ENDPOINT=https://matchlens-foundry-812.services.ai.azure.com/api/projects/matchlens" \
               "AZURE_AI_MODEL=gpt-4.1-mini" \
-              "MATCHLENS_DAILY_AI_MATCHES=5" \
-              "MATCHLENS_DAILY_MODEL_CALLS=850" \
+              "SWING_DAILY_AI_MATCHES=5" \
+              "SWING_DAILY_MODEL_CALLS=850" \
             --query properties.latestRevisionName -o tsv
       - name: Check the site answers on the new revision
         run: |

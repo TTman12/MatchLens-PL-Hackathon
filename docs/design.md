@@ -1,4 +1,4 @@
-# MatchLens: Momentum Explainer design
+# Swing: Momentum Explainer design
 
 Status: written as a draft on 20 Oct 2026 before anything was built, and brought up to date on 21 Oct 2026. Everything below is now built. Sections 1 to 4 and 7 are the design as agreed; sections 5, 6 and 8 describe what was built where it differs from the draft; section 10 holds Tristan's decisions. For how each part works today, the per-part docs are the reference: [agents.md](agents.md), [explainer.md](explainer.md), [broadcast.md](broadcast.md), [generator.md](generator.md), [live-feed.md](live-feed.md) and [generate-match.md](generate-match.md).
 
@@ -10,7 +10,7 @@ This builds on two earlier files:
 
 ## 1. The product in one line
 
-Everyone can see when the tide turns; MatchLens shows *why*. Agents watch every team and player stat minute by minute. When something changes, they find where it came from and put up a graphic with 1 or 2 numbers and a momentum bar, with no sentences on screen.
+Everyone can see when the tide turns; Swing shows *why*. Agents watch every team and player stat minute by minute. When something changes, they find where it came from and put up a graphic with 1 or 2 numbers and a momentum bar, with no sentences on screen.
 
 ## 2. The two modes
 
@@ -103,17 +103,17 @@ As built. The agents run on Microsoft Foundry through Microsoft Agent Framework.
 | **Verifier** | code | Re-runs the specialists on the tables, compares every number and enforces the screen rules. A rejected draft goes back once, then the rules' card is used. | tables |
 | **Director** | code | Decides on the spot whether a card goes on screen: 10 minutes apart, 4 a half, confidence 45% or more, goals and reds can break in. | cards |
 | **Interpreter** | Foundry agent | One line per viewer (neutral and each club's fans) on what the card means for the game, held to the facts by a check in code. | the verified card |
-| **Analyst** | Foundry agent | The MatchLens analysis card: what each club could do, picked from levers a stat backs. | the verified card |
+| **Analyst** | Foundry agent | The Swing analysis card: what each club could do, picked from levers a stat backs. | the verified card |
 | **Recapper** | Foundry agent | The full-time headline per viewer. | the recap facts |
 | **Translator** | Foundry agent or Azure AI Translator | Every on-screen line in Spanish, checked in code for names and numbers. Labels and anchors use a fixed glossary. | the bundle's lines |
 
-**Shared state.** Each finding is one record on the findings board (`matchlens/agents/board.py`): `{id, agent, claim_type, metric, team or player, before, after, effect_sd, polarity, ...}`. Every specialist posts to it and the Explainer reads it; models refer to findings by id, so the number on screen is always the tool's number. The draft planned to share the board through an MCP server; it is shared in process instead, and there is no MCP server on the crew's path.
+**Shared state.** Each finding is one record on the findings board (`swing/agents/board.py`): `{id, agent, claim_type, metric, team or player, before, after, effect_sd, polarity, ...}`. Every specialist posts to it and the Explainer reads it; models refer to findings by id, so the number on screen is always the tool's number. The draft planned to share the board through an MCP server; it is shared in process instead, and there is no MCP server on the crew's path.
 
 **Failure recovery.** If a specialist fails or times out, the Explainer works with what it has and the card's confidence drops by 0.1 per missing specialist. If the Verifier rejects a draft, it goes back once with the problems listed; a second miss falls back to the deterministic choice. The Interpreter, Analyst, Recapper and Translator agent each get one retry and then fall back to the rules' lines (the Azure AI Translator backend falls back straight away). Every step is logged on the card and shown in the admin screen's Agents tab.
 
 ## 6. Graphic contract
 
-As built, one card in a match bundle (`web/data/<match>.json`, written by `matchlens-broadcast`), trimmed:
+As built, one card in a match bundle (`web/data/<match>.json`, written by `swing-broadcast`), trimmed:
 
 ```json
 {
@@ -126,7 +126,7 @@ As built, one card in a match bundle (`web/data/<match>.json`, written by `match
   "momentum": {"before": 84.9, "now": 63.6, "gainer": "brk"},
   "cause": "play_change", "story": "pushing_up",
   "text": {"neutral": "...", "ash": "...", "brk": "..."},
-  "analysis": {"...": "the MatchLens analysis card that follows"},
+  "analysis": {"...": "the Swing analysis card that follows"},
   "detail": {"...": "the expanded table"},
   "hood": {"runner": "foundry", "specialists": ["..."], "verifier": ["..."], "confidence": 0.71},
   "i18n": {"es": {"anchor": "Últimos 9 minutos", "text": {"...": "..."}}}
@@ -149,7 +149,7 @@ These sit beside the realism gate as the two headline charts for the judges.
 ## 8. What changed from the draft
 
 - **Clean slate.** The old repo (movement simulator, 10 Hz frames, camera and replay, the earlier Match-State MCP server) was wiped on 20 Oct. It stays in git history only.
-- **A new, smaller MCP server.** The agents' tools (investigate, read the board, check a card) are served by the MatchLens MCP server, in process, with a fallback to direct calls. The same server runs on stdio for outside tools. See [agents.md](agents.md#the-mcp-server).
+- **A new, smaller MCP server.** The agents' tools (investigate, read the board, check a card) are served by the Swing MCP server, in process, with a fallback to direct calls. The same server runs on stdio for outside tools. See [agents.md](agents.md#the-mcp-server).
 - **The Translator translates sentences,** not just labels, because each card now has a line written for the viewer. A check in code compares each translation with the English.
 - **Agents after the card.** The Interpreter, the Analyst and the Recapper were added so the screen can say what a card means, what a club could do about it, and how the match went, each held to the facts by code and screened by Azure AI Content Safety.
 - **Strictly live.** The Watcher and the Director decide minute by minute with no look-ahead, so a recorded match and a live feed give the same cards ([live-feed.md](live-feed.md)). A feed adapter takes another provider's per-minute tables, and Generate match on the live site plays brand-new matches through the agents ([generate-match.md](generate-match.md)).
