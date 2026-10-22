@@ -82,14 +82,16 @@ Also: the **full-time recap** (who had each quarter-hour, the three turning poin
 
 ## Follow a player
 
-Following a player is the same explanation, seen through one player. Pick him on the pitch and his match stays on screen beside the cards:
+Swing explains a match at two levels that feed each other. The team level shows when momentum swings and why. The player level shows who made it happen. They are one product because they come from the same agents' work: the Player and Substitutions analysts that help explain every swing also name the players behind it.
 
-- **When he was in the game.** A strip with his touches, passes and distance, and a sparkline of his involvement every five minutes, so you can see whether he faded or grew as momentum swung.
-- **His part in the story.** When a card's explanation is about him (he is the substitute who out-ran the man he replaced, or the player doing most on the side that took over), his row on the card is highlighted.
-- **Milestones as they happen.** Name tags when he reaches 5 and 10 km, 10, 20 and 30 sprints, 25, 50 and 75 passes, and so on, as broadcasters tag players.
-- **Where he finished.** At full time the recap shows where he ranked in his team on each stat.
+![A momentum card naming the player who drove the swing, with the followed player's part in it](docs/img/swing-players.png)
 
-Every number is counted from the match tables; nothing about him is inferred. The agents don't yet write a line just for the followed player: he appears in their explanation only when the evidence says he caused the shift.
+- **Driven by, on every card.** Under each swing, the one or two players on the side that took over whose own output rose most since it started ("Y. Dunanu · defensive actions 0 → 5"), or the substitute against the man he replaced. Tap one to follow him.
+- **Your player's part in each swing.** Follow a player and every card checks whether he is part of that swing, on either side: "Your player: T. Gorrelli dropped off as Brackenford took over · touches 8 → 1", or "is driving this swing".
+- **His match, all the way through.** A strip with his touches, passes and distance, name tags when he reaches milestones (5 and 10 km, 10, 20 and 30 sprints, 25, 50 and 75 passes, and so on), as broadcasters tag players, and his moments on the timeline.
+- **His part in the swings at full time.** The recap adds "In 2 of 6 swings", with what he did in each (dropped off at 45+3', drove at 83'), next to where he ranked in his team.
+
+So the same agents' work reaches the analyst reading the tactics and the fan who only cares about one player. Every number is counted from the match tables: a player is named only when his own stats changed clearly (two standard deviations or more against his match so far) in the same direction as the swing.
 
 <!-- BEGIN: Built on Microsoft. This section is owned by the Microsoft stack work (services, evaluation scores, MCP server). Edit it there; the rest of the README links to it by its heading. -->
 ## Built on Microsoft

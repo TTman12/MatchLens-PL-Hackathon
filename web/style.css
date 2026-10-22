@@ -879,3 +879,36 @@ body { display: grid; place-items: center; overflow: hidden; }
   }
   .crest-btn.on, .pcard.on, .pcard:hover { transform: none; }
 }
+
+/* ---------- who moved the swing: the players behind the card ---------- */
+.card-who { background: var(--secondary); color: var(--primary); border-left: 0.35cqw solid var(--accent); padding: 0.45cqw 1.1cqw 0.55cqw; border-top: 1px solid rgba(40, 0, 43, 0.12); }
+.card-who > div + div { margin-top: 0.4cqw; }
+.who-k { font-family: var(--display); font-weight: 700; font-size: var(--tiny); letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.62; margin-right: 0.3cqw; }
+.who-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4cqw; }
+.who {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4cqw;
+  padding: 0.25cqw 0.6cqw;
+  background: #f3eef4;
+  color: var(--primary);
+  border: 1px solid rgba(40, 0, 43, 0.18);
+  font: inherit;
+  font-size: max(1.02cqw, 11px);
+  cursor: pointer;
+}
+.who:hover, .who:focus-visible { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.who b, .who-you b { font-family: var(--display); font-weight: 700; }
+.who-n { display: inline-flex; align-items: center; gap: 0.25cqw; font-variant-numeric: tabular-nums; opacity: 0.8; }
+.who-n .stat-to, .sw-row .stat-to { width: 0.9cqw; height: 0.45cqw; color: currentColor; opacity: 0.6; }
+.who-you { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35cqw; font-size: 1cqw; padding: 0.3cqw 0.5cqw; box-shadow: inset 0 0 0 0.15cqw var(--accent); }
+.who-you .who-n { margin-left: auto; }
+.card.on .card-who { animation: rise 0.5s var(--ease) 0.5s both; }
+.card.still .card-who { animation: none; }
+.sw-head { font-family: var(--display); font-weight: 700; font-size: 1.05cqw; margin-bottom: 0.15cqw; }
+.sw-row { display: flex; align-items: center; gap: 0.5cqw; padding: 0.15cqw 0; font-size: 0.85cqw; border-top: 1px solid var(--line); }
+.sw-role { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--tiny); }
+.sw-row.drove .sw-role { color: var(--secondary); }
+.sw-row.faded .sw-role { color: var(--faint); }
+.sw-row .who-n { margin-left: auto; opacity: 1; }

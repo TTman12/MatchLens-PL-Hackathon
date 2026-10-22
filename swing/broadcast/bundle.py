@@ -12,6 +12,7 @@ Director put on screen, with their numbers already formatted.
                                                                     # bundles already there, keeping their cards
     swing-broadcast --demo 6 --out web/data --redirect          # re-run the Director's current rules over
                                                                     # the bundles' cards (drops only, no model calls)
+                                                                    # and refresh the players behind each card
 
 Each bundle also carries the full-time recap, follow-a-player, the analyst view's detail and the
 Spanish screen (extras.py). With --agents, the Recapper writes the recap headlines and the
@@ -31,6 +32,7 @@ from ..explain.analysis import lenses
 from ..explain.director import direct
 from ..explain.explainer import explain_match
 from ..explain.match import MatchData, load
+from ..explain.movers import movers, parts
 from . import extras
 from .tables import stats_tables
 
@@ -283,7 +285,8 @@ EVENT_KINDS = {"goal", "red_card", "half_time", "substitution"}
 def redirected(md: MatchData, b: dict[str, Any]) -> dict[str, Any]:
     """An existing bundle with the Director's current rules run again over its cards, in place.
     Cards can only drop out (a card the old rules held back was never written), and every line on a
-    kept card is kept. The recap's turning points are picked again from the cards that remain."""
+    kept card is kept. The recap's turning points are picked again from the cards that remain, and
+    the players behind each card (movers.py) are read again from the specialists."""
     cues = [
         {
             "at": c["at"],
@@ -297,9 +300,13 @@ def redirected(md: MatchData, b: dict[str, Any]) -> dict[str, Any]:
         for c in b["cards"]
     ]
     b["cards"] = [d["card"] for d in direct(cues)]
+    for c in b["cards"]:  # who moved each swing: deterministic, so older bundles get it here too
+        c["players"] = movers(md, c)
+    b["i18n"]["es"]["labels"] = extras.labels(b)
     r = b["recap"]
     r["turning_points"] = recap.turning_points(b["cards"])
     r["facts"] = recap.facts(md, r["pattern"], r["turning_points"])
+    r["parts"] = parts(b["cards"])
     return b
 
 

@@ -81,6 +81,9 @@
       at: "At", last15: "Last 15'", modelled: "* modelled from tracking-style data.", tap_club: "Tap a club for its players.",
       back: "Back", not_on: "Not on the pitch yet.", on: "on", sub: "sub", passes: "passes",
       follow: "Follow", following: "Following", unfollow: "Stop following",
+      driven_by: "Driven by", you_drove: "is driving this swing", you_faded: (c) => `dropped off as ${c} took over`,
+      follow_who: (p) => `Follow ${p}`, in_swings: "In the swings", swings_of: (n, of) => `In ${n} of ${of} swings`,
+      drove: "drove", faded: "dropped off", vs: (p) => `vs ${p}`,
       full_time: "Full time", who_had_it: "Who had the game", turning: "Turning points", standouts: "Standouts",
       halves: "First half · second half", involvement: "Touches every 5 minutes", before: "before", since: "since",
       confidence: "confidence", stat_of: (who, label) => `${who}'s ${lower(label)}`, rank_at: (club) => `at ${club}`,
@@ -105,6 +108,9 @@
       at: "Min.", last15: "Últ. 15'", modelled: "* estimado con datos de seguimiento.", tap_club: "Toca un club para ver sus jugadores.",
       back: "Volver", not_on: "Todavía no ha salido al campo.", on: "entra", sub: "suplente", passes: "pases",
       follow: "Seguir", following: "Siguiendo", unfollow: "Dejar de seguir",
+      driven_by: "Impulsado por", you_drove: "está impulsando este cambio", you_faded: (c) => `bajó cuando ${c} tomó el control`,
+      follow_who: (p) => `Seguir a ${p}`, in_swings: "En los cambios de inercia", swings_of: (n, of) => `En ${n} de ${of} cambios`,
+      drove: "impulsó", faded: "bajó", vs: (p) => `frente a ${p}`,
       full_time: "Final", who_had_it: "Quién mandó", turning: "Momentos clave", standouts: "Destacados",
       halves: "Primera parte · segunda parte", involvement: "Toques cada 5 minutos", before: "antes", since: "desde",
       confidence: "confianza", stat_of: (who, label) => `${label} de ${who}`, rank_at: (club) => `en ${club}`,
@@ -523,6 +529,7 @@
         <div class="card-main">
           <div class="card-text" id="cardText">${esc(cardText(c))}</div>
           ${open ? detailHtml(c) : `<div class="card-body">${statRow(c.stats[0])}</div>`}
+          ${whoHtml(c)}
         </div>
       </div>`;
     el.hidden = false;
@@ -534,6 +541,43 @@
     cardUntil = performance.now() + CARD_SECONDS * 1000;
     hoodCard = c;
     if (tab === "agents") renderPanel();
+  }
+
+  // ---------- who moved the swing: the players behind the card ----------
+  // The Players and Substitutions agents find whose own output changed since the card's anchor; the
+  // card shows the top two who drove it, and tapping one follows him. When the player you follow is
+  // part of the swing, either side, the card says so first.
+  function moverNums(r) {
+    return `<span class="who-n">${esc(lower(L(r.label)))} ${r.before}${ARROW}${r.after}${r.vs ? ` ${esc(w("vs", r.vs))}` : ""}</span>`;
+  }
+
+  function whoHtml(c) {
+    const rows = c.players || [];
+    const me = follow && rows.find((r) => r.id === follow);
+    const chips = rows.filter((r) => r.role === "drove" && r.id !== follow).slice(0, 2);
+    if (!me && !chips.length) return "";
+    const gainer = teamById(c.momentum.gainer);
+    const you = me
+      ? `<div class="who-you"><span class="who-k">${w("your_player")}</span><span class="an-chip" style="background:${sideOf(me.team)}"></span>
+          <b>${esc(me.name)}</b> <span>${esc(me.role === "drove" ? w("you_drove") : w("you_faded", gainer.short_name))}</span>${moverNums(me)}</div>`
+      : "";
+    const row = chips.length
+      ? `<div class="who-row"><span class="who-k">${w("driven_by")}</span>${chips
+          .map(
+            (r) => `<button type="button" class="who" data-pick="${r.id}" aria-label="${esc(w("follow_who", r.name))}">
+              <span class="an-chip" style="background:${sideOf(r.team)}"></span><b>${esc(r.name)}</b>${moverNums(r)}</button>`,
+          )
+          .join("")}</div>`
+      : "";
+    return `<div class="card-who">${you}${row}</div>`;
+  }
+
+  // the card on screen again, after the followed player changes; it keeps its time up
+  function redrawCard() {
+    if (phase !== "stats" || !hoodCard) return;
+    const until = cardUntil;
+    showCard(hoodCard, false);
+    cardUntil = until;
   }
 
   // An open card stays up until it is closed, then leaves a few seconds later
@@ -774,14 +818,29 @@
     const f = bundle.follow[p.id];
     const defs = Object.fromEntries(bundle.stats.player_stats.map((d) => [d.key, d]));
     const club = teamById(p.team).short_name;
+    const inSwings = ((bundle.recap.parts || {})[p.id] || []).length > 0;
     const badges = f.ranks
-      .slice(0, 3)
+      .slice(0, inSwings ? (recapOpen ? 1 : 2) : 3) // room for his part in the swings
       .map(
         (r) => `<div class="badge"><b>#${r.rank}</b><span>${esc(L(defs[r.key].label))} ${w("rank_at", club)}</span><em>${fmt(r.value, defs[r.key].unit)}</em></div>`,
       )
       .join("");
     return `<div class="rc-sec"><span class="an-chip" style="background:${sideOf(p.team)}"></span> ${esc(p.name)}</div>
-      ${badges}<div class="rc-sub">${w("involvement")}</div>${spark(f.involvement, f.involvement.length, "wide")}`;
+      ${swingsHtml(p)}${badges}<div class="rc-sub">${w("involvement")}</div>${spark(f.involvement, f.involvement.length, "wide")}`;
+  }
+
+  // the followed player's part in the match's swings: how many, and what he did in each
+  function swingsHtml(p) {
+    const parts = (bundle.recap.parts || {})[p.id] || [];
+    const swings = bundle.cards.filter((c) => c.momentum.gainer).length;
+    if (!parts.length || !swings) return "";
+    const rows = parts
+      .slice(0, recapOpen ? 3 : 2)
+      .map(
+        (x) => `<div class="sw-row ${x.role}"><span class="tp-clock">${esc(x.clock)}</span><span class="sw-role">${w(x.role)}</span>${moverNums(x)}</div>`,
+      )
+      .join("");
+    return `<div class="rc-sub">${w("in_swings")}</div><div class="sw-head">${esc(w("swings_of", parts.length, swings))}</div>${rows}`;
   }
 
   function setFollow(id) {
@@ -793,6 +852,7 @@
     renderPanel();
     drawPicker();
     redrawRecap();
+    redrawCard();
   }
 
   // who wrote the card, when it wasn't all the agents: the rules, or a stand-in for an agent that failed
@@ -1194,6 +1254,13 @@
 
   // Expand on the card, the followed player's strip and the recap
   $("stage").addEventListener("click", (ev) => {
+    const who = ev.target.closest("#card button[data-pick]");
+    if (who) {
+      const p = bundle.stats.players.find((x) => x.id === who.dataset.pick);
+      if (p) squadClub = p.team; // the picker turns to his club
+      setFollow(who.dataset.pick);
+      return;
+    }
     const b = ev.target.closest("button[data-expand]");
     if (!b || b.closest("#panel")) return;
     const what = b.dataset.expand;
