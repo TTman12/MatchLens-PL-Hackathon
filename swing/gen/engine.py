@@ -67,6 +67,8 @@ K_NUMBERS = 1.8
 DT_SCALE = 0.91
 K_SHOT = -0.65
 K_FINISH = -0.35
+K_EASE = 1.5  # a side this many goals up (EASE_FROM and over) finishes less: the game is won, it eases off
+EASE_FROM = 3
 K_FWD_RISK = 0.3
 K_FWD_BASE = -0.3
 K_FWD_BLOCK = 0.25
@@ -346,7 +348,9 @@ class Match:
                 xg = self.pr.penalty_xg
             else:
                 xg = self.pr.xg(x, y, header) * (0.55 if typ == "Free kick shot" else 1.0)
-            pg = sigmoid(logit(xg) + K_FINISH + 0.5 * player.finish_q - (0.5 * gk.keep_q if gk else -0.5) + 0.25 * flow)
+            lead = team.score - opp.score
+            ease = K_EASE * (lead - EASE_FROM + 1) if lead >= EASE_FROM else 0.0
+            pg = sigmoid(logit(xg) + K_FINISH + 0.5 * player.finish_q - (0.5 * gk.keep_q if gk else -0.5) + 0.25 * flow - ease)
             if rng.random() < pg:
                 out = "goal"
             else:

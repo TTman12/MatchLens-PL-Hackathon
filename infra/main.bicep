@@ -127,8 +127,8 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               value: 'https://${foundryAccountName}.services.ai.azure.com/api/projects/${foundryProjectName}'
             }
             { name: 'AZURE_AI_MODEL', value: model }
-            { name: 'SWING_DAILY_AI_MATCHES', value: '5' } // Generate match: AI-explained matches a day
-            { name: 'SWING_DAILY_MODEL_CALLS', value: '850' }
+            { name: 'SWING_DAILY_AI_MATCHES', value: '10' } // Generate match: AI-explained matches a day
+            { name: 'SWING_DAILY_MODEL_CALLS', value: '1700' }
           ]
           probes: [
             {

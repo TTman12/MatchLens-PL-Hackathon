@@ -32,7 +32,7 @@ the Translator the Spanish lines.
 
 | | |
 |---|---|
-| **Daily budget** | `SWING_DAILY_AI_MATCHES` (5) matches a day are explained by the agents on Foundry, within `SWING_DAILY_MODEL_CALLS` (850) model calls. A match takes about 65 calls for the cards, plus a few for the recap and Spanish. The count is kept in `SWING_STATE_DIR` and resets at midnight UTC. |
+| **Daily budget** | `SWING_DAILY_AI_MATCHES` (10) matches a day are explained by the agents on Foundry, within `SWING_DAILY_MODEL_CALLS` (1700) model calls. A match takes about 65 calls for the cards, plus a few for the recap and Spanish. The count is kept in `SWING_STATE_DIR` and resets at midnight UTC. |
 | **Past the budget** | The match is still generated and played; the deterministic rules write the cards, and the screen says so. |
 | **One at a time** | One match on the agents at a time; a second viewer's match gets the rules. At most three matches play at once. |
 | **Per visitor** | `SWING_GENERATE_PER_HOUR` (6) new matches an hour from one address. |

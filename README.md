@@ -10,8 +10,21 @@ All match data is synthetic and every club and player is fictional. Built for th
 
 ![The broadcast screen: a card on a substitute's running, the momentum bar and the club stats](docs/img/broadcast.png)
 
+## Testing it
+
+Free, with no sign-in, until judging ends. Swing is built for a **desktop browser** (Chrome or Edge, a 16:9 window).
+
+| Link | What to try |
+| --- | --- |
+| [Fan screen](https://matchlens-live.blacktree-62621304.eastus2.azurecontainerapps.io) | Pick a club and a player, press play. Six prebuilt matches, no limits. |
+| [Admin screen](https://matchlens-live.blacktree-62621304.eastus2.azurecontainerapps.io/?mode=admin) | Club and player stats, the Agents tab, the match list and **Generate match**: a brand-new match played through the agents on Microsoft Foundry (about 3 minutes). |
+| [Fault drill](https://matchlens-live.blacktree-62621304.eastus2.azurecontainerapps.io/?mode=admin&tab=agents&drill=explainer) | Press Generate match with the Explainer knocked out, and watch the chain recover on the Agents tab. Pick another agent in the Fault drill menu. |
+
+**Limits on Generate match.** 10 matches a day across the whole site are explained by the agents (the count resets at midnight UTC), one at a time. Each visitor can start 6 matches and 3 fault drills an hour. Past the daily 10, or while another viewer's match has the agents, a match still plays in full and the deterministic rules write its cards, labelled "Rules-written" on screen. The first visit after a quiet spell takes a few seconds while the app starts.
+
 ## Contents
 
+- [Testing it](#testing-it)
 - [The problem](#the-problem)
 - [The five stages](#the-five-stages)
 - [Architecture and the agents' chain of command](#architecture-and-the-agents-chain-of-command)
@@ -161,7 +174,7 @@ Because the generator records *why* each match went the way it did (hidden from 
 | **Shifts that match a real swing** in the hidden state | 82% (random windows: 69%), on 380 unseen matches | [docs/explainer.md](docs/explainer.md), CI job `explainer` |
 | **Cause claims that are right** | 73% of 533 checked claims (rules); 70% for the agents on Foundry on 30 unseen matches, about 5 cents a match | [docs/agents.md](docs/agents.md) |
 | **Unseen-match test:** fresh seeds and pairings, sent only as a provider's renamed per-minute feed | Tables rebuilt exactly 30/30; 295 of 295 on-screen numbers recompute; live run identical to the one-go run 30/30 | [docs/live-feed.md](docs/live-feed.md), CI job `unseen` |
-| **Generate match** on the live site | A fresh match plays through the Foundry agents in about 3 minutes (about 75 model calls), within a daily budget of 5 AI matches | [docs/generate-match.md](docs/generate-match.md) |
+| **Generate match** on the live site | A fresh match plays through the Foundry agents in about 3 minutes (about 75 model calls), within a daily budget of 10 AI matches | [docs/generate-match.md](docs/generate-match.md) |
 
 CI runs ruff, strict mypy, the tests, the realism gate, the explainer score and the unseen-match test on every pull request.
 
@@ -178,8 +191,8 @@ CI runs ruff, strict mypy, the tests, the realism gate, the explainer score and 
 - **A cause is an inference.** About 70% of spontaneous swings have no change of plan behind them at all, so for most of those the card shows *what* changed in play (duels won, defending height, shots) rather than claiming an instruction nobody can see. Checked cause claims are right about 70 to 73% of the time, and red-card claims are too few to tune.
 - **Substitution claims can't be scored yet:** the hidden truth doesn't say whether a substitute made the difference.
 - **Tuned on synthetic data.** The effect sizes (`swing/explain/calibration.json`) were fitted on generated matches; a real feed would need them refitted, and would have no hidden truth to score causes against.
-- **The live site plays prebuilt matches** so viewers never spend model calls. Generate match is the live path on Foundry, capped at 5 AI matches a day; past that, the rules explain the match and the screen says so.
-- **Not built:** auto-eventing from video, ball and shot speed, and a pass difficulty rating. The stadium is a still photo with no marks, standing in for the match video.
+- **The live site plays prebuilt matches** so viewers never spend model calls. Generate match is the live path on Foundry, capped at 10 AI matches a day; past that, the rules explain the match and the screen says so.
+- **Not built:** auto-eventing from video, ball and shot speed, and a pass difficulty rating. The stadium is an AI-generated still of a fictional ground with no marks, standing in for the match video.
 - **Two languages so far:** English and Spanish. A third would need the Translator's check and the rules' fallback lines written for that language.
 
 ## Docs

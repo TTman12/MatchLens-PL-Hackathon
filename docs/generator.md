@@ -36,6 +36,7 @@ swing-realism                                       # generate 380 matches and c
    - **Spontaneously:** an instruction from the touchline at any point.
    - **Continuously:**
      - teams react to the score (trailing teams push and take risks; leading teams sit deeper);
+     - a side three or more goals up eases off in front of goal (`K_EASE` in `engine.py`), so a thrashing stays rare: about 1 in 20 random pairings ends with a margin of four, and about 1 in 250 with five or more (it was 1 in 14 and 1 in 30 before);
      - players tire;
      - opponents sometimes respond to a change.
 4. **Physical output** (`physical.py`) is modelled per player per minute from position, plan, ball-in-play time and freshness.

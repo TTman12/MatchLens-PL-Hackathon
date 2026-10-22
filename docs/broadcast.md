@@ -74,8 +74,8 @@ Click the timeline to scrub.
 ## Look
 
 - **Colours:** primary `#28002b`, secondary `#ffffff`, accent `#0000ee`. Team colours come from the fictional clubs. When two sides' colours are too close, the away side switches to its second colour.
-- **Type:** headings in the PremierLeague typeface at 700 (an H1 is 32px on a 1920-wide screen). That typeface is licensed, so it is not in this repo: the page uses it when it is installed, or when it is placed at `web/assets/fonts/PremierLeague.woff2`. Otherwise Barlow and Barlow Condensed stand in.
-- **Stadium:** `web/assets/stadium.jpg`, a photo Tristan supplied. Its boards and stands carry no marks. No league or club marks appear on screen.
+- **Type:** Barlow Condensed for headings at 700 (an H1 is 32px on a 1920-wide screen) and Barlow for text, both from Google Fonts under the SIL Open Font Licence.
+- **Stadium:** `web/assets/stadium.jpg`, an AI-generated image of a fictional stadium made for this project. Its boards and stands carry no marks. No league or club marks appear on screen.
 
 ## The Director
 

@@ -16,7 +16,7 @@ Settings (environment):
 - AZURE_AI_PROJECT_ENDPOINT, AZURE_AI_MODEL: the Foundry project the agents run on. The container
   app signs in with its managed identity (DefaultAzureCredential).
 - SWING_LIVE_AGENTS: foundry (the default when the endpoint is set) or offline.
-- SWING_DAILY_AI_MATCHES (5) and SWING_DAILY_MODEL_CALLS (850): today's budget. Past it,
+- SWING_DAILY_AI_MATCHES (10) and SWING_DAILY_MODEL_CALLS (1700): today's budget. Past it,
   matches are explained by the rules, and the screen says so.
 - SWING_GENERATE_PER_HOUR (6): new matches a visitor may start an hour.
 - SWING_DRILLS (on) and SWING_DRILLS_PER_HOUR (3): the fault drill. A drill only affects the
@@ -275,7 +275,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     agents = args.agents or os.environ.get("SWING_LIVE_AGENTS") or ("foundry" if os.environ.get(ENDPOINT_VAR) else "offline")
     state = Path(os.environ.get("SWING_STATE_DIR", "/tmp/swing"))
-    budget = DailyBudget(state / "budget.json", _int("SWING_DAILY_AI_MATCHES", 5), _int("SWING_DAILY_MODEL_CALLS", 850))
+    budget = DailyBudget(state / "budget.json", _int("SWING_DAILY_AI_MATCHES", 10), _int("SWING_DAILY_MODEL_CALLS", 1700))
     drills = RateLimit(_int("SWING_DRILLS_PER_HOUR", 3), 3600) if os.environ.get("SWING_DRILLS", "on") != "off" else None
     live = Live(agents, budget, RateLimit(_int("SWING_GENERATE_PER_HOUR", 6), 3600), args.pace, drills)
     server = make_server(args.web, args.port, live, args.host)
