@@ -124,6 +124,7 @@ def test_the_agents_write_the_cards_and_their_calls_are_booked() -> None:
     assert last["cards"] and all(c["by"] == "foundry" for c in last["cards"])
     assert runner.usage.calls > 0 and budget.calls_left() == 10_000 - runner.usage.calls
     assert runner.closed and last["live"]["note"] == ""
+    assert last["agents"]["runner"] == "foundry"  # a stand-in without Content Safety or MCP adds no counts
 
 
 def test_the_rules_take_over_when_the_budget_runs_out_mid_match() -> None:

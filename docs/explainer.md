@@ -11,7 +11,7 @@ matchlens-explain-eval --matches 380 --seed 9000               # score against h
 
 ## How a card is made
 
-1. **Watcher** (`watcher.py`). It keeps the momentum scale, which is the home side's share of final-third touches, weighted toward recent minutes. It raises three kinds of moment, and never before 20':
+1. **Watcher** (`watcher.py`). It keeps the momentum scale, which is the home side's share of final-third touches, weighted toward recent minutes. It raises three kinds of moment, and never before 15':
    - **Shift:** one side's share of final-third play over the last 6 minutes is at least 25 points away from the 15 minutes before, and the last 3 minutes still lean the same way. The anchor is the minute that best splits before from after.
    - **Recovery:** a shift that only takes a team back to its own level after a dip of at least 8 points.
    - **Event:** a goal, a red card, a substitution (a team's changes within 3 minutes count as one) or half-time. It is judged once 8 minutes of play have followed, whether or not momentum moved. A shift that starts close to an event is anchored to that event.
@@ -58,16 +58,16 @@ So the Explainer now claims only what stats can support:
 
 ## How well it does
 
-Scored on 380 unseen generated matches (season seed 9000; tuning used seed 2026):
+Scored on 380 unseen generated matches (season seed 9000; tuning used seed 2026; re-run on 22 Oct 2026 after moments were allowed from 15'):
 
 | Check | Result |
 |---|---|
-| Shifts where the hidden state really moved toward the side that gained | 81% (random windows: 69%) |
-| Event-mode shifts where the event really led to a change of plan | 86% |
-| Fatigue claims backed by a real fade | 88% (240 claims) |
-| "Chasing the game" claims where the trailing team's plan really moved | 63% (244) |
-| Red-card claims | 13 reshape claims, 54% right; 19 holding claims, 32% right. Too few to tune yet. |
-| All checked cause claims | 73% (516) |
+| Shifts where the hidden state really moved toward the side that gained | 82% (random windows: 69%) |
+| Event-mode shifts where the event really led to a change of plan | 85% |
+| Fatigue claims backed by a real fade | 89% (262 claims) |
+| "Chasing the game" claims where the trailing team's plan really moved | 60% (239) |
+| Red-card claims | 11 reshape claims, 55% right; 21 holding claims, 33% right. Too few to tune yet. |
+| All checked cause claims | 73% (533) |
 
 CI runs the same scoring on 100 unseen matches and fails if shifts stop beating random windows by at least 5 points, if event backing falls below 75%, or if checked claims fall below 65%.
 
@@ -75,5 +75,5 @@ CI runs the same scoring on 100 unseen matches and fails if shifts stop beating 
 
 All built since this part was written:
 - The specialists and the Explainer run as agents on Microsoft Foundry, with a shared findings board and a Verifier that rechecks every number ([agents.md](agents.md)).
-- A Director keeps about 6 of the 12 candidate cards a match ([broadcast.md](broadcast.md)).
+- A Director keeps about 5 or 6 of the 12 candidate cards a match ([broadcast.md](broadcast.md)).
 - The broadcast screen, with fan and admin screens ([broadcast.md](broadcast.md)).

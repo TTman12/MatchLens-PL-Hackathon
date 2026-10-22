@@ -55,16 +55,16 @@ Making the Watcher and Director strictly live changed little. Over 100 evaluatio
 - **no look-ahead:** the live run raised the same moments, made the same cards and put the same ones on screen as the one-go run, though it never had a minute it hadn't reached; and
 - **causes:** scored against the hidden truth, the live cards clear the same floors as `matchlens-explain-eval --check`. This is judged from 20 matches up.
 
-Result on 30 unseen matches (seed 5150, about 30 s):
+Result on 30 unseen matches (seed 5150, about 30 s; re-run 22 Oct 2026 with the Director's current rules):
 
 | Check | Result |
 |---|---|
 | Tables rebuilt exactly | 30 of 30 |
-| Numbers on screen that recompute | 345 of 345, on 192 cards |
-| Live = one-go (moments, all 338 candidates, cards on screen) | 30 of 30 |
-| Shifts matching a hidden swing | 82.4% (random windows 65.2%) |
-| Event shifts backed by truth | 82.3% |
-| Checked cause claims correct | 71% of 31 |
+| Numbers on screen that recompute | 295 of 295, on 165 cards |
+| Live = one-go (moments, all 347 candidates, cards on screen) | 30 of 30 |
+| Shifts matching a hidden swing | 81.1% (random windows 65.2%) |
+| Event shifts backed by truth | 84.2% |
+| Checked cause claims correct | 73% of 30 |
 
 CI runs the 30-match test on every pull request (the `unseen` job), and `pytest` runs a 3-match version.
 

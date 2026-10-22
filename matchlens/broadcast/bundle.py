@@ -10,6 +10,8 @@ Director put on screen, with their numbers already formatted.
     matchlens-broadcast --demo 6 --out web/data --enrich            # add the recap, follow-a-player, the
                                                                     # analyst detail and Spanish to the
                                                                     # bundles already there, keeping their cards
+    matchlens-broadcast --demo 6 --out web/data --redirect          # re-run the Director's current rules over
+                                                                    # the bundles' cards (drops only, no model calls)
 
 Each bundle also carries the full-time recap, follow-a-player, the analyst view's detail and the
 Spanish screen (extras.py). With --agents, the Recapper writes the recap headlines and the
@@ -24,6 +26,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from ..explain import recap
 from ..explain.analysis import lenses
 from ..explain.director import direct
 from ..explain.explainer import explain_match
@@ -274,18 +277,52 @@ def enriched(md: MatchData, b: dict[str, Any]) -> dict[str, Any]:
     return extras.add(md, b, [{"at": c["at"], "facts": extras.card_facts(md, c)} for c in b["cards"]])
 
 
+EVENT_KINDS = {"goal", "red_card", "half_time", "substitution"}
+
+
+def redirected(md: MatchData, b: dict[str, Any]) -> dict[str, Any]:
+    """An existing bundle with the Director's current rules run again over its cards, in place.
+    Cards can only drop out (a card the old rules held back was never written), and every line on a
+    kept card is kept. The recap's turning points are picked again from the cards that remain."""
+    cues = [
+        {
+            "at": c["at"],
+            "salience": abs(c["momentum"]["now"] - c["momentum"]["before"]),
+            "show": True,
+            "stats": c["stats"],
+            "mode": "event" if c["kind"] in EVENT_KINDS else c["kind"],
+            "cause": {"kind": c["cause"], "confidence": (c.get("hood") or c.get("detail") or {}).get("confidence", 1.0)},
+            "card": c,
+        }
+        for c in b["cards"]
+    ]
+    b["cards"] = [d["card"] for d in direct(cues)]
+    r = b["recap"]
+    r["turning_points"] = recap.turning_points(b["cards"])
+    r["facts"] = recap.facts(md, r["pattern"], r["turning_points"])
+    return b
+
+
 def write_bundles(
-    folders: list[Path], out: Path, agents: str | None = None, enrich: bool = False, translator: str = "auto"
+    folders: list[Path],
+    out: Path,
+    agents: str | None = None,
+    enrich: bool = False,
+    translator: str = "auto",
+    redirect: bool = False,
 ) -> list[dict[str, Any]]:
     out.mkdir(parents=True, exist_ok=True)
     index = []
     mds = [load(f) for f in folders]
-    if enrich:
+    if redirect:
+        bundles = [redirected(md, json.loads((out / f"{md.meta['match_id']}.json").read_text())) for md in mds]
+    elif enrich:
         bundles = [enriched(md, json.loads((out / f"{md.meta['match_id']}.json").read_text())) for md in mds]
     else:
         results: list[dict[str, Any] | None] = list(explain_with_agents(mds, agents)) if agents else [None] * len(mds)
         bundles = [build(md, result) for md, result in zip(mds, results, strict=True)]
-    finish(bundles, agents, translator)
+    if not redirect:
+        finish(bundles, agents, translator)
     for b in bundles:
         (out / f"{b['match_id']}.json").write_text(json.dumps(b, separators=(",", ":"), ensure_ascii=False))
         h, a = b["teams"]
@@ -316,6 +353,9 @@ def main() -> None:
     ap.add_argument("--agents", choices=["offline", "foundry"], help="explain with the agent crew on this runner")
     ap.add_argument("--enrich", action="store_true", help="keep the bundles in --out and add the extras to them")
     ap.add_argument(
+        "--redirect", action="store_true", help="keep the bundles in --out and re-run the Director's rules over their cards"
+    )
+    ap.add_argument(
         "--translator",
         choices=["auto", "azure", "agent", "offline"],
         default="auto",
@@ -345,9 +385,9 @@ def main() -> None:
                         m.manager.minutes,
                     )
                 )
-            index = write_bundles(folders, args.out, args.agents, args.enrich, args.translator)
+            index = write_bundles(folders, args.out, args.agents, args.enrich, args.translator, args.redirect)
     else:
-        index = write_bundles(args.folders, args.out, args.agents, args.enrich, args.translator)
+        index = write_bundles(args.folders, args.out, args.agents, args.enrich, args.translator, args.redirect)
     for r in index:
         print(f"{r['match_id']:>20}  {r['home']} {r['score'][0]}-{r['score'][1]} {r['away']}  {r['cards']} cards")
 

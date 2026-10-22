@@ -2,7 +2,7 @@
 
 **Everyone can see when the tide turns. Shift shows you why.**
 
-MatchLens is a team of AI agents that watches every club and player statistic in a football match, minute by minute. When momentum swings, it works out where the change came from (a substitute out-running the player he replaced, a side dropping deeper after a red card, a team chasing the game) and puts the answer on screen as a broadcast graphic: one or two numbers, a momentum bar and a single line written for *your* club. Every number is computed by code and checked again before it airs, so the models choose and explain but can never make a number up.
+MatchLens is a team of AI agents that watches every club and player statistic in a football match, minute by minute. When momentum swings, it works out where the change came from (a substitute out-running the player he replaced, a side dropping deeper after a red card, a team chasing the game) and puts the answer on screen as a broadcast graphic: one or two numbers, a momentum bar and one plain-English sentence on why it happened, told from your side of the game (your club, or neutral if you don't have one) and in your language. Every number is computed by code and checked again before it airs, so the models choose and explain but can never make a number up.
 
 All match data is synthetic and every club and player is fictional. Built for the Microsoft × Premier League hackathon.
 
@@ -16,12 +16,12 @@ All match data is synthetic and every club and player is fictional. Built for th
 - [The five stages](#the-five-stages)
 - [Architecture and the agents' chain of command](#architecture-and-the-agents-chain-of-command)
 - [What a viewer sees](#what-a-viewer-sees)
+- [Follow a player](#follow-a-player)
 - [Built on Microsoft](#built-on-microsoft)
 - [Run it locally (offline, no Azure)](#run-it-locally-offline-no-azure)
 - [Proof it works](#proof-it-works)
 - [Synthetic data](#synthetic-data)
 - [Honest limits](#honest-limits)
-- [Hackathon checklist](#hackathon-checklist)
 - [Docs](#docs)
 
 ## The problem
@@ -35,31 +35,31 @@ The brief asks for one pipeline with five stages. This is where each one lives.
 | Stage | What MatchLens does | Code |
 | --- | --- | --- |
 | **1. Ingest** | Takes a match a minute at a time: per-minute club and player tables plus key events (goals, cards, subs), from our generator or from any provider, with a small file mapping its column names onto ours. Nothing later than the current minute exists. | `matchlens/ingest/`, `matchlens/gen/` |
-| **2. Interpret** | Aggregates 24 club stats and 14 player stats (possession, PPDA, defending height, duels won, xG, distance, sprints and more). The Watcher keeps a momentum scale and raises a moment for a shift, a recovery, or an event, and never looks ahead. | `matchlens/data/`, `matchlens/explain/watcher.py` |
+| **2. Interpret** | Aggregates 24 club stats and 14 player stats (possession, PPDA, defending height, duels won, xG, distance, sprints and more). The Watcher, which is plain code, keeps a running momentum scale and flags the minute something needs explaining: a momentum shift, a recovery after a dip, or a key event. It only ever uses the minutes already played. | `matchlens/data/`, `matchlens/explain/watcher.py` |
 | **3. Explain** | Four specialist agents investigate in parallel and post findings to a shared board. The Explainer picks the cause and the one or two numbers that show it. A Verifier in code recomputes every number. | `matchlens/agents/`, `matchlens/explain/` |
-| **4. Render** | A Director in code decides which cards go up and when. Each card is a timed, machine-readable JSON cue, drawn as a lower-third over the feed with a momentum bar, timeline and notifications. | `matchlens/explain/director.py`, `matchlens/broadcast/`, `web/` |
-| **5. Personalise** | Your club, your player, your language (English or Spanish), and a simple card that expands into the analyst's table. Lines are written separately for a neutral and for each club's fans, and a full-time recap closes the match. | `matchlens/agents/interpreter.py`, `analyst.py`, `recapper.py`, `translator.py`, `web/` |
+| **4. Render** | A Director in code decides which explanations are good enough, and spaced out enough, to go on screen. Each card is a timed, machine-readable JSON cue, drawn as a lower-third over the feed with a momentum bar, timeline and notifications. | `matchlens/explain/director.py`, `matchlens/broadcast/`, `web/` |
+| **5. Personalise** | Your club, your player, your language (English or Spanish), and a simple card that expands into the analyst's table. Each card's line is written once for a neutral and once for each club's fans, and every viewer is shown the version for their side. A full-time recap closes the match. | `matchlens/agents/interpreter.py`, `analyst.py`, `recapper.py`, `translator.py`, `web/` |
 
 ## Architecture and the agents' chain of command
 
 ![MatchLens architecture: ingest, interpret, explain, render and personalise, with code deciding and Foundry agents choosing and writing](docs/img/architecture.svg)
 
-**Code is in charge; the agents choose and write.** Code decides *when* to act (the Watcher), *what is allowed* (the Verifier and the checks on every line) and *what reaches the screen* (the Director). The agents on Microsoft Foundry do the judgement: which findings matter, what caused the swing, what it means for each viewer.
+**Code is in charge; the agents choose and write.** Code decides *when* to act (the Watcher), *what is allowed* (the Verifier and the checks on every line) and *what reaches the screen* (the Director). The agents on Microsoft Foundry do the judgement: which findings matter, what caused the swing, and what it means for each set of fans.
 
 | Agent | Kind | Job |
 | --- | --- | --- |
-| **Watcher** | code | Raises a moment: a momentum shift, a recovery after a dip, or an event (goal, red card, substitution, half-time). Decides minute by minute, never revises, never looks ahead. |
+| **Watcher** | code | Flags the minute something needs explaining: a momentum shift, a recovery after a dip, or a key event (goal, red card, substitution, half-time). It checks every minute from 15', using only the minutes already played, and never changes its mind later. |
 | **Team-play analyst** | Foundry agent + tool | How each side's play changed since the moment began, across 21 team stats. |
 | **Player analyst** | Foundry agent + tool | The biggest individual movers on each side, and a team-wide fatigue fade. |
 | **Substitutions analyst** | Foundry agent + tool | Each substitute against the player he replaced. Allowed to say "not me". |
 | **Match-events analyst** | Foundry agent + tool | Goals, red cards and game state: a side chasing the game, a ten-man reshape. |
 | **Explainer** | Foundry agent | Reads the shared board and picks a cause from those the evidence allows, plus one or two finding ids. Tests its draft with a `check_card` tool. |
 | **Verifier** | code | Re-runs the specialists on the tables and compares every number, then enforces the screen rules. A rejected draft goes back once; a second miss falls back to the rules' card. |
-| **Director** | code | Decides on the spot which cards go up: at least 5 minutes apart, at most 5 a half, goals and reds can break in. |
-| **Interpreter** | Foundry agent | One line per viewer on what the numbers mean for the game. No numbers, nothing the data can't see. |
+| **Director** | code | The match's editor. It sees every card the agents produce (about 12 a match) and puts up only a few (about 5 or 6): at least 10 minutes apart, at most 4 a half, never before 15', and never one with a confidence below 45%. A goal or red card can break the 10-minute gap. It decides as each card arrives and never waits for a better one, so it behaves the same live as on a replay. |
+| **Interpreter** | Foundry agent | One sentence per card on what the numbers mean for the game: one for a neutral and one for each club's fans (three in all). It is written once and every viewer sees the version for their side, so the model cost doesn't grow with the audience. No numbers, nothing the data can't see. |
 | **Analyst** | Foundry agent | The "MatchLens analysis" card: what each club could do about it, picked from 18 levers that a stat in the match backs. |
-| **Recapper** | Foundry agent | The full-time headline for each viewer, from the result and how the match went. |
-| **Translator** | Foundry agent or Azure AI Translator | Every line in Spanish, checked in code so no name or number changes. |
+| **Recapper** | Foundry agent | The full-time headline, once for a neutral and once for each club, from the result and how the match went. |
+| **Translator** | Foundry agent | Every line in Spanish, written once and shared by all viewers, checked in code so no name or number changes. |
 
 **Shared state and handoffs.** The four specialists never see each other's prompts; they meet on the findings board, where every number is a tool's output with an id. Models only refer to numbers by id, so a model can't change a number by retyping it.
 
@@ -78,12 +78,23 @@ More: [docs/agents.md](docs/agents.md) (the crew, the board, scores against the 
 | ![A goal notification](docs/img/note-goal.png) | ![Generate match at full time](docs/img/generate-match-ft.png) |
 | **Notifications** for goals, every substitution, red cards and momentum shifts, so a card never arrives cold. | **Generate match** plays a brand-new, never-seen match through the agents a minute at a time, then the full-time recap. |
 
-Also: **follow a player** (a live strip with touches, passes and distance, and name tags when he reaches 5 km, 20 sprints, 50 passes and so on), the **full-time recap** (who had each quarter-hour, the three turning points, a standout per club), **full screen**, and **Spanish** for every label and line. Details in [docs/broadcast.md](docs/broadcast.md).
+Also: the **full-time recap** (who had each quarter-hour, the three turning points, a standout per club), **full screen**, and **Spanish** for every label and line. Details in [docs/broadcast.md](docs/broadcast.md).
+
+## Follow a player
+
+Following a player is the same explanation, seen through one player. Pick him on the pitch and his match stays on screen beside the cards:
+
+- **When he was in the game.** A strip with his touches, passes and distance, and a sparkline of his involvement every five minutes, so you can see whether he faded or grew as momentum swung.
+- **His part in the story.** When a card's explanation is about him (he is the substitute who out-ran the man he replaced, or the player doing most on the side that took over), his row on the card is highlighted.
+- **Milestones as they happen.** Name tags when he reaches 5 and 10 km, 10, 20 and 30 sprints, 25, 50 and 75 passes, and so on, as broadcasters tag players.
+- **Where he finished.** At full time the recap shows where he ranked in his team on each stat.
+
+Every number is counted from the match tables; nothing about him is inferred. The agents don't yet write a line just for the followed player: he appears in their explanation only when the evidence says he caused the shift.
 
 <!-- BEGIN: Built on Microsoft. This section is owned by the Microsoft stack work (services, evaluation scores, MCP server). Edit it there; the rest of the README links to it by its heading. -->
 ## Built on Microsoft
 
-Every service below is used by code in this repo. Nothing is listed that the code doesn't use.
+Every service below is used by the live product or by the pipeline that builds and checks it. Each was checked against the live site, the GitHub Actions runs or the deployed configuration on 22 Oct 2026.
 
 | Service | Where | What it does |
 | --- | --- | --- |
@@ -92,16 +103,17 @@ Every service below is used by code in this repo. Nothing is listed that the cod
 | **Model Context Protocol** server | `matchlens/agents/mcp_server.py` | The agents' tools are served by the MatchLens MCP server: when a specialist or the Explainer calls a tool, the call goes over MCP to the server, which computes from the match tables and reads or writes the findings board. A failed call runs the tool directly. `matchlens-mcp out/matches` serves the same tools on stdio to any MCP client. |
 | **Foundry Models: Azure OpenAI `gpt-4.1-mini`** | the project's model deployment | The model behind every agent, and the judge for the evaluations. |
 | **Foundry Evaluations** (Azure AI Evaluation SDK) | `matchlens/foundry_eval.py`, `.github/workflows/foundry-eval.yml` | Scores every on-screen line for groundedness, relevance and coherence, plus a code check on numbers. The run is logged to the project's Evaluations page. Latest run, 448 lines in English and Spanish: groundedness 4.86 (97% pass), relevance 4.10, coherence 4.01, numbers on card 100%. The weak spot is spin in club-fan lines. Full results and caveats are in [docs/foundry-eval.md](docs/foundry-eval.md). |
-| **Azure AI Translator** | `matchlens/agents/translator.py` | One of the backends for the Spanish screen (Text Translation v3, free F0 tier). A check in code catches any translation that changed a number or a name. |
 | **Azure AI Content Safety** | `matchlens/agents/safety.py` | Screens every line the Interpreter, Analyst and Recapper write before it can go on air. A flagged line is sent back to the agent, then replaced by the rule-written line. |
 | **Azure Monitor Application Insights**, via **OpenTelemetry** | `matchlens/telemetry.py` | One trace per match. It covers the Watcher, each moment, specialist, Explainer round and Verifier check, with Agent Framework's agent and model spans underneath. The traces show on the Foundry project's Tracing page. |
-| **Azure Container Apps** | `infra/main.bicep`, `Dockerfile`, `matchlens/live` | Hosts the live site and Generate match, which plays brand-new matches through the agents on Foundry with the app's managed identity. It scales to zero between viewers and has health probes. |
+| **Azure Container Apps** | `infra/main.bicep`, `Dockerfile`, `matchlens/live` | Hosts the live site and Generate match, which plays brand-new matches through the agents on Foundry with the app's managed identity. It scales to zero between viewers, and every deploy checks the site's `/healthz` before it counts as passed. |
 | **Azure Linux** container image | `Dockerfile` | The base image for the site (`mcr.microsoft.com/azurelinux/base/python`). |
 | **Azure Monitor Log Analytics** | `infra/main.bicep` | Collects the container app's logs. |
 | **Microsoft Entra ID** | everywhere | There are no keys anywhere. Locally and in Cloud Shell, `DefaultAzureCredential` signs in. The app uses a managed identity. GitHub Actions signs in with **workload identity federation (OIDC)**. |
 | **GitHub Actions** and **GitHub Container Registry** | `.github/workflows/` | Tests, a realism gate and the Explainer score on every PR. Builds the image, deploys it to Container Apps over OIDC, runs Foundry evaluations and lints the Bicep. |
-| **Bicep** and the **Azure Developer CLI** | `infra/`, `azure.yaml` | The whole Azure setup as code. `azd provision` can stand it up from nothing, Foundry included. |
+| **Bicep** and the **Azure Developer CLI** | `infra/`, `azure.yaml` | The Azure setup as code. The live environment was set up from `infra/main.bicep`, and every PR compiles and lints it. `azure.yaml` lets `azd provision` stand up a new environment, Foundry included (written for that, not yet run from scratch). |
 | **Azure Cost Management** budget | `infra/main.bicep` | A $20 monthly budget on the resource group, with email alerts. |
+
+The code can also send the Spanish lines through **Azure AI Translator** (`matchlens/agents/translator.py`, `--translator azure`), but the live site and the demo matches use the Translator agent, so it isn't listed above.
 <!-- END: Built on Microsoft -->
 
 ## Run it locally (offline, no Azure)
@@ -126,7 +138,7 @@ Generate match and the live feed, still offline:
 ```
 matchlens-live --web web --agents offline              # the site plus Generate match, at http://localhost:8000
 matchlens-feed unseen                                  # the unseen-match test (below)
-pytest -q                                              # 75 tests
+pytest -q                                              # 90 tests
 ```
 
 With Microsoft Foundry (`pip install -e ".[foundry]"`, `az login`, and `AZURE_AI_PROJECT_ENDPOINT` set to your project):
@@ -145,18 +157,18 @@ Because the generator records *why* each match went the way it did (hidden from 
 
 | Check | Result | Where |
 | --- | --- | --- |
-| **Realism gate:** a generated season against the real 2017-18 Premier League | 31 of 31 numbers within tolerance (passes, shots, goals, cards, subs, shifts per match, the share of shifts with no trigger, the substitute boost, the late-game dip ...) | [docs/realism.md](docs/realism.md), CI job `realism` |
-| **Shifts that match a real swing** in the hidden state | 81% (random windows: 69%), on 380 unseen matches | [docs/explainer.md](docs/explainer.md), CI job `explainer` |
-| **Cause claims that are right** | 73% of 516 checked claims (rules); 70% for the agents on Foundry on 30 unseen matches, about 5 cents a match | [docs/agents.md](docs/agents.md) |
-| **Unseen-match test:** fresh seeds and pairings, sent only as a provider's renamed per-minute feed | Tables rebuilt exactly 30/30; 345 of 345 on-screen numbers recompute; live run identical to the one-go run 30/30 | [docs/live-feed.md](docs/live-feed.md), CI job `unseen` |
+| **Realism gate:** a generated season against a real season (public research data, see [Synthetic data](#synthetic-data)) | 31 of 31 numbers within tolerance (passes, shots, goals, cards, subs, shifts per match, the share of shifts with no trigger, the substitute boost, the late-game dip ...) | [docs/realism.md](docs/realism.md), CI job `realism` |
+| **Shifts that match a real swing** in the hidden state | 82% (random windows: 69%), on 380 unseen matches | [docs/explainer.md](docs/explainer.md), CI job `explainer` |
+| **Cause claims that are right** | 73% of 533 checked claims (rules); 70% for the agents on Foundry on 30 unseen matches, about 5 cents a match | [docs/agents.md](docs/agents.md) |
+| **Unseen-match test:** fresh seeds and pairings, sent only as a provider's renamed per-minute feed | Tables rebuilt exactly 30/30; 295 of 295 on-screen numbers recompute; live run identical to the one-go run 30/30 | [docs/live-feed.md](docs/live-feed.md), CI job `unseen` |
 | **Generate match** on the live site | A fresh match plays through the Foundry agents in about 3 minutes (about 75 model calls), within a daily budget of 5 AI matches | [docs/generate-match.md](docs/generate-match.md) |
 
 CI runs ruff, strict mypy, the tests, the realism gate, the explainer score and the unseen-match test on every pull request.
 
 ## Synthetic data
 
-- **No real match data is used or shipped.** Every match is generated. The 20 clubs and their squads are fictional (`data/league.json`), the crests are drawn by the page from each club's colours, and no league or club marks appear.
-- **How it stays realistic.** `research/learn_priors.py` read one real season once, the public Wyscout event data for the 2017-18 Premier League (Pappalardo et al., 2019, *Scientific Data* 6:236, [figshare](https://doi.org/10.6084/m9.figshare.c.4415000), CC BY 4.0), and kept only aggregate tables (`matchlens/gen/priors.json.gz`): which action follows which by pitch zone, pass lengths and success, timing, an xG model, card and substitution rates. No real match, team or player is stored. The raw data is downloaded on demand to measure patterns and is never committed.
+- **Every match on screen is generated; no real match data is shipped.** The clubs and their squads are fictional (`data/league.json`), the crests are drawn by the page from each club's colours, and no league or club marks appear.
+- **How it stays realistic.** To make generated matches behave like real football, `research/learn_priors.py` read one public research dataset once: the Wyscout event data for the 2017-18 Premier League season, published openly by Pappalardo et al. (2019, *Scientific Data* 6:236, [figshare](https://doi.org/10.6084/m9.figshare.c.4415000)) under CC BY 4.0, which allows reuse with credit. It kept only aggregate probability tables (`matchlens/gen/priors.json.gz`): which action follows which by pitch zone, pass lengths and success, timing, an xG model, card and substitution rates. No real match, club, player or event is stored, and the raw data is never committed or shipped. The same season gives the realism gate its targets (averages such as passes per team and shifts per match, `matchlens/realism/targets.json`) and the momentum findings in [docs/research](docs/research/real-momentum-patterns.md).
 - **How it's generated.** The engine plays a match action by action from those tables, steered by each team's plan (block height, pressing, directness and more), player quality, fatigue and a drifting ebb and flow. A coaching layer changes plans after some events and sometimes for no reason, and logs every decision as hidden truth. Momentum is never written directly: it comes out of the stats. See [docs/generator.md](docs/generator.md).
 - **Distance and sprints are modelled**, and marked so on screen.
 - **Any match in the format works.** The format is published in [docs/data-format.md](docs/data-format.md), and the feed adapter takes another provider's column names ([docs/live-feed.md](docs/live-feed.md)).
@@ -167,35 +179,8 @@ CI runs ruff, strict mypy, the tests, the realism gate, the explainer score and 
 - **Substitution claims can't be scored yet:** the hidden truth doesn't say whether a substitute made the difference.
 - **Tuned on synthetic data.** The effect sizes (`matchlens/explain/calibration.json`) were fitted on generated matches; a real feed would need them refitted, and would have no hidden truth to score causes against.
 - **The live site plays prebuilt matches** so viewers never spend model calls. Generate match is the live path on Foundry, capped at 5 AI matches a day; past that, the rules explain the match and the screen says so.
-- **Not built:** auto-eventing from video, ball and shot speed, and a pass difficulty rating. Two languages (English and Spanish). The stadium is a still photo with no marks, standing in for the match video.
-
-## Hackathon checklist
-
-| Requirement | Status |
-| --- | --- |
-| New project, built after registration opened (29 Sep 2026) | Yes: first commit 19 Oct 2026 |
-| Public GitHub repository | Yes |
-| Synthetic, football-realistic data only; no real Premier League data redistributed | Yes ([Synthetic data](#synthetic-data)) |
-| Third-party data and SDKs used within their licences | Yes: Wyscout public data (CC BY 4.0) for aggregate priors only, not shipped; Microsoft SDKs; MIT licence |
-| No third-party trademarks or copyrighted material | Yes: fictional clubs, page-drawn crests, no league marks; the PremierLeague typeface is not in the repo (Barlow stands in) |
-| Runs as depicted, on its platform | Yes: live on Azure Container Apps; runs offline locally |
-| Free live test link, up until judging ends (10 Nov 2026) | Yes: <https://matchlens-live.blacktree-62621304.eastus2.azurecontainerapps.io> |
-| Project pitch: what it is, Microsoft and Azure technologies, the problem it solves | To do |
-| Demo video under 2 minutes, on a public URL | To do |
-| Category | Best Multi-Agent System |
-
-| What the brief asks for | In MatchLens |
-| --- | --- |
-| Ingest, interpret, explain, render, personalise | All five ([The five stages](#the-five-stages)) |
-| Player identification, with speed and distance indicators at thresholds | Follow a player: name tags at 5 and 10 km, sprint and pass milestones |
-| Pass quality | Pass accuracy and pass length, by club and player; no difficulty rating |
-| Speed metrics, auto-eventing from video | Not built |
-| Narratives, player context, milestones, recaps | Card lines per viewer, MatchLens analysis, player cards, full-time recap |
-| Explainability: control vs chaos, pressure changes, rhythm | Momentum shifts and recoveries, each with its cause and the stats behind it |
-| Data innovation | A generator that passes a 31-number realism gate and records hidden truth |
-| Multi-language | English and Spanish, checked so no number or name changes |
-| Analyst vs casual fan | Simple cards that Expand; fan screen and admin screen |
-| Favourite club, favourite player, player-focused mode | Pick a crest, pick a player on the pitch, follow him all match |
+- **Not built:** auto-eventing from video, ball and shot speed, and a pass difficulty rating. The stadium is a still photo with no marks, standing in for the match video.
+- **Two languages so far:** English and Spanish. A third would need the Translator's check and the rules' fallback lines written for that language.
 
 ## Docs
 

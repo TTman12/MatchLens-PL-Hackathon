@@ -111,21 +111,24 @@ def test_a_failed_specialist_lowers_confidence(tmp_path: Path) -> None:
 
 
 def test_verifier_recomputes_numbers(tmp_path: Path) -> None:
-    md = load(_write(tmp_path, "cal", "brk", 5))
-    m = next(m for m in watch(md) if m.shifted)
-    part = md.until(m.now)
-    board = Board()
     from matchlens.explain.specialists import investigate
 
-    for agent, found in investigate(part, m).items():
-        board.post(agent, [dict(f) for f in found])
+    md = load(_write(tmp_path, "cal", "brk", 5))
+    for m in (m for m in watch(md) if m.shifted):  # the first shift with a strong team-play finding
+        part = md.until(m.now)
+        board = Board()
+        for agent, found in investigate(part, m).items():
+            board.post(agent, [dict(f) for f in found])
+        strong = [
+            k
+            for k, f in board.findings.items()
+            if f["agent"] == "team_play" and abs(f["effect_sd"]) >= 1.5 and f["metric"] != "field_tilt"
+        ]
+        if strong:
+            break
+    fid = strong[0]
     menu = cause_menu(part, m, board.by_agent())
     v = Verifier(part, m, board, menu)
-    fid = next(
-        k
-        for k, f in board.findings.items()
-        if f["agent"] == "team_play" and abs(f["effect_sd"]) >= 1.5 and f["metric"] != "field_tilt"
-    )
     play = next(o["id"] for o in menu if o["kind"] in ("play_change", "recovery", "goal_lift", "chasing_the_game"))
     assert not [p for p in v.check(play, [fid]) if "match the tables" in p]
     board.findings[fid]["after"] += 3  # a number that no longer matches the tables

@@ -9,7 +9,7 @@ minute `now` uses data from before `now` only, and is never revised by what happ
 - **event**: a goal, red card, substitution or half-time, looked at once enough play has followed,
   whether or not momentum moved.
 
-Nothing is raised before the settling period ends (20').
+Nothing is raised before the settling period ends (15').
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from .match import KeyEvent, MatchData
 from .metrics import share
 
-SETTLE = 20  # no moments before this minute
+SETTLE = 15  # no moments before this minute
 RECENT = 6  # minutes in the "now" window
 PRIOR = 15  # minutes compared against
 SWING = 25.0  # field-tilt points between the two windows that count as a shift

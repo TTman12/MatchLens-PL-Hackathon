@@ -231,6 +231,14 @@ class Job:
         except Exception as exc:  # the rules' recap and Spanish are already in the bundle
             log.warning("match %s: recap or Spanish failed: %s", self.id, exc)
             b["recap"]["agents"] = None
+        # what the services did over the whole match, for the admin screen and for checking the live site
+        agents = b.get("agents") or {}
+        agents["runner"] = "foundry"
+        if (safety := getattr(self.foundry, "safety", None)) is not None:
+            agents["content_safety"] = safety.count.as_dict()
+        if (bridge := getattr(self.foundry, "mcp", None)) is not None:
+            agents["mcp"] = bridge.as_dict()
+        b["agents"] = agents
 
     def info(self) -> dict[str, Any]:
         return {

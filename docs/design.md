@@ -94,14 +94,14 @@ As built. The agents run on Microsoft Foundry through Microsoft Agent Framework.
 
 | Agent | Kind | Role | Reads |
 |---|---|---|---|
-| **Watcher** | code | Keeps the momentum scale (the home side's share of final-third touches). Fires on a sustained shift, a recovery, or a discrete event, from 20' on, and never looks ahead. Assigns the mode and the anchor. | team_minute, events |
+| **Watcher** | code | Keeps the momentum scale (the home side's share of final-third touches). Fires on a sustained shift, a recovery, or a discrete event, from 15' on, and never looks ahead. Assigns the mode and the anchor. | team_minute, events |
 | **Team-play analyst** | Foundry agent + tool | What changed in team behaviour since the anchor across 21 stats, ranked by effect size against random windows of the same match. | team_minute |
 | **Player analyst** | Foundry agent + tool | Which individuals changed most, and a team-wide fatigue fade. | player_minute |
 | **Substitutions analyst** | Foundry agent + tool | Each sub since the anchor against the player he replaced. Must be willing to say "not me". | player_minute, events |
 | **Match-events analyst** | Foundry agent + tool | Goals, cards and game state: a trailing team pushing, a 10-man reshape, a leading team managing the game. | events, team_minute |
 | **Explainer** | Foundry agent | Reads the findings board, picks a cause from those the evidence allows and the **1 or 2 stats** that best show it. It may conclude there's no clear single cause. | the board |
 | **Verifier** | code | Re-runs the specialists on the tables, compares every number and enforces the screen rules. A rejected draft goes back once, then the rules' card is used. | tables |
-| **Director** | code | Decides on the spot whether a card goes on screen: 5 minutes apart, 5 a half, goals and reds can break in. | cards |
+| **Director** | code | Decides on the spot whether a card goes on screen: 10 minutes apart, 4 a half, confidence 45% or more, goals and reds can break in. | cards |
 | **Interpreter** | Foundry agent | One line per viewer (neutral and each club's fans) on what the card means for the game, held to the facts by a check in code. | the verified card |
 | **Analyst** | Foundry agent | The MatchLens analysis card: what each club could do, picked from levers a stat backs. | the verified card |
 | **Recapper** | Foundry agent | The full-time headline per viewer. | the recap facts |
@@ -170,7 +170,7 @@ These sit beside the realism gate as the two headline charts for the judges.
    - Test on unseen seeds and team styles.
    - Publish the input format so any data that matches it works.
 3. **Baseline for explaining a shift.** Compare stats since the shift began against the team's average over the whole match so far, excluding the shift period itself.
-4. **Settling period.** No shift detection or explanation before 20'. Events before then still go on the timeline, and an event-mode card for an early event (e.g. a red at 12') waits until there is enough data after it.
+4. **Settling period.** No shift detection or explanation before 15' (20' until 22 Oct 2026). Events before then still go on the timeline, and an event-mode card for an early event (e.g. a red at 12') waits until there is enough data after it.
 5. **Screen layout:**
    - A realistic stadium still (a freeze-frame of a match in play) fills the background. Nothing is simulated.
    - A **momentum scale** is always visible.
