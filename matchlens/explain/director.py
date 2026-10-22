@@ -5,9 +5,12 @@ good ones, spaced out. The Director decides on the spot, as each card arrives, a
 see what comes later. It puts a card up when:
 
 - it is worth showing (`show`) and has numbers to show,
+- its confidence is at least MIN_CONFIDENCE (a weak explanation never airs),
 - it is at least COOLDOWN minutes after the last card on screen (a goal or red-card card may
   break the cooldown, as broadcasters do), and
 - fewer than PER_HALF cards have gone up in that half.
+
+The Watcher raises nothing before minute 15, so that is the earliest a card can go up.
 
 When several cards arrive in the same minute, the most urgent, then most salient, is offered
 first. Run over a recorded match, it makes exactly the choices it would have made live.
@@ -17,8 +20,9 @@ from __future__ import annotations
 
 from typing import Any
 
-COOLDOWN = 5  # minutes between cards
-PER_HALF = 5
+COOLDOWN = 10  # minutes between cards
+PER_HALF = 4
+MIN_CONFIDENCE = 0.45  # cards below this stay off screen
 
 
 def _urgent(card: dict[str, Any]) -> bool:
@@ -39,7 +43,7 @@ class Director:
         """Of these cards (all from the same minute), the ones that go on screen now, marked `on_screen`."""
         up = []
         for c in sorted(cards, key=lambda c: (_urgent(c), c["salience"]), reverse=True):
-            if not (c["show"] and c["stats"]):
+            if not (c["show"] and c["stats"]) or c["cause"].get("confidence", 1.0) < MIN_CONFIDENCE:
                 continue
             last = self.shown[-1]["at"] if self.shown else -99
             per_half = sum(1 for s in self.shown if _half(s) == _half(c))

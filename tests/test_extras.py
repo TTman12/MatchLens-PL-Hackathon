@@ -8,9 +8,9 @@ from typing import Any
 from matchlens.agents.recapper import RecapJob, check_recap, write_recap
 from matchlens.agents.runners import OfflineRunner, Usage
 from matchlens.agents.translator import AzureBackend, TranslateJob, check_translation, items, translate, translate_bundle
-from matchlens.broadcast.bundle import build, enriched, finish
+from matchlens.broadcast.bundle import build, enriched, finish, redirected
 from matchlens.broadcast.tables import PLAYER_STATS, TEAM_STATS
-from matchlens.explain import spanish
+from matchlens.explain import director, spanish
 from matchlens.explain.analysis import LEVERS
 from matchlens.explain.follow import THRESHOLDS
 from matchlens.explain.insight import LINES, NO_CHANGE, PLAYER_LINES
@@ -190,6 +190,23 @@ def test_enriching_keeps_the_cards_and_reads_their_facts_back(tmp_path: Path) ->
     # the Spanish read back from a card agrees with the Spanish written from its facts
     same = sum(a["i18n"]["es"]["text"] == b["i18n"]["es"]["text"] for a, b in zip(again["cards"], fresh["cards"], strict=True))
     assert same >= len(fresh["cards"]) - 1
+
+
+def test_redirecting_applies_the_current_rules_to_an_old_bundle(tmp_path: Path, monkeypatch: Any) -> None:
+    md = _md(tmp_path)
+    with monkeypatch.context() as m:  # a bundle made under the old, looser rules
+        m.setattr(director, "COOLDOWN", 5)
+        m.setattr(director, "PER_HALF", 5)
+        old = build(md)
+    now = build(md)
+    again = redirected(md, json.loads(json.dumps(old)))
+    at = [c["at"] for c in again["cards"]]
+    assert set(at) < {c["at"] for c in old["cards"]}  # cards only drop out
+    assert sum(a <= 47 for a in at) <= director.PER_HALF and sum(a > 47 for a in at) <= director.PER_HALF
+    calm = [(c, n) for c, n in zip(again["cards"][:-1], again["cards"][1:], strict=True) if n["kind"] in ("shift", "recovery")]
+    assert all(n["at"] - c["at"] >= director.COOLDOWN for c, n in calm)
+    assert {t["at"] for t in again["recap"]["turning_points"]} <= set(at)
+    assert redirected(md, json.loads(json.dumps(now))) == now  # current bundles are left alone
 
 
 def test_the_offline_agents_finish_a_bundle(tmp_path: Path) -> None:

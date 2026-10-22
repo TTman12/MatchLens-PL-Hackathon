@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from matchlens.explain.director import Director, direct
+from matchlens.explain.director import COOLDOWN, MIN_CONFIDENCE, Director, direct
 from matchlens.explain.explainer import explain_match
 from matchlens.explain.match import load
 from matchlens.gen import generate_match
@@ -62,17 +62,35 @@ def test_missing_columns_are_reported(tmp_path: Path) -> None:
     assert "sprints" in match.missing
 
 
-def _card(at: int, salience: float, kind: str = "play_change", mode: str = "shift") -> dict:
-    return {"at": at, "salience": salience, "show": True, "stats": [{}], "mode": mode, "cause": {"kind": kind}}
+def _card(at: int, salience: float, kind: str = "play_change", mode: str = "shift", confidence: float = 0.7) -> dict:
+    return {
+        "at": at,
+        "salience": salience,
+        "show": True,
+        "stats": [{}],
+        "mode": mode,
+        "cause": {"kind": kind, "confidence": confidence},
+    }
 
 
 def test_director_never_waits_for_a_better_card() -> None:
     d = Director()
-    assert d.offer([_card(30, 0.5)])  # nothing on screen: it goes up now
-    assert not d.offer([_card(32, 2.0)])  # better, but inside the cooldown
-    assert d.offer([_card(33, 0.4, "chasing_the_game", "event")])  # urgent cards break the cooldown
-    assert not d.offer([_card(33, 0.9, "goal_lift", "event")])  # but not twice in one minute
-    assert d.offer([_card(38, 0.3), _card(38, 0.8)])[0]["salience"] == 0.8  # same minute: the best goes first
+    assert d.offer([_card(20, 0.5)])  # nothing on screen: it goes up now
+    assert not d.offer([_card(29, 2.0)])  # better, but inside the 10-minute cooldown
+    assert d.offer([_card(30, 0.4, "chasing_the_game", "event")])  # urgent cards break the cooldown
+    assert not d.offer([_card(30, 0.9, "goal_lift", "event")])  # but not twice in one minute
+    assert d.offer([_card(40, 0.3), _card(40, 0.8)])[0]["salience"] == 0.8  # same minute: the best goes first
+
+
+def test_director_caps_each_half_and_drops_weak_cards() -> None:
+    d = Director()
+    assert not d.offer([_card(16, 0.9, confidence=0.12)])  # too weak to air, however salient
+    assert len(d.offer([_card(16, 0.5, confidence=MIN_CONFIDENCE)])) == 1
+    for at in (26, 36, 46):
+        assert d.offer([_card(at, 0.5)])
+    assert not d.offer([_card(47, 0.5, "red_card_reshape", "event")])  # four in the half already
+    assert d.offer([_card(57, 0.5)])  # a new half
+    assert len(d.shown) == 5 and all(b["at"] - a["at"] >= COOLDOWN for a, b in zip(d.shown[:-1], d.shown[1:], strict=True))
 
 
 def test_unseen_matches_quick() -> None:

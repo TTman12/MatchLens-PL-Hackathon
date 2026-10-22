@@ -71,8 +71,8 @@
   <!-- 2 interpret -->
   <rect class="code" x="570" y="192" width="290" height="66" rx="6"/>
   <text class="t" x="584" y="216">Watcher</text>
-  <text class="s" x="584" y="236">raises a shift, a recovery or an event</text>
-  <text class="s" x="584" y="250">(goal, red, sub, half-time); no look-ahead</text>
+  <text class="s" x="584" y="236">flags when something needs explaining:</text>
+  <text class="s" x="584" y="250">a momentum shift, a recovery, a key event</text>
   <path class="line" d="M715 142 L715 190" marker-end="url(#a)"/>
 
   <!-- 3 explain -->
@@ -123,13 +123,13 @@
   <path class="line" d="M870 530 L870 558 L310 558 L310 568" marker-end="url(#a)"/>
   <rect class="code" x="170" y="570" width="280" height="70" rx="6"/>
   <text class="t" x="184" y="594">Director</text>
-  <text class="s" x="184" y="614">decides on the spot: 5 min apart,</text>
-  <text class="s" x="184" y="628">5 a half; goals and reds can break in</text>
+  <text class="s" x="184" y="614">picks which cards air: 10+ min apart,</text>
+  <text class="s" x="184" y="628">4 a half max, 45%+ confidence</text>
   <path class="line" d="M450 605 L498 605" marker-end="url(#a)"/>
   <rect class="agent" x="500" y="570" width="310" height="70" rx="6"/>
   <text class="ta" x="514" y="594">Interpreter + Analyst</text>
-  <text class="sa" x="514" y="614">what the numbers mean for the game, and</text>
-  <text class="sa" x="514" y="628">what each club could do, one line per viewer</text>
+  <text class="sa" x="514" y="614">what the numbers mean, and what each</text>
+  <text class="sa" x="514" y="628">club could do: one line per club lens</text>
   <path class="line" d="M810 605 L858 605" marker-end="url(#a)"/>
   <rect class="code" x="860" y="570" width="290" height="70" rx="6"/>
   <text class="t" x="874" y="594">Content Safety + checks in code</text>
@@ -140,14 +140,14 @@
   <text class="note" x="170" y="690">once a match, at full time</text>
   <rect class="agent" x="170" y="700" width="220" height="64" rx="6"/>
   <text class="ta" x="184" y="724">Recapper</text>
-  <text class="sa" x="184" y="744">full-time headline per viewer</text>
+  <text class="sa" x="184" y="744">full-time headline per club lens</text>
   <path class="line" d="M390 732 L418 732" marker-end="url(#a)"/>
   <rect class="agent" x="420" y="700" width="230" height="64" rx="6"/>
   <text class="ta" x="434" y="724">Translator</text>
   <text class="sa" x="434" y="744">Spanish; names, numbers kept</text>
   <path class="line" d="M650 732 L688 732" marker-end="url(#a)"/>
-  <text class="s" x="170" y="792">The Translator runs as a Foundry agent or through Azure AI Translator;</text>
-  <text class="s" x="170" y="808">a check in code compares every line with the English.</text>
+  <text class="s" x="170" y="792">The Translator is a Foundry agent; every line is written once and shared</text>
+  <text class="s" x="170" y="808">by all viewers, and a check in code compares it with the English.</text>
   <text class="s" x="170" y="836">Every agent's work is one trace in Application Insights.</text>
 
   <path class="line" d="M1005 640 L1005 688" marker-end="url(#a)"/>

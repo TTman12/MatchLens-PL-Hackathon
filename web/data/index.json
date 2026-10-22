@@ -39,7 +39,7 @@
    0,
    3
   ],
-  "cards": 6,
+  "cards": 4,
   "teams": [
    {
     "team_id": "cal",
@@ -71,7 +71,7 @@
    3,
    3
   ],
-  "cards": 8,
+  "cards": 6,
   "teams": [
    {
     "team_id": "brk",
@@ -103,7 +103,7 @@
    2,
    1
   ],
-  "cards": 9,
+  "cards": 6,
   "teams": [
    {
     "team_id": "dun",
@@ -135,7 +135,7 @@
    2,
    1
   ],
-  "cards": 5,
+  "cards": 4,
   "teams": [
    {
     "team_id": "ash",
@@ -167,7 +167,7 @@
    1,
    2
   ],
-  "cards": 6,
+  "cards": 5,
   "teams": [
    {
     "team_id": "brk",
