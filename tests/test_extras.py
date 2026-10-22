@@ -239,3 +239,40 @@ def test_translate_bundle_writes_spanish_and_skips_english_leftovers(tmp_path: P
     for c in b["cards"]:
         for line in c["i18n"]["es"]["text"].values():
             assert not re.search(r"\b(the|are)\b", line)
+
+
+def test_each_card_names_the_players_who_moved_its_swing(tmp_path: Path) -> None:
+    md = _md(tmp_path)
+    b = build(md)
+    named = 0
+    for c in b["cards"]:
+        gainer = c["momentum"]["gainer"]
+        for r in c["players"]:
+            named += 1
+            assert r["name"] == md.names[r["id"]]
+            if r["role"] == "drove":  # the side that took over, doing more
+                assert r["team"] == gainer and float(r["after"]) > float(r["before"])
+            else:  # the side that lost it, doing less
+                assert r["role"] == "faded" and r["team"] != gainer and float(r["after"]) < float(r["before"])
+            assert r["label"] in b["i18n"]["es"]["labels"]
+        assert len({r["id"] for r in c["players"]}) == len(c["players"])
+    assert named
+    parts = b["recap"]["parts"]
+    assert sum(len(v) for v in parts.values()) == named
+    for rows in parts.values():
+        assert [x["at"] for x in rows] == sorted(x["at"] for x in rows)
+    for c in b["cards"]:
+        for r in c["players"]:
+            assert any(x["at"] == c["at"] and x["role"] == r["role"] for x in parts[r["id"]])
+
+
+def test_redirect_adds_the_players_to_older_bundles(tmp_path: Path) -> None:
+    md = _md(tmp_path)
+    b = build(md)
+    for c in b["cards"]:
+        del c["players"]
+    del b["recap"]["parts"]
+    again = redirected(md, json.loads(json.dumps(b)))
+    fresh = {c["at"]: c["players"] for c in build(md)["cards"]}
+    assert again["cards"] and all(c["players"] == fresh[c["at"]] for c in again["cards"])
+    assert "parts" in again["recap"]

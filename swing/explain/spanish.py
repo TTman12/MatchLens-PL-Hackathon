@@ -292,6 +292,7 @@ LABELS = {
     "Fouls": "Faltas",
     "Distance per player": "Distancia por jugador",
     "Distance": "Distancia",
+    "Metres per minute": "Metros por minuto",
     "Sprints": "Sprints",
     "Sprints per player": "Sprints por jugador",
     "High-speed running": "Carrera a alta velocidad",

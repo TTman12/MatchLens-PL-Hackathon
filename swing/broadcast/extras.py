@@ -6,6 +6,8 @@ detail, and the Spanish screen.
 - ``stats.last15``: club stats over the last 15 minutes, minute by minute, for the analyst view.
 - each card's ``detail``: both clubs before the card's anchor against since, on the stats analysts
   read, plus the card's cause and confidence.
+- each card's ``players``: who moved the swing, drivers then the faded (swing/explain/movers.py),
+  and ``recap.parts``: each player's part in the swings, for the followed player's recap.
 - ``i18n.es``: stat labels, and each card's anchor, line and analysis lines in Spanish. The rules
   write the Spanish here; swing/agents/translator.py replaces them with checked translations
   of the English lines when a translator runs.
@@ -24,6 +26,7 @@ from ..explain.follow import follow
 from ..explain.insight import lines, reading
 from ..explain.match import MatchData
 from ..explain.metrics import BY_KEY as METRICS
+from ..explain.movers import movers, parts
 from ..explain.recap import headlines, recap
 from ..explain.specialists import PLAYER_STATS
 from .tables import TEAM_STATS, _running
@@ -153,6 +156,7 @@ def labels(b: dict[str, Any]) -> dict[str, str]:
         seen |= {s["label"] for s in c["stats"]}
         seen |= {a["stat"]["label"] for a in (c.get("analysis") or {}).values()}
         seen |= {r["label"] for r in c.get("detail", {}).get("rows", [])}
+        seen |= {r["label"] for r in c.get("players") or []}
     return {k: spanish.LABELS.get(k, k) for k in sorted(seen)}
 
 
@@ -171,10 +175,12 @@ def add(md: MatchData, b: dict[str, Any], explained: list[dict[str, Any]]) -> di
             or (card.get("detail") or {}).get("confidence")
         )
         card["detail"] = detail(md, card, conf)
+        card["players"] = movers(md, card)
         card["i18n"] = {"es": spanish_card(md, card, src.get("facts") if src else None)}
     r = recap(md, b["momentum"], b["half_time_m"], b["cards"], b["stats"], w)
     r["i18n"] = {"es": {"text": headlines(md, r["pattern"], "es"), "source": "rules"}}
     r["agents"] = None
+    r["parts"] = parts(b["cards"])
     b["recap"] = r
     b["follow"] = follow(md, b["stats"])
     b["i18n"] = {"es": {"labels": labels(b)}}
