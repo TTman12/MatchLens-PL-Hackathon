@@ -1,6 +1,6 @@
 # Shift
 
-**Everyone can see when the tide turns. MatchLens shows why.**
+**Everyone can see when the tide turns. Shift shows you why.**
 
 MatchLens is a team of AI agents that watches every club and player statistic in a football match, minute by minute. When momentum swings, it works out where the change came from (a substitute out-running the player he replaced, a side dropping deeper after a red card, a team chasing the game) and puts the answer on screen as a broadcast graphic: one or two numbers, a momentum bar and a single line written for *your* club. Every number is computed by code and checked again before it airs, so the models choose and explain but can never make a number up.
 
