@@ -56,8 +56,8 @@ jobs:
             --set-env-vars \
               "AZURE_AI_PROJECT_ENDPOINT=https://matchlens-foundry-812.services.ai.azure.com/api/projects/matchlens" \
               "AZURE_AI_MODEL=gpt-4.1-mini" \
-              "SWING_DAILY_AI_MATCHES=5" \
-              "SWING_DAILY_MODEL_CALLS=850" \
+              "SWING_DAILY_AI_MATCHES=10" \
+              "SWING_DAILY_MODEL_CALLS=1700" \
             --query properties.latestRevisionName -o tsv
       - name: Check the site answers on the new revision
         run: |

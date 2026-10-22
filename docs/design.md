@@ -180,7 +180,7 @@ These sit beside the realism gate as the two headline charts for the judges.
 6. **Distance and sprints:** included, modelled, and labelled as modelled.
 7. **Build order:** generator first, gated on the realism test.
 8. **Look:**
-   - Emulate the Premier League's broadcast and website visual language (colour, type feel, layout, motion) rather than default AI-site styling. No logos.
+   - Look like a modern football broadcast (colour, type feel, layout, motion) rather than default AI-site styling. No league or club logos, typefaces or other marks.
    - Open point for the graphics stage: the PL typeface is proprietary, and the rules bar third-party trademarks. Plan to use a close open-licence font and a palette inspired by theirs, not exact brand assets.
 9. **Stadium image:**
    - Ideally AI-generated with an image model on Azure (this also strengthens the Microsoft story).
