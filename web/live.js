@@ -1,12 +1,12 @@
-// MatchLens "Generate match": asks the server for a brand-new match (matchlens/live/server.py) and
+// Swing "Generate match": asks the server for a brand-new match (swing/live/server.py) and
 // plays it on the screen as its minutes arrive. The server generates the match, sends it through
 // the agents one minute at a time as an unseen match, and rebuilds the screen's bundle after each
-// minute; this file polls for that bundle and hands it to the screen (app.js, window.matchlensScreen).
+// minute; this file polls for that bundle and hands it to the screen (app.js, window.swingScreen).
 //
 // URL options: ?live=<id> reopens a generated match while the server still has it.
 //              ?drill=<agent>[&drill_mode=flaky] arms the fault drill (admin screen): the next
 //              generated match has that agent knocked out, to show the others recover
-//              (matchlens/live/failover.py). Agents: team_play players substitutions match_events
+//              (swing/live/failover.py). Agents: team_play players substitutions match_events
 //              explainer interpreter analyst.
 
 (() => {
@@ -14,7 +14,7 @@
 
   const POLL_MS = 1500;
   const $ = (id) => document.getElementById(id);
-  const screen = () => window.matchlensScreen;
+  const screen = () => window.swingScreen;
   const params = new URLSearchParams(location.search);
 
   const WORDS = {

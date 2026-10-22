@@ -58,7 +58,7 @@
   color: var(--mist);
 }
 
-/* an agent failed on this card and was recovered (matchlens/live/failover.py) */
+/* an agent failed on this card and was recovered (swing/live/failover.py) */
 .card-by.recovered { color: var(--secondary); box-shadow: inset 0.2cqw 0 0 var(--pink); }
 .st-stood-in .hood-chip { background: var(--pink); color: var(--secondary); }
 .hood-recovery { margin: 0 0 0.6cqw; padding: 0.3cqw 0 0.3cqw 0.5cqw; border-left: 0.2cqw solid var(--pink); }

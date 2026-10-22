@@ -1,6 +1,6 @@
 # Foundry evaluation results
 
-The latest full run of `matchlens-foundry-eval` covered every line on the live screen: 448 lines from the six demo matches in `web/data`. That is each card's read (the Interpreter), each "what next" line (the Analyst) and each full-time headline (the Recapper), for the neutral viewer and for each club's fans, in English and in Spanish.
+The latest full run of `swing-foundry-eval` covered every line on the live screen: 448 lines from the six demo matches in `web/data`. That is each card's read (the Interpreter), each "what next" line (the Analyst) and each full-time headline (the Recapper), for the neutral viewer and for each club's fans, in English and in Spanish.
 
 - **Run:** GitHub Actions [run 39682021221](https://github.com/TTman12/MatchLens-PL-Hackathon/actions/runs/39682021221), 21 Oct 2026, judged by `gpt-4.1-mini`. It is logged to the Foundry project's Evaluations page as run `753cc753-a0c6-4d62-a823-63c934f8b547`.
 - **Judges:**
@@ -35,7 +35,7 @@ Locally:
 
 ```
 pip install -e ".[eval]"
-matchlens-foundry-eval web/data
+swing-foundry-eval web/data
 ```
 
 Add `--offline` for the code check only.

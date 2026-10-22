@@ -4,14 +4,14 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from matchlens.agents.crew import explain_match
-from matchlens.agents.interpreter import InterpretJob, interpret
-from matchlens.agents.runners import Usage
-from matchlens.agents.safety import ContentSafety, endpoint_from_project
-from matchlens.explain.director import direct
-from matchlens.explain.match import load
-from matchlens.gen import generate_match
-from matchlens.gen.cli import write_one
+from swing.agents.crew import explain_match
+from swing.agents.interpreter import InterpretJob, interpret
+from swing.agents.runners import Usage
+from swing.agents.safety import ContentSafety, endpoint_from_project
+from swing.explain.director import direct
+from swing.explain.match import load
+from swing.gen import generate_match
+from swing.gen.cli import write_one
 
 
 class FakeClient:

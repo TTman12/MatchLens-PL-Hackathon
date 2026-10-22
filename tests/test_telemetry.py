@@ -2,10 +2,10 @@ from pathlib import Path
 
 import pytest
 
-from matchlens.agents.crew import explain_match
-from matchlens.explain.match import load
-from matchlens.gen import generate_match
-from matchlens.gen.cli import write_one
+from swing.agents.crew import explain_match
+from swing.explain.match import load
+from swing.gen import generate_match
+from swing.gen.cli import write_one
 
 
 def test_a_match_is_one_trace_with_the_code_steps_and_agents_inside(tmp_path: Path) -> None:
@@ -32,22 +32,22 @@ def test_a_match_is_one_trace_with_the_code_steps_and_agents_inside(tmp_path: Pa
     spans = exporter.get_finished_spans()
     by_id = {s.context.span_id: s for s in spans}
     (root,) = [s for s in spans if s.parent is None]
-    assert root.name == f"matchlens.match {md.meta['match_id']}"
+    assert root.name == f"swing.match {md.meta['match_id']}"
     assert {s.context.trace_id for s in spans} == {root.context.trace_id}
-    moments = [s for s in spans if s.name.startswith("matchlens.moment")]
+    moments = [s for s in spans if s.name.startswith("swing.moment")]
     assert len(moments) == len(result["cards"])
-    specialists = [s for s in spans if s.name.startswith("matchlens.specialist")]
+    specialists = [s for s in spans if s.name.startswith("swing.specialist")]
     assert len(specialists) == 4 * len(moments)
-    assert all(by_id[s.parent.span_id].name.startswith("matchlens.moment") for s in specialists if s.parent)
-    verifier = [s for s in spans if s.name == "matchlens.verifier"]
-    assert verifier and all(s.attributes and s.attributes["matchlens.passed"] for s in verifier)
-    assert {s.attributes["matchlens.cause"] for s in moments if s.attributes} == {c["cause"]["kind"] for c in result["cards"]}
+    assert all(by_id[s.parent.span_id].name.startswith("swing.moment") for s in specialists if s.parent)
+    verifier = [s for s in spans if s.name == "swing.verifier"]
+    assert verifier and all(s.attributes and s.attributes["swing.passed"] for s in verifier)
+    assert {s.attributes["swing.cause"] for s in moments if s.attributes} == {c["cause"]["kind"] for c in result["cards"]}
 
 
 def test_tracing_is_set_up_once_per_process(monkeypatch: pytest.MonkeyPatch) -> None:
     import asyncio
 
-    from matchlens import telemetry
+    from swing import telemetry
 
     calls: list[str] = []
 

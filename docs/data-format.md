@@ -1,6 +1,6 @@
 # Match data format (v1.0)
 
-MatchLens reads any match supplied in this format. The format doesn't care whether the match came from our generator or from somewhere else.
+Swing reads any match supplied in this format. The format doesn't care whether the match came from our generator or from somewhere else.
 
 A match is one folder:
 
@@ -12,7 +12,7 @@ A match is one folder:
 | `team_minute.csv` | derived | Per-team stats for each minute, built from the events (and from `physical.csv` when present) |
 | `player_minute.csv` | derived | Per-player stats for each minute, for players on the pitch |
 
-You can rebuild the derived tables for any folder with `matchlens.data.aggregate.aggregate(meta, events, physical)`.
+You can rebuild the derived tables for any folder with `swing.data.aggregate.aggregate(meta, events, physical)`.
 
 The generator writes its hidden ground truth (the coaching decisions behind a match) to `out/truth/<match_id>.json`, outside the match folder. Nothing that reads a match can see it.
 

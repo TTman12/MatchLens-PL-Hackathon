@@ -6,14 +6,14 @@ from typing import Any
 
 import pytest
 
-from matchlens.agents import mcp_server
-from matchlens.agents.crew import Job, explain_match, explain_match_async, offline_answer
-from matchlens.agents.mcp_server import McpBridge
-from matchlens.agents.roles import EXPLAINER, Role
-from matchlens.agents.runners import ToolSpec, Usage
-from matchlens.explain.match import load
-from matchlens.gen import generate_match
-from matchlens.gen.cli import write_one
+from swing.agents import mcp_server
+from swing.agents.crew import Job, explain_match, explain_match_async, offline_answer
+from swing.agents.mcp_server import McpBridge
+from swing.agents.roles import EXPLAINER, Role
+from swing.agents.runners import ToolSpec, Usage
+from swing.explain.match import load
+from swing.gen import generate_match
+from swing.gen.cli import write_one
 
 pytest.importorskip("mcp")
 
@@ -127,9 +127,9 @@ def test_foundry_declares_the_same_tools_and_calls_them_over_mcp(tmp_path: Path)
     pytest.importorskip("agent_framework")
     from types import SimpleNamespace
 
-    from matchlens.agents.crew import check_tool, specialist_tool
-    from matchlens.agents.runners import FoundryRunner
-    from matchlens.explain.watcher import watch
+    from swing.agents.crew import check_tool, specialist_tool
+    from swing.agents.runners import FoundryRunner
+    from swing.explain.watcher import watch
 
     md = load(_write(tmp_path, "dun", "ash", 42))
     m = watch(md)[-1]

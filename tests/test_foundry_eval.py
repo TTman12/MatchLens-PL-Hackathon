@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from matchlens.foundry_eval import NumbersOnCard, card_context, rows, run
+from swing.foundry_eval import NumbersOnCard, card_context, rows, run
 
 DATA = Path(__file__).resolve().parents[1] / "web" / "data"
 

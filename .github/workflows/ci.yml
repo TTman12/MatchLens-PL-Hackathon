@@ -15,7 +15,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
       - run: ruff check .
-      - run: ruff format --check matchlens tests research/learn_priors.py
+      - run: ruff format --check swing tests research/learn_priors.py
       - run: mypy
       - run: pytest -q
 
@@ -28,7 +28,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .
       - name: Generate a full season and check it against the real one
-        run: matchlens-realism --matches 380 --out realism.md
+        run: swing-realism --matches 380 --out realism.md
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -44,7 +44,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .
       - name: Score the explainer against hidden truth on unseen matches
-        run: matchlens-explain-eval --matches 100 --seed 9000 --check
+        run: swing-explain-eval --matches 100 --seed 9000 --check
 
   unseen:
     runs-on: ubuntu-latest
@@ -55,7 +55,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .
       - name: Send fresh matches as a provider's live feed and check every card end to end
-        run: matchlens-feed unseen --matches 30 --json unseen.json
+        run: swing-feed unseen --matches 30 --json unseen.json
       - if: always()
         uses: actions/upload-artifact@v4
         with:

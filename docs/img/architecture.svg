@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 910" width="1200" height="910" font-family="Segoe UI, Helvetica, Arial, sans-serif">
-  <title>MatchLens architecture: five stages from synthetic events to a personalised broadcast screen</title>
+  <title>Swing architecture: five stages from synthetic events to a personalised broadcast screen</title>
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 z" fill="#28002b"/>
@@ -50,7 +50,7 @@
   <!-- 1 ingest -->
   <rect class="code" x="170" y="40" width="320" height="58" rx="6"/>
   <text class="t" x="184" y="64">Synthetic match generator</text>
-  <text class="s" x="184" y="84">matchlens-gen · fictional clubs and squads</text>
+  <text class="s" x="184" y="84">swing-gen · fictional clubs and squads</text>
   <rect class="code" x="170" y="108" width="320" height="52" rx="6"/>
   <text class="t" x="184" y="130">Live provider feed</text>
   <text class="s" x="184" y="148">per-minute tables + key events, any column names</text>

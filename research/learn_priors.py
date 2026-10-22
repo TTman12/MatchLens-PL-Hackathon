@@ -7,7 +7,7 @@ substitution timing. No event rows, match identifiers, teams or player names are
 Data: Pappalardo et al. (2019), "A public data set of spatio-temporal match events in soccer
 competitions", Scientific Data 6:236, CC BY 4.0, https://doi.org/10.6084/m9.figshare.c.4415000
 
-Usage: python3 -I research/learn_priors.py <wyscout_dir> matchlens/gen/priors.json.gz
+Usage: python3 -I research/learn_priors.py <wyscout_dir> swing/gen/priors.json.gz
 where <wyscout_dir> holds events_England.json, matches_England.json and players.json.
 """
 

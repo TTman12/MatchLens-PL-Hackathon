@@ -2,9 +2,9 @@ import csv
 import json
 from pathlib import Path
 
-from matchlens.data.io import read_match
-from matchlens.gen import generate_match
-from matchlens.gen.cli import write_one
+from swing.data.io import read_match
+from swing.gen import generate_match
+from swing.gen.cli import write_one
 
 
 def test_same_seed_same_match() -> None:

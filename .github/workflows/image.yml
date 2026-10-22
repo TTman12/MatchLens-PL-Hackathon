@@ -6,7 +6,7 @@ name: Site image
 on:
   push:
     branches: [main, "claude/**"]
-    paths: [Dockerfile, .dockerignore, web/**, matchlens/**, data/league.json, pyproject.toml, .github/workflows/image.yml]
+    paths: [Dockerfile, .dockerignore, web/**, swing/**, data/league.json, pyproject.toml, .github/workflows/image.yml]
   workflow_dispatch:
 
 permissions:
@@ -35,4 +35,4 @@ jobs:
             ${{ github.ref == 'refs/heads/main' && format('{0}:latest', steps.name.outputs.image) || '' }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.description=MatchLens broadcast screen
+            org.opencontainers.image.description=Swing broadcast screen

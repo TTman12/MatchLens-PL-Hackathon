@@ -1,4 +1,4 @@
-"""Agent failover on a generated match (matchlens/live/failover.py): the retry, the rules stand-in,
+"""Agent failover on a generated match (swing/live/failover.py): the retry, the rules stand-in,
 the incidents on the cards, and the admin screen's fault drill through the HTTP API."""
 
 from __future__ import annotations
@@ -13,13 +13,13 @@ from typing import Any
 
 import pytest
 
-from matchlens.agents.roles import EXPLAINER, INTERPRETER, PLAYERS, TEAM_PLAY
-from matchlens.agents.runners import OfflineRunner, RunnerError, Usage
-from matchlens.live import failover
-from matchlens.live.failover import Drill, FailoverRunner, recording
-from matchlens.live.job import Job
-from matchlens.live.limits import DailyBudget, RateLimit
-from matchlens.live.server import Live, make_server
+from swing.agents.roles import EXPLAINER, INTERPRETER, PLAYERS, TEAM_PLAY
+from swing.agents.runners import OfflineRunner, RunnerError, Usage
+from swing.live import failover
+from swing.live.failover import Drill, FailoverRunner, recording
+from swing.live.job import Job
+from swing.live.limits import DailyBudget, RateLimit
+from swing.live.server import Live, make_server
 
 HOME, AWAY, SEED = "ash", "kes", 424242
 

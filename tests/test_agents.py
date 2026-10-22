@@ -5,17 +5,17 @@ from typing import Any
 
 import pytest
 
-from matchlens.agents.board import Board
-from matchlens.agents.crew import Job, explain_match, explain_match_async, offline_answer, parse
-from matchlens.agents.roles import EXPLAINER, Role
-from matchlens.agents.runners import RunnerError, ToolSpec, Usage
-from matchlens.agents.verifier import Verifier, cause_menu
-from matchlens.broadcast.bundle import build
-from matchlens.explain import explainer
-from matchlens.explain.match import load
-from matchlens.explain.watcher import watch
-from matchlens.gen import generate_match
-from matchlens.gen.cli import write_one
+from swing.agents.board import Board
+from swing.agents.crew import Job, explain_match, explain_match_async, offline_answer, parse
+from swing.agents.roles import EXPLAINER, Role
+from swing.agents.runners import RunnerError, ToolSpec, Usage
+from swing.agents.verifier import Verifier, cause_menu
+from swing.broadcast.bundle import build
+from swing.explain import explainer
+from swing.explain.match import load
+from swing.explain.watcher import watch
+from swing.gen import generate_match
+from swing.gen.cli import write_one
 
 
 def _write(tmp: Path, home: str, away: str, seed: int) -> Path:
@@ -111,7 +111,7 @@ def test_a_failed_specialist_lowers_confidence(tmp_path: Path) -> None:
 
 
 def test_verifier_recomputes_numbers(tmp_path: Path) -> None:
-    from matchlens.explain.specialists import investigate
+    from swing.explain.specialists import investigate
 
     md = load(_write(tmp_path, "cal", "brk", 5))
     for m in (m for m in watch(md) if m.shifted):  # the first shift with a strong team-play finding

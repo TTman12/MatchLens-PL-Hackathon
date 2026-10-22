@@ -4,14 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from matchlens.explain.director import COOLDOWN, MIN_CONFIDENCE, Director, direct
-from matchlens.explain.explainer import explain_match
-from matchlens.explain.match import load
-from matchlens.gen import generate_match
-from matchlens.gen.cli import write_one
-from matchlens.ingest import unseen
-from matchlens.ingest.feed import LiveMatch, export_feed, load_mapping, read_feed
-from matchlens.ingest.runner import play
+from swing.explain.director import COOLDOWN, MIN_CONFIDENCE, Director, direct
+from swing.explain.explainer import explain_match
+from swing.explain.match import load
+from swing.gen import generate_match
+from swing.gen.cli import write_one
+from swing.ingest import unseen
+from swing.ingest.feed import LiveMatch, export_feed, load_mapping, read_feed
+from swing.ingest.runner import play
 
 
 def _write(tmp: Path, home: str, away: str, seed: int) -> Path:

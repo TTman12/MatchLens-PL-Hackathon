@@ -1,4 +1,4 @@
-// MatchLens on Azure: the live site on Azure Container Apps, next to the Microsoft Foundry project
+// Swing on Azure: the live site on Azure Container Apps, next to the Microsoft Foundry project
 // the agents run on.
 //
 // The live site is the broadcast screen and its prebuilt match bundles, served from one container
@@ -127,8 +127,8 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               value: 'https://${foundryAccountName}.services.ai.azure.com/api/projects/${foundryProjectName}'
             }
             { name: 'AZURE_AI_MODEL', value: model }
-            { name: 'MATCHLENS_DAILY_AI_MATCHES', value: '5' } // Generate match: AI-explained matches a day
-            { name: 'MATCHLENS_DAILY_MODEL_CALLS', value: '850' }
+            { name: 'SWING_DAILY_AI_MATCHES', value: '5' } // Generate match: AI-explained matches a day
+            { name: 'SWING_DAILY_MODEL_CALLS', value: '850' }
           ]
           probes: [
             {

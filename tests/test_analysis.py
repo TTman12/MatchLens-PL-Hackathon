@@ -3,15 +3,15 @@ import json
 from pathlib import Path
 from typing import Any
 
-from matchlens.agents.analyst import AnalystJob, analyse, analyse_cards, check_analysis
-from matchlens.agents.crew import explain_match
-from matchlens.agents.runners import OfflineRunner, Usage
-from matchlens.explain.analysis import EXCLUSIVE, LEVERS, lenses, speaks_to
-from matchlens.explain.director import direct
-from matchlens.explain.insight import PLAYER_LINES
-from matchlens.explain.match import load
-from matchlens.gen import generate_match
-from matchlens.gen.cli import write_one
+from swing.agents.analyst import AnalystJob, analyse, analyse_cards, check_analysis
+from swing.agents.crew import explain_match
+from swing.agents.runners import OfflineRunner, Usage
+from swing.explain.analysis import EXCLUSIVE, LEVERS, lenses, speaks_to
+from swing.explain.director import direct
+from swing.explain.insight import PLAYER_LINES
+from swing.explain.match import load
+from swing.gen import generate_match
+from swing.gen.cli import write_one
 
 
 def _cards(tmp: Path, home: str = "cal", away: str = "dun", seed: int = 32) -> tuple[Any, list[dict[str, Any]]]:

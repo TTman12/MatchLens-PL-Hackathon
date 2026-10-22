@@ -1,4 +1,4 @@
-// A fresh Microsoft Foundry setup for MatchLens: an AI Services account with a project, the
+// A fresh Microsoft Foundry setup for Swing: an AI Services account with a project, the
 // gpt-4.1-mini deployment the agents use, and Application Insights connected to the project so
 // agent runs show on its Tracing page. Only used for a new environment (main.bicep newFoundry);
 // the live one already has all of this.

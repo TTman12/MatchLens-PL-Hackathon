@@ -1,9 +1,9 @@
 import json
 
-from matchlens.gen.season import generate_season
-from matchlens.realism.agg import from_events
-from matchlens.realism.gate import TARGETS, TOLERANCE
-from matchlens.realism.metrics import compute
+from swing.gen.season import generate_season
+from swing.realism.agg import from_events
+from swing.realism.gate import TARGETS, TOLERANCE
+from swing.realism.metrics import compute
 
 
 def test_targets_cover_every_metric() -> None:
